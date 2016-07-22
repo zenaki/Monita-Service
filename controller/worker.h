@@ -9,6 +9,7 @@
 
 #include <QSqlQuery>
 
+#include "util/config.h"
 #include "util/utama.h"
 #include "model/get_db.h"
 #include "model/save_db.h"
@@ -45,6 +46,8 @@ private slots:
     void pollForDataOnBus();
 
 private:
+    config cfg;
+
     QString Address_TcpModbus;
     int Port_TcpModbus;
     int slave_id;
@@ -53,13 +56,15 @@ private:
     int num_of_coils;
     modbus_t *m_tcpModbus;
     int modbus_period;
+    int jml_sumber;
+    QStringList Modbus_Config;
 
-    struct config *cfg;
+//    struct config *cfg;
     QStringList list_config;
 
-    void request();
-    void getResponModule();
-    void set_dataHarian();
+    void request(int index);
+    void getResponModule(int index);
+    void set_dataHarian(QString address, int port);
 
     int stringToHex(QString s);
     QString embracedString(const QString s);

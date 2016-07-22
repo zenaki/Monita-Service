@@ -10,19 +10,41 @@ Worker::Worker(QObject *parent) : QObject(parent){
     files = &file;
     files->open(QIODevice::WriteOnly);
 
-    while (!db.isOpen()) {
-        db = mysql.connect_db();
-        db.open();
-        if (!db.isOpen()) {qDebug() << "Monita::Database::Error : Connecting Fail ..!!";QThread::msleep(DELAY_DB_CONNECT);}
+//    while (!db.isOpen()) {
+//        db = mysql.connect_db();
+//        db.open();
+//        if (!db.isOpen()) {qDebug() << "Monita::Database::Error : Connecting Fail ..!!";QThread::msleep(DELAY_DB_CONNECT);}
+//    }
+//    db.close();
+//    list_config = get.get_config(db);
+    jml_sumber = 0;
+    Modbus_Config.clear();
+    list_config = cfg.read("source");
+    if (list_config.length() > 7) {
+        for (int i = 0; i < list_config.length()/7; i++) {
+            Modbus_Config.append(list_config.at(i*7+1));
+            Modbus_Config.append(list_config.at(i*7+2));
+            Modbus_Config.append(list_config.at(i*7+3));
+            Modbus_Config.append(list_config.at(i*7+4));
+            Modbus_Config.append(list_config.at(i*7+5));
+            Modbus_Config.append(list_config.at(i*7+6));
+            jml_sumber++;
+        }
+    } else {
+        Modbus_Config.append(list_config.at(1));
+        Modbus_Config.append(list_config.at(2));
+        Modbus_Config.append(list_config.at(3));
+        Modbus_Config.append(list_config.at(4));
+        Modbus_Config.append(list_config.at(5));
+        Modbus_Config.append(list_config.at(6));
+        jml_sumber++;
     }
-    db.close();
-    list_config = get.get_config(db);
-    Address_TcpModbus = list_config.at(0);
-    Port_TcpModbus = list_config.at(1).toInt();
-    slave_id = list_config.at(2).toInt();
-    function_id = list_config.at(3).toInt();
-    starting_address = list_config.at(4).toInt();
-    num_of_coils = list_config.at(5).toInt();
+//    Address_TcpModbus = list_config.at(1);
+//    Port_TcpModbus = list_config.at(2).toInt();
+//    slave_id = list_config.at(3).toInt();
+//    function_id = list_config.at(4).toInt();
+//    starting_address = list_config.at(5).toInt();
+//    num_of_coils = list_config.at(6).toInt();
 //    if (!list_config.isEmpty()) {
 //        strcpy(cfg->Ip_TcpModbus,list.at(0).toLatin1());
 //        cfg->Port_TcpModbus = list.at(1).toInt();
@@ -34,66 +56,74 @@ Worker::Worker(QObject *parent) : QObject(parent){
 
     modbus_period = 0;
 
-    this->connectTcpModbus(Address_TcpModbus, Port_TcpModbus);
+//    this->connectTcpModbus(Modbus_Config.at(0), Modbus_Config.at(1).toInt());
     this->doWork();
 }
 
 void Worker::doWork()
 {
     timer.stop();
-    if (!m_tcpModbus) {
-        while (!db.isOpen()) {
-            db = mysql.connect_db();
-            db.open();
-            if (!db.isOpen()) {qDebug() << "Monita::Database::Error : Connecting Fail ..!!";QThread::msleep(DELAY_DB_CONNECT);}
-        }
-        db.close();
-        list_config = get.get_config(db);
-        Address_TcpModbus = list_config.at(0);
-        Port_TcpModbus = list_config.at(1).toInt();
-        slave_id = list_config.at(2).toInt();
-        function_id = list_config.at(3).toInt();
-        starting_address = list_config.at(4).toInt();
-        num_of_coils = list_config.at(5).toInt();
-        this->connectTcpModbus(Address_TcpModbus, Port_TcpModbus);
-    } else {
-        this->getResponModule();
-        modbus_period++;
-        if (modbus_period >= MODBUS_PERIOD) {
-            this->set_dataHarian();
-            modbus_period = 0;
+    for (int i = 0; i < jml_sumber; i++) {
+        this->connectTcpModbus(Modbus_Config.at(i*6), Modbus_Config.at(i*6+1).toInt());
+        if (!m_tcpModbus) {
+            Modbus_Config.clear();
+            list_config = cfg.read("source");
+            if (list_config.length() > 7) {
+                for (int i = 0; i < list_config.length(); i++) {
+                    Modbus_Config.append(list_config.at(i*7+1));
+                    Modbus_Config.append(list_config.at(i*7+2));
+                    Modbus_Config.append(list_config.at(i*7+3));
+                    Modbus_Config.append(list_config.at(i*7+4));
+                    Modbus_Config.append(list_config.at(i*7+5));
+                    Modbus_Config.append(list_config.at(i*7+6));
+                }
+            } else {
+                Modbus_Config.append(list_config.at(1));
+                Modbus_Config.append(list_config.at(2));
+                Modbus_Config.append(list_config.at(3));
+                Modbus_Config.append(list_config.at(4));
+                Modbus_Config.append(list_config.at(5));
+                Modbus_Config.append(list_config.at(6));
+            }
+            this->connectTcpModbus(Modbus_Config.at(i*6), Modbus_Config.at(i*6+1).toInt());
+        } else {
+            this->getResponModule(i);
+            modbus_period++;
+            if (modbus_period >= MODBUS_PERIOD*jml_sumber) {
+                QStringList redis_config = cfg.read("redis");
+                this->set_dataHarian(redis_config.at(0), redis_config.at(1).toInt());
+                modbus_period = 0;
+            }
+            releaseTcpModbus();
         }
     }
     timer.start(PERIODE);
 }
 
-void Worker::getResponModule()
+void Worker::getResponModule(int index)
 {
     printf("Monita::TcpModbus::Getting Response ..\n");
-    this->request();
+    this->request(index);
 }
 
-void Worker::set_dataHarian()
+void Worker::set_dataHarian(QString address, int port)
 {
-    QStringList request = this->reqRedis("hlen data_jaman_" + QDate::currentDate().toString("dd_MM_yyyy"), REDIS_ADDRESS, REDIS_PORT);
+    QStringList request = this->reqRedis("hlen data_jaman_" + QDate::currentDate().toString("dd_MM_yyyy"), address, port);
     int redis_len = request.at(0).toInt();
 //    if (redis_len >= 30) {
 
 //    }
-    request = this->reqRedis("hgetall data_jaman_" + QDate::currentDate().toString("dd_MM_yyyy"), REDIS_ADDRESS, REDIS_PORT, redis_len*2);
-    qSort(request.begin(), request.end());
+    request = this->reqRedis("hgetall data_jaman_" + QDate::currentDate().toString("dd_MM_yyyy"), address, port, redis_len*2);
+//    qSort(request.begin(), request.end());
     QStringList temp1; QString data;
     QStringList id_titik_ukur; QStringList tanggal;
     QStringList data_tunggal; QStringList waktu;
-    for (int i = 0; i < request.length(); i++) {
-        if (i < redis_len) {
-            data_tunggal.insert(i, request.at(i));
-        } else {
-            temp1 = request.at(i).split("_");
-            id_titik_ukur.append(temp1.at(0));
-            tanggal.append(temp1.at(1).split("-"));
-            waktu.append(temp1.at(2).split(":"));
-        }
+    for (int i = 0; i < request.length(); i+=2) {
+        temp1 = request.at(i).split("_");
+        id_titik_ukur.append(temp1.at(0));
+        tanggal.append(temp1.at(1).split("-"));
+        waktu.append(temp1.at(2).split(":"));
+        data_tunggal.append(request.at(i+1));
     }
     while (!db.isOpen()) {
         db = mysql.connect_db();
@@ -144,24 +174,26 @@ void Worker::connectTcpModbus(const QString &address, int portNbr)
     m_tcpModbus = modbus_new_tcp( address.toLatin1().constData(), portNbr );
     if( modbus_connect( m_tcpModbus ) == -1 )
     {
-        printf("Monita::TcpModbus::Could not connecting ..\n");
+//        printf("Monita::TcpModbus::Could not connecting ..\n");
+        qDebug() << "Monita::TcpModbus::" + address + ":" + QString::number(portNbr) + " Could not connect ..";
         releaseTcpModbus();
     } else {
-        printf("Monita::TcpModbus::Connecting Success ..\n");
+//        printf("Monita::TcpModbus::Connecting Success ..\n");
+        qDebug() << "Monita::TcpModbus::" + address + ":" + QString::number(portNbr) + " Connected ..";
     }
 }
 
-void Worker::request()
+void Worker::request(int index)
 {
     if( m_tcpModbus == NULL )
     {
         return;
     }
 
-    const int slave = slave_id;
-    const int func = function_id;
-    const int addr = starting_address;
-    int num = num_of_coils;
+    const int slave = Modbus_Config.at(index*6+2).toInt();
+    const int func = Modbus_Config.at(index*6+3).toInt();
+    const int addr = Modbus_Config.at(index*6+4).toInt();
+    int num = Modbus_Config.at(index*6+5).toInt();
 
     uint8_t dest[1024];
     uint16_t *dest16 = (uint16_t *) dest;

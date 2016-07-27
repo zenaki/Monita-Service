@@ -24,15 +24,17 @@
 
 #define  MAX_MEASUREMENT_POINT 999
 
-#define REDIS_ADDRESS "127.0.0.1"
-#define REDIS_PORT    6379
+//#define REDIS_ADDRESS "127.0.0.1"
+//#define REDIS_PORT    6379
 
 #define  PERIODE 1000
 #define  MODBUS_PERIOD 60
 
 #define DELAY_DB_CONNECT 5000
 
-#define MAX_SOURCE 50
+#define PATH_DB_CONNECTION "monita_configuration/monita-db.dbe"
+#define PATH_CONFIGURATION_JSON "monita_configuration/monita-cfg.json"
+#define PATH_CONFIGURATION_BIN "monita_configuration/monita-cfg.dat"
 
 struct tcp_modbus_config {
     char Ip_TcpModbus[16];

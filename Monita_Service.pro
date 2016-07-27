@@ -19,7 +19,7 @@ HEADERS += \
         3rdparty/qextserialport/qextserialport.h \
         3rdparty/qextserialport/qextserialenumerator.h \
         3rdparty/libmodbus/src/modbus.h \
-    util/config.h
+        util/config.h
 
 SOURCES += main.cpp \
         model/get_db.cpp \
@@ -32,7 +32,7 @@ SOURCES += main.cpp \
         3rdparty/libmodbus/src/modbus.c \
         3rdparty/libmodbus/src/modbus-data.c \
         3rdparty/libmodbus/src/modbus-tcp.c \
-    util/config.cpp
+        util/config.cpp
 
 INCLUDEPATH += 3rdparty/libmodbus \
                3rdparty/libmodbus/src \

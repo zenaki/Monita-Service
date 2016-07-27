@@ -10,6 +10,7 @@ void save_db::data_harian(QSqlDatabase db, QString tanggal, QString data){
 
     query = "REPLACE INTO data_" + tanggal + " ( \
                 id_titik_ukur, \
+                slave_id, \
                 waktu, \
                 data_tunggal, \
                 hour, \
@@ -17,7 +18,7 @@ void save_db::data_harian(QSqlDatabase db, QString tanggal, QString data){
                 second \
             ) VALUES ";
     query = query + data + ";";
-    qDebug() << query;
+//    qDebug() << query;
 
     q.prepare(query);
 
@@ -38,12 +39,13 @@ void save_db::create_tabel_data_harian(QSqlDatabase db, QString tanggal){
     query.clear();
     query = "CREATE TABLE if not exists data_" + tanggal + " (\
                 id_titik_ukur INT(11) NOT NULL, \
+                slave_id INT(3) NOT NULL, \
                 waktu bigint(17) NOT NULL, \
                 data_tunggal float NOT NULL, \
                 hour tinyint(4) NOT NULL, \
                 minute tinyint(4) NOT NULL, \
                 second tinyint(4) NOT NULL, \
-                PRIMARY KEY (id_titik_ukur, waktu) \
+                PRIMARY KEY (id_titik_ukur, slave_id, waktu) \
     );";
 
     q.exec(query);

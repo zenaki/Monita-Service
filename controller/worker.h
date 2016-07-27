@@ -33,7 +33,8 @@ public:
     explicit Worker(QObject *parent = 0);
 
 signals:
-    
+    void finish();
+
 public slots:
 
 protected:
@@ -47,13 +48,6 @@ private slots:
 
 private:
     config cfg;
-
-    QString Address_TcpModbus;
-    int Port_TcpModbus;
-    int slave_id;
-    int function_id;
-    int starting_address;
-    int num_of_coils;
     modbus_t *m_tcpModbus;
     int modbus_period;
     int jml_sumber;
@@ -61,9 +55,9 @@ private:
 
 //    struct config *cfg;
     QStringList list_config;
+//    QStringList period_config;
 
     void request(int index);
-    void getResponModule(int index);
     void set_dataHarian(QString address, int port);
 
     int stringToHex(QString s);

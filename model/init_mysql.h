@@ -11,8 +11,6 @@
 
 #include "util/utama.h"
 
-#define PATH_DB_CONNECTION "db.dbe"
-
 class init_mysql
 {
 public:

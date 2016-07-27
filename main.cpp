@@ -1,7 +1,6 @@
 #include <QCoreApplication>
 
 #include "controller/worker.h"
-#include "model/monita_log.h"
 
 int main(int argc, char *argv[])
 {
@@ -9,6 +8,7 @@ int main(int argc, char *argv[])
     printf("Monita Service Started :: \n");
 
     Worker worker;
+    QObject::connect(&worker, SIGNAL(finish()), &a, SLOT(quit()));
 
     return a.exec();
 }

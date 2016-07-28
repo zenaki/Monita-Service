@@ -1,14 +1,6 @@
 #ifndef INIT_MYSQL_H
 #define INIT_MYSQL_H
 
-#include <QDebug>
-#include <QSqlError>
-#include <QSqlDatabase>
-#include <QSqlQuery>
-#include <QDir>
-#include <QFile>
-#include <QSettings>
-
 #include "util/utama.h"
 
 class init_mysql

@@ -12,27 +12,27 @@ HEADERS += \
         controller/worker.h \
         model/save_db.h \
         model/init_mysql.h \
-        util/parsing_fuction.h \
         util/utama.h \
         model/monita_log.h \
         imodbus.h \
         3rdparty/qextserialport/qextserialport.h \
         3rdparty/qextserialport/qextserialenumerator.h \
         3rdparty/libmodbus/src/modbus.h \
-        util/config.h
+        util/config.h \
+    util/redis.h
 
 SOURCES += main.cpp \
         model/get_db.cpp \
         controller/worker.cpp \
         model/save_db.cpp \
         model/init_mysql.cpp \
-        util/parsing_fuction.cpp \
         model/monita_log.cpp \
         3rdparty/qextserialport/qextserialport.cpp \
         3rdparty/libmodbus/src/modbus.c \
         3rdparty/libmodbus/src/modbus-data.c \
         3rdparty/libmodbus/src/modbus-tcp.c \
-        util/config.cpp
+        util/config.cpp \
+    util/redis.cpp
 
 INCLUDEPATH += 3rdparty/libmodbus \
                3rdparty/libmodbus/src \

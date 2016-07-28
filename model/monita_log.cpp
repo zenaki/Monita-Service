@@ -2,28 +2,22 @@
 
 monita_log::monita_log()
 {
-    buf_lay = (char *) malloc(1024);
-    buf_dateTime = (char *) malloc(32);
+//    buf_lay = (char *) malloc(1024);
+//    buf_dateTime = (char *) malloc(32);
 }
 
-void monita_log::write(QFile *file, const char *text, ...){
-
-    va_list args;
-    int i;
-
-    va_start (args, text);
-
-       /* For this to work, printbuffer must be larger than
-        * anything we ever want to print.
-        */
-    i = vsprintf (buf_lay, text, args);
-    va_end (args);
-
-    /* Print the string */
-    sprintf (buf_dateTime, " [%s]\r\n", QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss").toUtf8().data(), args);
-
-    strcat(buf_lay, buf_dateTime);
-
-    QTextStream printLog(file);
-    printLog << buf_lay;
+void monita_log::write(QString path, QString type, QString message)
+{
+    QFile outFile(path);
+    if (!outFile.exists()) {
+        QDir dir;
+        dir.mkpath("monita_configuration");
+    }
+    outFile.open(QIODevice::WriteOnly | QIODevice::Append);
+    QTextStream ts(&outFile);
+//    message.prepend("::").prepend(type).prepend("::").prepend(" Monita Service").prepend(QDateTime::currentDateTime().toString("dd-MM-yyyy HH:mm:ss"));
+    message.prepend("::").prepend(QDateTime::currentDateTime().toString("dd-MM-yyyy HH:mm:ss"));
+    qDebug() << message;
+    ts << message << endl;
+    outFile.close();
 }

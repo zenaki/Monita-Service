@@ -1,30 +1,16 @@
 #ifndef WORKER_H
 #define WORKER_H
 
-#include "imodbus.h"
-
 #include <QObject>
-#include <QTimer>
-#include <QDebug>
-#include <QDateTime>
-#include <QThread>
 
-#include <QSqlQuery>
-
-#include "util/config.h"
 #include "util/utama.h"
+#include "util/config.h"
 #include "model/get_db.h"
-#include "model/save_db.h"
-#include "model/init_mysql.h"
-#include "model/monita_log.h"
 
 #include <qmath.h>
 #include <errno.h>
 
-extern "C"
-{
-    #include "hiredis/hiredis.h"
-}
+#include "imodbus.h"
 
 class Worker : public QObject
 {
@@ -48,8 +34,9 @@ private slots:
 
 private:
     config cfg;
+    redis rds;
+    monita_log log;
     modbus_t *m_tcpModbus;
-
     struct monita_config monita_cfg;
 
     void request(int index);
@@ -58,10 +45,6 @@ private:
     int stringToHex(QString s);
     QString embracedString(const QString s);
     QString descriptiveDataTypeName(int funcCode);
-
-    QStringList reqRedis(QString command, QString address, int port, int len = 0);
-    redisReply *r_reply;
-    redisContext *r_context;
 
     /** log **/
     QString fileName;

@@ -1,11 +1,6 @@
 #ifndef GET_DB_H
 #define GET_DB_H
 
-#include <QDebug>
-#include <QSqlDatabase>
-#include <QSqlQuery>
-
-#include <QDateTime>
 #include <util/utama.h>
 
 class get_db

@@ -1,6 +1,8 @@
 #ifndef WORKER_H
 #define WORKER_H
 
+#include "imodbus.h"
+
 #include <QObject>
 #include <QTimer>
 #include <QDebug>
@@ -18,8 +20,6 @@
 
 #include <qmath.h>
 #include <errno.h>
-
-#include "imodbus.h"
 
 extern "C"
 {
@@ -49,13 +49,8 @@ private slots:
 private:
     config cfg;
     modbus_t *m_tcpModbus;
-    int modbus_period;
-    int jml_sumber;
-    QStringList Modbus_Config;
 
-//    struct config *cfg;
-    QStringList list_config;
-//    QStringList period_config;
+    struct monita_config monita_cfg;
 
     void request(int index);
     void set_dataHarian(QString address, int port);

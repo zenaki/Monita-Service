@@ -27,8 +27,8 @@
 //#define REDIS_ADDRESS "127.0.0.1"
 //#define REDIS_PORT    6379
 
-#define  PERIODE 1000
-#define  MODBUS_PERIOD 60
+//#define  PERIODE 1000
+//#define  MODBUS_PERIOD 60
 
 #define DELAY_DB_CONNECT 5000
 
@@ -36,13 +36,13 @@
 #define PATH_CONFIGURATION_JSON "monita_configuration/monita-cfg.json"
 #define PATH_CONFIGURATION_BIN "monita_configuration/monita-cfg.dat"
 
-struct tcp_modbus_config {
-    char Ip_TcpModbus[16];
-    int Port_TcpModbus;
-    int slave_id;
-    int function_code;
-    int start_address;
-    int num_of_coils;
+struct monita_config {
+    QString str_log;
+    int modbus_period;
+    int jml_sumber;
+    QStringList Modbus_Config;
+    QStringList list_config;
+    QStringList period_config;
 };
 
 #endif // UTAMA_H

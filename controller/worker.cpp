@@ -10,69 +10,68 @@ Worker::Worker(QObject *parent) : QObject(parent){
     files = &file;
     files->open(QIODevice::WriteOnly);
 
-    jml_sumber = 0;
-    Modbus_Config.clear();
-    list_config = cfg.read("source");
-    if (list_config.length() > 7) {
-        Modbus_Config = list_config;
-        jml_sumber = list_config.length()/7;
+    monita_cfg.jml_sumber = 0;
+//    Modbus_Config.clear();
+    monita_cfg.list_config = cfg.read("source");
+    if (monita_cfg.list_config.length() > 7) {
+//        Modbus_Config = list_config;
+        monita_cfg.jml_sumber = monita_cfg.list_config.length()/7;
     } else {
-        Modbus_Config = list_config;
-        jml_sumber++;
+//        Modbus_Config = list_config;
+        monita_cfg.jml_sumber++;
     }
 
-//    period_cfg = cfg.read("config");
+    monita_cfg.period_config = cfg.read("config");
 
     connect(&timer, SIGNAL(timeout()), this, SLOT(doWork()));
 //    timer.start((1000 * 60 * 10) / 2); /* 5 menit */
 //    timer.start(period_cfg.at(1).toInt());
-    timer.start(PERIODE);
+    timer.start(monita_cfg.period_config.at(1).toInt());
 
-    modbus_period = 0;
+    monita_cfg.modbus_period = 0;
     this->doWork();
 }
 
 void Worker::doWork()
 {
     timer.stop();
-    for (int i = 0; i < jml_sumber; i++) {
-        if (Modbus_Config.at(6) == "TCP") {
-            this->connectTcpModbus(Modbus_Config.at(i*7), Modbus_Config.at(i*7+1).toInt());
+    for (int i = 0; i < monita_cfg.jml_sumber; i++) {
+        if (monita_cfg.list_config.at(6) == "TCP") {
+            m_tcpModbus = NULL;
+            this->connectTcpModbus(monita_cfg.list_config.at(i*7), monita_cfg.list_config.at(i*7+1).toInt());
             if (!m_tcpModbus) {
-                Modbus_Config.clear();
-                jml_sumber = 0;
-                list_config = cfg.read("source");
-                if (list_config.length() > 7) {
-                    for (int i = 0; i < list_config.length()/7; i++) {
-                        Modbus_Config = list_config;
-                        jml_sumber++;
-                    }
+//                Modbus_Config.clear();
+                monita_cfg.jml_sumber = 0;
+                monita_cfg.list_config = cfg.read("source");
+                if (monita_cfg.list_config.length() > 7) {
+//                    Modbus_Config = list_config;
+                    monita_cfg.jml_sumber = monita_cfg.list_config.length()/7;
                 } else {
-                    Modbus_Config = list_config;
-                    jml_sumber++;
+//                    Modbus_Config = list_config;
+                    monita_cfg.jml_sumber++;
                 }
-                this->connectTcpModbus(Modbus_Config.at(i*7), Modbus_Config.at(i*7+1).toInt());
+                this->connectTcpModbus(monita_cfg.list_config.at(i*7), monita_cfg.list_config.at(i*7+1).toInt());
                 this->request(i);
-                modbus_period++;
-                if (modbus_period >= MODBUS_PERIOD*jml_sumber) {
+                monita_cfg.modbus_period++;
+                if (monita_cfg.modbus_period >= monita_cfg.period_config.at(0).toInt()*monita_cfg.jml_sumber) {
                     QStringList redis_config = cfg.read("redis");
                     this->set_dataHarian(redis_config.at(0), redis_config.at(1).toInt());
-                    modbus_period = 0;
+                    monita_cfg.modbus_period = 0;
                 }
                 releaseTcpModbus();
             } else {
                 this->request(i);
-                modbus_period++;
-                if (modbus_period >= MODBUS_PERIOD*jml_sumber) {
+                monita_cfg.modbus_period++;
+                if (monita_cfg.modbus_period >= monita_cfg.period_config.at(0).toInt()*monita_cfg.jml_sumber) {
                     QStringList redis_config = cfg.read("redis");
                     this->set_dataHarian(redis_config.at(0), redis_config.at(1).toInt());
-                    modbus_period = 0;
+                    monita_cfg.modbus_period = 0;
                 }
                 releaseTcpModbus();
             }
         }
     }
-    timer.start(PERIODE);
+    timer.start(monita_cfg.period_config.at(1).toInt());
 }
 
 void Worker::set_dataHarian(QString address, int port)
@@ -174,10 +173,10 @@ void Worker::request(int index)
         return;
     }
 
-    const int slave = Modbus_Config.at(index*7+2).toInt();
-    const int func = Modbus_Config.at(index*7+3).toInt();
-    const int addr = Modbus_Config.at(index*7+4).toInt();
-    int num = Modbus_Config.at(index*7+5).toInt();
+    const int slave = monita_cfg.list_config.at(index*7+2).toInt();
+    const int func = monita_cfg.list_config.at(index*7+3).toInt();
+    const int addr = monita_cfg.list_config.at(index*7+4).toInt();
+    int num = monita_cfg.list_config.at(index*7+5).toInt();
 
     uint8_t dest[1024];
     uint16_t *dest16 = (uint16_t *) dest;

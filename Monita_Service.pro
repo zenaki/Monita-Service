@@ -1,4 +1,4 @@
-QT += core sql
+QT += core sql network
 QT -= gui
 
 TARGET = Monita_Service
@@ -19,7 +19,10 @@ HEADERS += \
         3rdparty/qextserialport/qextserialenumerator.h \
         3rdparty/libmodbus/src/modbus.h \
         util/config.h \
-    util/redis.h
+    util/redis.h \
+    util/util_skyw.h \
+    util/parsing_fuction.h \
+    util/util_modbus.h
 
 SOURCES += main.cpp \
         model/get_db.cpp \
@@ -32,7 +35,10 @@ SOURCES += main.cpp \
         3rdparty/libmodbus/src/modbus-data.c \
         3rdparty/libmodbus/src/modbus-tcp.c \
         util/config.cpp \
-    util/redis.cpp
+    util/redis.cpp \
+    util/util_skyw.cpp \
+    util/parsing_fuction.cpp \
+    util/util_modbus.cpp
 
 INCLUDEPATH += 3rdparty/libmodbus \
                3rdparty/libmodbus/src \

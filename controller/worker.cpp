@@ -2,18 +2,15 @@
 
 #include "modbus-tcp.h"
 
-Worker::Worker(QObject *parent) : QObject(parent){
-//    fileName.sprintf("%s/log/log.txt", QDir::currentPath().toUtf8().data());
-
-//    QFile file(fileName);
-
-//    files = &file;
-//    files->open(QIODevice::WriteOnly);
-
+Worker::Worker(QObject *parent) : QObject(parent)
+{
     monita_cfg.jml_sumber = 0;
     monita_cfg.source_config = cfg.read("source");
     if (monita_cfg.source_config.length() > 7) {monita_cfg.jml_sumber = monita_cfg.source_config.length()/7;
     } else {monita_cfg.jml_sumber++;}
+
+    manager = new QNetworkAccessManager();
+    connect(manager, SIGNAL(finished(QNetworkReply*)), this, SLOT(replyFinished(QNetworkReply *)));
 
     monita_cfg.config = cfg.read("config");
 
@@ -39,7 +36,7 @@ void Worker::doWork()
                 } else {monita_cfg.jml_sumber++;}
 
                 this->connectTcpModbus(monita_cfg.source_config.at(i*7), monita_cfg.source_config.at(i*7+1).toInt());
-                this->request(i);
+                this->request_modbus(i);
                 monita_cfg.modbus_period++;
                 if (monita_cfg.modbus_period >= monita_cfg.config.at(0).toInt()*monita_cfg.jml_sumber) {
                     monita_cfg.redis_config = cfg.read("redis");
@@ -48,7 +45,7 @@ void Worker::doWork()
                 }
                 releaseTcpModbus();
             } else {
-                this->request(i);
+                this->request_modbus(i);
                 monita_cfg.modbus_period++;
                 if (monita_cfg.modbus_period >= monita_cfg.config.at(0).toInt()*monita_cfg.jml_sumber) {
                     QStringList redis_config = cfg.read("redis");
@@ -83,10 +80,10 @@ void Worker::set_dataHarian(QString address, int port)
     }
     int t = 0;
     while (!db.isOpen()) {
+        db.close();
         db = mysql.connect_db();
         db.open();
         if (!db.isOpen()) {
-//            qDebug() << "Monita::Database::Error : Connecting Fail ..!!";
             log.write(monita_cfg.config.at(2),"Database","Error : Connecting Fail ..!!");
             QThread::msleep(DELAY_DB_CONNECT);
             t++;
@@ -110,13 +107,12 @@ void Worker::set_dataHarian(QString address, int port)
         if (i != redis_len - 1) {
             data = data + ",";
         }
-//        QThread::msleep(10);
     }
     while (!db.isOpen()) {
+        db.close();
         db = mysql.connect_db();
         db.open();
         if (!db.isOpen()) {
-//            qDebug() << "Monita::Database::Error : Connecting Fail ..!!";
             log.write(monita_cfg.config.at(2),"Database","Error : Connecting Fail ..!!");
             QThread::msleep(DELAY_DB_CONNECT);
             t++;
@@ -125,9 +121,19 @@ void Worker::set_dataHarian(QString address, int port)
     }
     set.data_harian(db, QDate::currentDate().toString("yyyy_MM_dd"), data);
     db.close();
-//    qDebug() << "Monita::Database::Data Inserted on table data_" + QDate::currentDate().toString("dd_MM_yyyy") + " ..";
     log.write(monita_cfg.config.at(2),"Database","Data Inserted on table data_" + QDate::currentDate().toString("dd_MM_yyyy") + " ..");
     rds.reqRedis("del data_jaman_" + QDate::currentDate().toString("dd_MM_yyyy"), address, port);
+}
+
+void Worker::request_sky_wave()
+{
+    QNetworkRequest request;
+
+    monita_cfg.urls.sprintf("%s%s", acc->gway[monita_cfg.gateway_count].link, acc->gway[monita_cfg.gateway_count].nextutc);
+    QUrl url =  QUrl::fromEncoded(monita_cfg.urls.toLocal8Bit().data());
+
+    request.setUrl(url);
+    manager->get(request);
 }
 
 void Worker::releaseTcpModbus()
@@ -146,18 +152,14 @@ void Worker::connectTcpModbus(const QString &address, int portNbr)
     m_tcpModbus = modbus_new_tcp( address.toLatin1().constData(), portNbr );
     if( modbus_connect( m_tcpModbus ) == -1 )
     {
-//        printf("Monita::TcpModbus::Could not connecting ..\n");
-//        qDebug() << "Monita::TcpModbus::" + address + ":" + QString::number(portNbr) + " Could not connect ..";
         log.write(monita_cfg.config.at(2),"TcpModbus",address + ":" + QString::number(portNbr) + " Could not connect ..");
         releaseTcpModbus();
     } else {
-//        printf("Monita::TcpModbus::Connecting Success ..\n");
-//        qDebug() << "Monita::TcpModbus::" + address + ":" + QString::number(portNbr) + " Connected ..";
         log.write(monita_cfg.config.at(2),"TcpModbus",address + ":" + QString::number(portNbr) + " Connected ..");
     }
 }
 
-void Worker::request(int index)
+void Worker::request_modbus(int index)
 {
     if( m_tcpModbus == NULL )
     {
@@ -180,9 +182,9 @@ void Worker::request(int index)
     const QString dataType = descriptiveDataTypeName(func);
 
     modbus_set_slave( m_tcpModbus, slave );
-//    qDebug() << QDateTime::currentDateTime().toString("dd-MM-yyyy - HH:mm:ss:zzz") + " -------------------------------------------------------";
-    log.write(monita_cfg.config.at(2),"TcpModbus", "Reguest date : " +
-              QDateTime::currentDateTime().toString("dd-MM-yyyy - HH:mm:ss:zzz") + "------------------------------");
+    log.write(monita_cfg.config.at(2),"TcpModbus", "Request from : " +
+              monita_cfg.source_config.at(index*7) + ":" + monita_cfg.source_config.at(index*7+1) +
+              " ------------------------------");
     switch( func )
     {
         case MODBUS_FC_READ_COILS:
@@ -243,16 +245,12 @@ void Worker::request(int index)
     {
         if( writeAccess )
         {
-//            m_statusText->setText(
-//                    tr( "Values successfully sent" ) );
-//            m_statusInd->setStyleSheet( "background: #0b0;" );
             printf("Monita::TcpModbus::Value successfully sent ..\n");
+            log.write(monita_cfg.config.at(2),"TcpModbus","Value successfully sent ..");
             QTimer::singleShot( 2000, this, SLOT( resetStatus() ) );
         }
         else
         {
-//            bool b_hex = is16Bit && ui->cbHexData->checkState() == Qt::Checked;
-//            b_hex = true;
             QString qs_num;
             QString data_int;
             QString data_hex;
@@ -260,22 +258,15 @@ void Worker::request(int index)
             QByteArray array;
             QString data_real;
 
-//            ui->regTable->setRowCount( num );
             for( int i = 0; i < num; ++i )
             {
                 int data = is16Bit ? dest16[i] : dest[i];
-
-//                QTableWidgetItem * dtItem = new QTableWidgetItem(dataType);
-//                QTableWidgetItem * addrItem = new QTableWidgetItem(QString::number(addr+i));
-//                qs_num.sprintf(b_hex ? "0x%04x" : "%d", data);
                 data_int.sprintf("%d", data);
                 data_hex.sprintf("0x%04x", data);
-//                data_real.sprintf("%f", data);
                 if (i % 2 == 1) {
                     data_real.sprintf("%04x%04x", data_before, data);
                     bool ok;
                     int sign = 1;
-//                    QByteArray array("425AE78F");
                     array = data_real.toUtf8();
                     array = QByteArray::number(array.toLongLong(&ok,16),2); //convert hex to binary -you don't need this since your incoming data is binary
                     if(array.length()==32) {
@@ -287,32 +278,11 @@ void Worker::request(int index)
                     for(int i=0;i<fraction.length();i++)     // iterate through the array to claculate the fraction as a decimal.
                         if(fraction.at(i)=='1')     mantissa += 1.0/(pow(2,i+1));
                     int exponent = array.left(array.length()-23).toLongLong(&ok,2)-127;     //claculate the exponent
-//                    qDebug() << "number= "<< QString::number( sign*pow(2,exponent)*(mantissa+1.0),'f', 5 );
-//                    data_real.sprintf("%f", f_dt);
                     data_real = QString::number( sign*pow(2,exponent)*(mantissa+1.0),'f', 5 );
                 } else {
                     data_before = data;
                 }
 
-//                QTableWidgetItem * dataItem = new QTableWidgetItem(data_int);
-//                QTableWidgetItem * hexItem = new QTableWidgetItem(data_hex);
-//                QTableWidgetItem * realItem = new QTableWidgetItem(data_real);
-//                dtItem->setFlags( dtItem->flags() &
-//                            ~Qt::ItemIsEditable );
-//                addrItem->setFlags( addrItem->flags() &
-//                            ~Qt::ItemIsEditable );
-//                dataItem->setFlags( dataItem->flags() &
-//                            ~Qt::ItemIsEditable );
-//                hexItem->setFlags( hexItem->flags() &
-//                            ~Qt::ItemIsEditable );
-//                realItem->setFlags( realItem->flags() &
-//                            ~Qt::ItemIsEditable );
-
-//                ui->regTable->setItem(i,0,dtItem);
-//                ui->regTable->setItem(i,1,addrItem);
-//                ui->regTable->setItem(i,2,dataItem);
-//                ui->regTable->setItem(i,3,hexItem);
-//                ui->regTable->setItem(i,4,realItem);
                 if (!data_real.isEmpty()) {
                     QStringList redis_config = cfg.read("redis");
                     rds.reqRedis("hset data_jaman_" + QDate::currentDate().toString("dd_MM_yyyy") + " " +
@@ -322,12 +292,6 @@ void Worker::request(int index)
                                    QDateTime::currentDateTime().toString("dd-MM-yyyy_HH:mm:ss:zzz") +
                                    " " +
                                    data_real, redis_config.at(0), redis_config.at(1).toInt());
-//                    qDebug() << "Monita::TcpModbus::" +
-//                                QString::number(slave) + " - " +
-//                                QString::number(addr+i) + " - " +
-//                                data_int + " - " +
-//                                data_hex + " - " +
-//                                data_real;
                     log.write(monita_cfg.config.at(2),"TcpModbus","Monita::TcpModbus::" +
                               QString::number(slave) + " - " +
                               QString::number(addr+i) + " - " +
@@ -350,22 +314,11 @@ void Worker::request(int index)
                     errno == EIO
                                                                     )
             {
-//                QMessageBox::critical( this, tr( "I/O error" ),
-//                    tr( "I/O error: did not receive any data from slave." ) );
-//                qDebug() << "I/O error::I/O error: did not receive any data from slave.";
-//                printf("Monita::TcpModbus::I/O error:: did not receive any data from slave ..\n");
                 log.write(monita_cfg.config.at(2),"TcpModbus","I/O error:: did not receive any data from slave ..");
                 releaseTcpModbus();
             }
             else
             {
-//                QMessageBox::critical( this, tr( "Protocol error" ),
-//                    tr( "Slave threw exception \"%1\" or "
-//                        "function not implemented." ).
-//                                arg( modbus_strerror( errno ) ) );
-//                qDebug() << "Monita::TcpModbus::Protocol Error::Slave threw exception " +
-//                            QString::fromUtf8(modbus_strerror(errno)) +
-//                            " or function not implemented.";
                 log.write(monita_cfg.config.at(2),"TcpModbus","Monita::TcpModbus::Protocol Error::Slave threw exception " +
                           QString::fromUtf8(modbus_strerror(errno)) +
                           " or function not implemented.");
@@ -374,12 +327,6 @@ void Worker::request(int index)
         }
         else
         {
-//            QMessageBox::critical( this, tr( "Protocol error" ),
-//                tr( "Number of registers returned does not "
-//                    "match number of registers "
-//                            "requested!" ) );
-//            qDebug() << "Monita::TcpModbus::Protocol Error::"
-//                        "Number of registers returned does not match number of registers requested!";
             log.write(monita_cfg.config.at(2),"TcpModbus","Monita::TcpModbus::Protocol Error::"
                                            "Number of registers returned does not match number of registers requested!");
             releaseTcpModbus();
@@ -421,11 +368,7 @@ QString Worker::descriptiveDataTypeName(int funcCode)
 
 void Worker::resetStatus( void )
 {
-//    m_statusText->setText( tr( "Ready" ) );
-//    m_statusInd->setStyleSheet( "background: #aaa;" );
-//    qDebug() << "Monita::TcpModbus::Reset : Ready ..";
     log.write(monita_cfg.config.at(2),"TcpModbus","Reset : Ready ..");
-
 }
 
 void Worker::pollForDataOnBus( void )
@@ -433,5 +376,23 @@ void Worker::pollForDataOnBus( void )
     if(m_tcpModbus)
     {
         modbus_poll(m_tcpModbus);
+    }
+}
+
+void Worker::replyFinished(QNetworkReply* reply){
+    QString xmlStr;
+    xmlStr.clear();
+
+    xmlStr=reply->readAll();
+    read.parse_xml_account_methode(xmlStr, db, marine, acc, acc->gway[monita_cfg.gateway_count].id, monita_cfg.gateway_count);
+
+    monita_cfg.gateway_count++;
+
+    if (monita_cfg.gateway_count < acc->sum_getway){
+        this->request_sky_wave();
+    }
+    else{
+        monita_cfg.gateway_count = 0;
+        timer.start((1000 * 60 * 10) / 2);
     }
 }

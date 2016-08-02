@@ -15,8 +15,8 @@ void monita_log::write(QString path, QString type, QString message)
     }
     outFile.open(QIODevice::WriteOnly | QIODevice::Append);
     QTextStream ts(&outFile);
-//    message.prepend("::").prepend(type).prepend("::").prepend(" Monita Service").prepend(QDateTime::currentDateTime().toString("dd-MM-yyyy HH:mm:ss"));
-    message.prepend("::").prepend(QDateTime::currentDateTime().toString("dd-MM-yyyy HH:mm:ss"));
+    message.prepend("::").prepend(type).prepend("::").prepend(QDateTime::currentDateTime().toString("dd-MM-yyyy HH:mm:ss"));
+//    message.prepend("::").prepend(QDateTime::currentDateTime().toString("dd-MM-yyyy HH:mm:ss"));
     qDebug() << message;
     ts << message << endl;
     outFile.close();

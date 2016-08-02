@@ -49,11 +49,13 @@ QStringList config::read(QString obj)
                 foreach (const QJsonValue & v, array) {
                     result.append(QString::number(v.toObject().value("DB_PERIOD").toInt()));
                     result.append(QString::number(v.toObject().value("INTERVAL").toInt()));
+                    result.append(QString::number(v.toObject().value("TIMESTAMP").toInt()));
                     result.append(v.toObject().value("LOG_PATH").toString());
                 }
             } else {
                 result.append(QString::number(value.toObject().value("DB_PERIOD").toInt()));
                 result.append(QString::number(value.toObject().value("INTERVAL").toInt()));
+                result.append(QString::number(value.toObject().value("TIMESTAMP").toInt()));
                 result.append(value.toObject().value("LOG_PATH").toString());
             }
         }
@@ -89,6 +91,7 @@ void config::write(QJsonObject &json) const //Default
     QJsonObject configObject;
     configObject["INTERVAL"] = 1000;    //milis
     configObject["DB_PERIOD"] = 60;     //detik
+    configObject["TIMESTAMP"] = 3;     //TimeStamp
     temp = "monita_configuration/log.txt";
     configObject["LOG_PATH"] = temp;
     configArray.append(configObject);

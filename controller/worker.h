@@ -51,6 +51,10 @@ private:
     struct sky_wave_account *acc;
     struct monita_config monita_cfg;
 
+    int ship_count;
+    int gateway_count;
+    int cnt_panggil;
+
     void request_modbus(int index);
     int stringToHex(QString s);
     QString embracedString(const QString s);

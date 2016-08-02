@@ -1,7 +1,7 @@
 QT += core sql network
 QT -= gui
 
-TARGET = Monita_Service
+TARGET = monita-service
 CONFIG += console
 CONFIG -= app_bundle
 

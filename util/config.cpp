@@ -11,7 +11,7 @@ QStringList config::read(QString obj)
         JsonDoc = QJsonDocument::fromJson(data_json);
         QJsonObject object = JsonDoc.object();
         QJsonValue value = object.value(obj);
-        if (obj == "redis") {
+        if (obj == "REDIS") {
             if (object.value(obj).isArray()) {
                 QJsonArray array = value.toArray();
                 foreach (const QJsonValue & v, array) {
@@ -22,7 +22,7 @@ QStringList config::read(QString obj)
                 result.append(value.toObject().value("IP").toString());
                 result.append(QString::number(value.toObject().value("PORT").toInt()));
             }
-        } else if (obj == "source") {
+        } else if (obj == "SOURCE") {
             if (object.value(obj).isArray()) {
                 QJsonArray array = value.toArray();
                 foreach (const QJsonValue & v, array) {
@@ -43,7 +43,7 @@ QStringList config::read(QString obj)
                 result.append(QString::number(value.toObject().value("COILS").toInt()));
                 result.append(value.toObject().value("MODE").toString());
             }
-        } else if (obj == "config") {
+        } else if (obj == "CONFIG") {
             if (object.value(obj).isArray()) {
                 QJsonArray array = value.toArray();
                 foreach (const QJsonValue & v, array) {
@@ -51,12 +51,31 @@ QStringList config::read(QString obj)
                     result.append(QString::number(v.toObject().value("INTERVAL").toInt()));
                     result.append(QString::number(v.toObject().value("TIMESTAMP").toInt()));
                     result.append(v.toObject().value("LOG_PATH").toString());
+                    result.append(v.toObject().value("REDIS_KEY").toString());
+                    result.append(v.toObject().value("TABLE_NAME").toString());
                 }
             } else {
                 result.append(QString::number(value.toObject().value("DB_PERIOD").toInt()));
                 result.append(QString::number(value.toObject().value("INTERVAL").toInt()));
                 result.append(QString::number(value.toObject().value("TIMESTAMP").toInt()));
                 result.append(value.toObject().value("LOG_PATH").toString());
+                result.append(value.toObject().value("REDIS_KEY").toString());
+                result.append(value.toObject().value("TABLE_NAME").toString());
+            }
+        } else if (obj == "CALC") {
+            if (object.value(obj).isArray()) {
+                QJsonArray array = value.toArray();
+                foreach (const QJsonValue & v, array) {
+                    result.append(QString::number(v.toObject().value("ID").toInt()));
+                    result.append(v.toObject().value("OPERATOR").toString());
+                    result.append(v.toObject().value("SLAVE;REG").toString());
+                    result.append(QString::number(v.toObject().value("CUSTOM_ID").toInt()));
+                }
+            } else {
+                result.append(QString::number(value.toObject().value("ID").toInt()));
+                result.append(value.toObject().value("OPERATOR").toString());
+                result.append(value.toObject().value("SLAVE;REG").toString());
+                result.append(QString::number(value.toObject().value("CUSTOM_ID").toInt()));
             }
         }
     }

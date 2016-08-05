@@ -32,12 +32,12 @@ void save_db::data_harian(QSqlDatabase db, QString tanggal, QString data){
     q.exec();
 }
 
-void save_db::create_tabel_data_harian(QSqlDatabase db, QString tanggal){
+void save_db::create_tabel_data_harian(QSqlDatabase db, QString tb_name, QString tanggal){
     QString query;
     QSqlQuery q(db);
 
     query.clear();
-    query = "CREATE TABLE if not exists data_" + tanggal + " (\
+    query = "CREATE TABLE if not exists " + tb_name + tanggal + " (\
                 id_titik_ukur INT(11) NOT NULL, \
                 slave_id INT(3) NOT NULL, \
                 waktu bigint(17) NOT NULL, \

@@ -5,14 +5,15 @@
 Worker::Worker(QObject *parent) : QObject(parent)
 {
     monita_cfg.jml_sumber = 0;
-    monita_cfg.source_config = cfg.read("source");
+    monita_cfg.source_config = cfg.read("SOURCE");
     if (monita_cfg.source_config.length() > 7) {monita_cfg.jml_sumber = monita_cfg.source_config.length()/7;
     } else {monita_cfg.jml_sumber++;}
 
     manager = new QNetworkAccessManager();
     connect(manager, SIGNAL(finished(QNetworkReply*)), this, SLOT(replyFinished(QNetworkReply *)));
 
-    monita_cfg.config = cfg.read("config");
+    monita_cfg.config = cfg.read("CONFIG");
+    monita_cfg.calc_config = cfg.read("CALC");
 
     connect(&timer, SIGNAL(timeout()), this, SLOT(doWork()));
 //    timer.start((1000 * 60 * 10) / 2); /* 5 menit */
@@ -45,20 +46,20 @@ void Worker::doWork()
             this->connectTcpModbus(monita_cfg.source_config.at(i*7), monita_cfg.source_config.at(i*7+1).toInt());
             if (!m_tcpModbus) {
                 monita_cfg.jml_sumber = 0;
-                monita_cfg.source_config = cfg.read("source");
+                monita_cfg.source_config = cfg.read("SOURCE");
                 if (monita_cfg.source_config.length() > 7) {monita_cfg.jml_sumber = monita_cfg.source_config.length()/7;
                 } else {monita_cfg.jml_sumber++;}
 
                 this->connectTcpModbus(monita_cfg.source_config.at(i*7), monita_cfg.source_config.at(i*7+1).toInt());
                 if (m_tcpModbus) {
                     this->request_modbus(i);
-                    monita_cfg.modbus_period++;
+//                    monita_cfg.modbus_period++;
                     if (monita_cfg.modbus_period >= monita_cfg.config.at(0).toInt()*monita_cfg.jml_sumber) {
                         log.write(monita_cfg.config.at(3),"Debug",
                                   "Modbus_Periode : " + QString::number(monita_cfg.modbus_period) + "; " +
                                   "Modbus_Interval : " + monita_cfg.config.at(0) +"; " +
                                   "Jumlah_Sumber : " + QString::number(monita_cfg.jml_sumber));
-                        monita_cfg.redis_config = cfg.read("redis");
+                        monita_cfg.redis_config = cfg.read("REDIS");
                         this->set_dataHarian(monita_cfg.redis_config.at(0), monita_cfg.redis_config.at(1).toInt());
                         monita_cfg.modbus_period = 0;
                     }
@@ -67,18 +68,19 @@ void Worker::doWork()
                 releaseTcpModbus();
             } else {
                 this->request_modbus(i);
-                monita_cfg.modbus_period++;
+//                monita_cfg.modbus_period++;
                 if (monita_cfg.modbus_period >= monita_cfg.config.at(0).toInt()*monita_cfg.jml_sumber) {
                     log.write(monita_cfg.config.at(3),"Debug",
                               "Modbus_Periode : " + QString::number(monita_cfg.modbus_period) + "; " +
                               "Modbus_Interval : " + monita_cfg.config.at(0) +"; " +
                               "Jumlah_Sumber : " + QString::number(monita_cfg.jml_sumber));
-                    QStringList redis_config = cfg.read("redis");
+                    QStringList redis_config = cfg.read("REDIS");
                     this->set_dataHarian(redis_config.at(0), redis_config.at(1).toInt());
                     monita_cfg.modbus_period = 0;
                 }
                 releaseTcpModbus();
             }
+            monita_cfg.modbus_period++;
         } else if (monita_cfg.source_config.at(6) == "SKYW") {
 //            this->request_sky_wave();
         }
@@ -120,8 +122,8 @@ void Worker::set_dataHarian(QString address, int port)
             if (t >= 3) {emit finish();}
         }
     }
-    if (!get.check_table_is_available(db, "data_" + QDate::currentDate().toString("yyyy_MM_dd"))) {
-        set.create_tabel_data_harian(db, QDate::currentDate().toString("yyyy_MM_dd"));
+    if (!get.check_table_is_available(db, monita_cfg.config.at(5) + QDate::currentDate().toString("yyyy_MM_dd"))) {
+        set.create_tabel_data_harian(db, monita_cfg.config.at(5), QDate::currentDate().toString("yyyy_MM_dd"));
     }
     for (int i = 0; i < redis_len; i++) {
         data = data + "(" +
@@ -315,8 +317,8 @@ void Worker::request_modbus(int index)
                 }
 
                 if (!data_real.isEmpty()) {
-                    QStringList redis_config = cfg.read("redis");
-                    rds.reqRedis("hset data_jaman_" + QDate::currentDate().toString("dd_MM_yyyy") + " " +
+                    QStringList redis_config = cfg.read("REDIS");
+                    rds.reqRedis("hset " + monita_cfg.config.at(4) + QDate::currentDate().toString("dd_MM_yyyy") + " " +
                                    QString::number(slave) + ";" +
                                    QString::number(addr+i) +
                                    "_" +

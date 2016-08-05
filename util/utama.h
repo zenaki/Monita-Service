@@ -76,6 +76,7 @@ struct monita_config {
     QStringList config;
     QStringList source_config;
     QStringList redis_config;
+    QStringList calc_config;
 
     QString urls;
     int gateway_count;

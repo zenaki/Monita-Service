@@ -192,19 +192,19 @@ void Worker::calculation(int slave_id, int reg, float data, bool logsheet, QDate
             list_temp2 = list_temp1.at(l).split(";");
             if (list_temp2.at(0) == QString::number(slave_id) && list_temp2.at(1) == QString::number(reg)) {
                 if (monita_cfg.calc_config.at(k+1) == "SUM") {
-                    if (list_temp2.at(2) == "ABS") {if (data < 0) {data = data * -1.0;}}
+                    if (list_temp2.length()>2) {if (list_temp2.at(2) == "ABS") {if (data < 0) {data = data * -1.0;}}}
                     temp = funct_sum(monita_cfg.calc_config.at(k).toInt(), monita_cfg.calc_config.at(k+3).toInt(), calc_temp, data);
                 } else if (monita_cfg.calc_config.at(k+1) == "AVE") {
-                    if (list_temp2.at(2) == "ABS") {if (data < 0) {data = data * -1.0;}}
+                    if (list_temp2.length()>2) {if (list_temp2.at(2) == "ABS") {if (data < 0) {data = data * -1.0;}}}
                     temp = funct_ave(monita_cfg.calc_config.at(k).toInt(), monita_cfg.calc_config.at(k+3).toInt(), calc_temp, data, list_temp1.length());
                 } else if (monita_cfg.calc_config.at(k+1) == "MUL") {
-                    if (list_temp2.at(2) == "ABS") {if (data < 0) {data = data * -1.0;}}
+                    if (list_temp2.length()>2) {if (list_temp2.at(2) == "ABS") {if (data < 0) {data = data * -1.0;}}}
                     temp = funct_mul(monita_cfg.calc_config.at(k).toInt(), monita_cfg.calc_config.at(k+3).toInt(), calc_temp, data);
                 } else if (monita_cfg.calc_config.at(k+1) == "MIN") {
-                    if (list_temp2.at(2) == "ABS") {if (data < 0) {data = data * -1.0;}}
+                    if (list_temp2.length()>2) {if (list_temp2.at(2) == "ABS") {if (data < 0) {data = data * -1.0;}}}
                     temp = funct_min(monita_cfg.calc_config.at(k).toInt(), monita_cfg.calc_config.at(k+3).toInt(), calc_temp, data);
                 } else if (monita_cfg.calc_config.at(k+1) == "MAX") {
-                    if (list_temp2.at(2) == "ABS") {if (data < 0) {data = data * -1.0;}}
+                    if (list_temp2.length()>2) {if (list_temp2.at(2) == "ABS") {if (data < 0) {data = data * -1.0;}}}
                     temp = funct_max(monita_cfg.calc_config.at(k).toInt(), monita_cfg.calc_config.at(k+3).toInt(), calc_temp, data);
                 }
             }

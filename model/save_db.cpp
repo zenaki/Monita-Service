@@ -4,13 +4,22 @@ save_db::save_db()
 {
 }
 
-void save_db::data_harian(QSqlDatabase db, QString tanggal, QString data){
+void save_db::data_harian(QSqlDatabase db, QString tb_name, QString tanggal, QString data){
     QString query;
     QSqlQuery q(db);
 
-    query = "REPLACE INTO data_" + tanggal + " ( \
+/*    query = "REPLACE INTO data_" + tanggal + " ( \
                 id_titik_ukur, \
                 slave_id, \
+                waktu, \
+                data_tunggal, \
+                hour, \
+                minute, \
+                second \
+            ) VALUES ";
+*/
+    query = "REPLACE INTO " + tb_name + tanggal + " ( \
+                id_titik_ukur, \
                 waktu, \
                 data_tunggal, \
                 hour, \
@@ -37,7 +46,7 @@ void save_db::create_tabel_data_harian(QSqlDatabase db, QString tb_name, QString
     QSqlQuery q(db);
 
     query.clear();
-    query = "CREATE TABLE if not exists " + tb_name + tanggal + " (\
+/*    query = "CREATE TABLE if not exists " + tb_name + tanggal + " (\
                 id_titik_ukur INT(11) NOT NULL, \
                 slave_id INT(3) NOT NULL, \
                 waktu bigint(17) NOT NULL, \
@@ -47,7 +56,16 @@ void save_db::create_tabel_data_harian(QSqlDatabase db, QString tb_name, QString
                 second tinyint(4) NOT NULL, \
                 PRIMARY KEY (id_titik_ukur, slave_id, waktu) \
     );";
-
+*/
+    query = "CREATE TABLE if not exists " + tb_name + tanggal + " (\
+                id_titik_ukur INT(11) NOT NULL, \
+                waktu bigint(17) NOT NULL, \
+                data_tunggal float NOT NULL, \
+                hour tinyint(4) NOT NULL, \
+                minute tinyint(4) NOT NULL, \
+                second tinyint(4) NOT NULL, \
+                PRIMARY KEY (id_titik_ukur, waktu) \
+    );";
     q.exec(query);
 }
 

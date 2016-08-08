@@ -128,9 +128,18 @@ void Worker::set_dataHarian(QString address, int port, QDateTime dt_sdh)
         set.create_tabel_data_harian(db, monita_cfg.config.at(5), dt_sdh.date().toString("yyyy_MM_dd"));
     }
     for (int i = 0; i < redis_len; i++) {
+//        data = data + "(" +
+//                id_titik_ukur.at(i) + ", " +
+//                slave.at(i) + ", " +
+//                tanggal.at(i*3+2) + tanggal.at(i*3+1) + tanggal.at(i*3) +
+//                waktu.at(i*4) + waktu.at(i*4+1) + waktu.at(i*4+2) + waktu.at(i*4+3) + ", " +
+//                data_tunggal.at(i) + ", " +
+//                waktu.at(i*4) + ", " +
+//                waktu.at(i*4+1) + ", " +
+//                waktu.at(i*4+2) +
+//        ")";
         data = data + "(" +
-                id_titik_ukur.at(i) + ", " +
-                slave.at(i) + ", " +
+                slave.at(i) + id_titik_ukur.at(i) + ", " +
                 tanggal.at(i*3+2) + tanggal.at(i*3+1) + tanggal.at(i*3) +
                 waktu.at(i*4) + waktu.at(i*4+1) + waktu.at(i*4+2) + waktu.at(i*4+3) + ", " +
                 data_tunggal.at(i) + ", " +
@@ -154,7 +163,7 @@ void Worker::set_dataHarian(QString address, int port, QDateTime dt_sdh)
             if (t >= 3) {emit finish();}
         }
     }
-    set.data_harian(db, dt_sdh.date().toString("yyyy_MM_dd"), data);
+    set.data_harian(db, monita_cfg.config.at(5), dt_sdh.date().toString("yyyy_MM_dd"), data);
     db.close();
     log.write(monita_cfg.config.at(3),"Database","Data Inserted on table data_" + QDate::currentDate().toString("dd_MM_yyyy") + " ..");
 //    rds.reqRedis("del data_jaman_" + QDate::currentDate().toString("dd_MM_yyyy"), address, port);
@@ -176,20 +185,26 @@ void Worker::request_sky_wave()
 void Worker::calculation(int slave_id, int reg, float data, bool logsheet, QDateTime dt_calc)
 {
     QStringList list_temp1; QStringList list_temp2; QString temp;
+    monita_cfg.calc_config = cfg.read("CALC");
     for (int k = 0; k < monita_cfg.calc_config.length(); k+=4) {
         list_temp1 = monita_cfg.calc_config.at(k+2).split(",");
         for (int l = 0; l < list_temp1.length(); l++) {
             list_temp2 = list_temp1.at(l).split(";");
             if (list_temp2.at(0) == QString::number(slave_id) && list_temp2.at(1) == QString::number(reg)) {
                 if (monita_cfg.calc_config.at(k+1) == "SUM") {
+                    if (list_temp2.at(2) == "ABS") {if (data < 0) {data = data * -1.0;}}
                     temp = funct_sum(monita_cfg.calc_config.at(k).toInt(), monita_cfg.calc_config.at(k+3).toInt(), calc_temp, data);
                 } else if (monita_cfg.calc_config.at(k+1) == "AVE") {
+                    if (list_temp2.at(2) == "ABS") {if (data < 0) {data = data * -1.0;}}
                     temp = funct_ave(monita_cfg.calc_config.at(k).toInt(), monita_cfg.calc_config.at(k+3).toInt(), calc_temp, data, list_temp1.length());
                 } else if (monita_cfg.calc_config.at(k+1) == "MUL") {
+                    if (list_temp2.at(2) == "ABS") {if (data < 0) {data = data * -1.0;}}
                     temp = funct_mul(monita_cfg.calc_config.at(k).toInt(), monita_cfg.calc_config.at(k+3).toInt(), calc_temp, data);
                 } else if (monita_cfg.calc_config.at(k+1) == "MIN") {
+                    if (list_temp2.at(2) == "ABS") {if (data < 0) {data = data * -1.0;}}
                     temp = funct_min(monita_cfg.calc_config.at(k).toInt(), monita_cfg.calc_config.at(k+3).toInt(), calc_temp, data);
                 } else if (monita_cfg.calc_config.at(k+1) == "MAX") {
+                    if (list_temp2.at(2) == "ABS") {if (data < 0) {data = data * -1.0;}}
                     temp = funct_max(monita_cfg.calc_config.at(k).toInt(), monita_cfg.calc_config.at(k+3).toInt(), calc_temp, data);
                 }
             }
@@ -212,7 +227,9 @@ void Worker::calculation(int slave_id, int reg, float data, bool logsheet, QDate
                              dt_calc.toString("dd-MM-yyyy_HH:mm:ss:zzz") +
                              " " +
                              list_temp1.at(2), redis_config.at(0), redis_config.at(1).toInt());
-                log.write(monita_cfg.config.at(3),"Debug","Calc On Temp Redis");
+//                log.write(monita_cfg.config.at(3),"Debug","Calc On Temp Redis");
+            } else {
+//                log.write(monita_cfg.config.at(3),"Debug","Calc Not On Temp Redis");
             }
         }
     }
@@ -528,37 +545,16 @@ void Worker::request_modbus(int index, QDateTime dt_req_mod)
                                            " " +
                                            data_real, redis_config.at(0), redis_config.at(1).toInt());
                             log.write(monita_cfg.config.at(3),"Debug","On Temp Redis");
+                            logsheet = true;
                         }
-                        log.write(monita_cfg.config.at(3),"TcpModbus",
-                                  QString::number(slave) + " - " +
-                                  QString::number(addr+i) + " - " +
-                                  data_int + " - " +
-                                  data_hex + " - " +
-                                  data_real);
-                        logsheet = true;
                     }
+                    log.write(monita_cfg.config.at(3),"TcpModbus",
+                              QString::number(slave) + " - " +
+                              QString::number(addr+i) + " - " +
+                              data_int + " - " +
+                              data_hex + " - " +
+                              data_real);
                     this->calculation(slave, addr+i, data_real.toFloat(), logsheet, dt_req_mod);
-//                    if (monita_cfg.modbus_period <= 1 * monita_cfg.jml_sumber ||
-//                            (monita_cfg.modbus_period > 20 * monita_cfg.jml_sumber &&
-//                             monita_cfg.modbus_period <= 21 * monita_cfg.jml_sumber) ||
-//                            (monita_cfg.modbus_period > 40 * monita_cfg.jml_sumber &&
-//                             monita_cfg.modbus_period <= 41 * monita_cfg.jml_sumber)
-//                       ) {
-//                        rds.reqRedis("hset temp " +
-//                                       QString::number(slave) + ";" +
-//                                       QString::number(addr+i) +
-//                                       "_" +
-//                                       QDateTime::currentDateTime().toString("dd-MM-yyyy_HH:mm:ss:zzz") +
-//                                       " " +
-//                                       data_real, redis_config.at(0), redis_config.at(1).toInt());
-//                        log.write(monita_cfg.config.at(3),"Debug","On Temp Redis");
-//                    }
-//                    log.write(monita_cfg.config.at(3),"TcpModbus",
-//                              QString::number(slave) + " - " +
-//                              QString::number(addr+i) + " - " +
-//                              data_int + " - " +
-//                              data_hex + " - " +
-//                              data_real);
                 }
                 data_real.clear();
             }

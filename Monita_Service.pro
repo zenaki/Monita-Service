@@ -19,10 +19,13 @@ HEADERS += \
         3rdparty/qextserialport/qextserialenumerator.h \
         3rdparty/libmodbus/src/modbus.h \
         util/config.h \
-    util/redis.h \
-    util/util_skyw.h \
-    util/parsing_fuction.h \
-    util/util_modbus.h
+        util/redis.h \
+        util/util_skyw.h \
+        util/parsing_fuction.h \
+        util/util_modbus.h \
+    controller/tcp_modbus.h \
+    controller/data_mysql.h \
+    controller/data_visual.h
 
 SOURCES += main.cpp \
         model/get_db.cpp \
@@ -35,10 +38,13 @@ SOURCES += main.cpp \
         3rdparty/libmodbus/src/modbus-data.c \
         3rdparty/libmodbus/src/modbus-tcp.c \
         util/config.cpp \
-    util/redis.cpp \
-    util/util_skyw.cpp \
-    util/parsing_fuction.cpp \
-    util/util_modbus.cpp
+        util/redis.cpp \
+        util/util_skyw.cpp \
+        util/parsing_fuction.cpp \
+        util/util_modbus.cpp \
+    controller/tcp_modbus.cpp \
+    controller/data_mysql.cpp \
+    controller/data_visual.cpp
 
 INCLUDEPATH += 3rdparty/libmodbus \
                3rdparty/libmodbus/src \
@@ -52,7 +58,7 @@ unix {
 
 win32 {
     SOURCES += 3rdparty/qextserialport/win_qextserialport.cpp \
-           3rdparty/qextserialport/qextserialenumerator_win.cpp
+                3rdparty/qextserialport/qextserialenumerator_win.cpp
     DEFINES += _TTY_WIN_  WINVER=0x0501
     LIBS += -lsetupapi -lws2_32
 }

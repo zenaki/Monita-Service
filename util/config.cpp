@@ -52,6 +52,7 @@ QStringList config::read(QString obj)
                     result.append(QString::number(v.toObject().value("TIMESTAMP").toInt()));
                     result.append(v.toObject().value("REDIS_KEY").toString());
                     result.append(v.toObject().value("TABLE_NAME").toString());
+                    result.append(QString::number(v.toObject().value("WEBSOCKET_PORT").toInt()));
                     result.append(v.toObject().value("LUA_CALCULATION").toString());
                     result.append(v.toObject().value("LUA_SET_MYSQL").toString());
                 }
@@ -61,6 +62,7 @@ QStringList config::read(QString obj)
                 result.append(QString::number(value.toObject().value("TIMESTAMP").toInt()));
                 result.append(value.toObject().value("REDIS_KEY").toString());
                 result.append(value.toObject().value("TABLE_NAME").toString());
+                result.append(QString::number(value.toObject().value("WEBSOCKET_PORT").toInt()));
                 result.append(value.toObject().value("LUA_CALCULATION").toString());
                 result.append(value.toObject().value("LUA_SET_MYSQL").toString());
             }

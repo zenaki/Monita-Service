@@ -14,14 +14,19 @@
 
 #include "imodbus.h"
 
+#include <QWebSocketServer>
+#include <QWebSocket>
+
+#include "controller/tcp_modbus.h"
+#include "controller/data_mysql.h"
+#include "controller/data_visual.h"
+
 class Worker : public QObject
 {
     Q_OBJECT
 public:
-    explicit Worker(QObject *parent = 0);
-
-signals:
-    void finish();
+    explicit Worker(quint16 port, QObject *parent = 0);
+    ~Worker();
 
 protected:
     void releaseTcpModbus();
@@ -32,6 +37,15 @@ private slots:
     void resetStatus();
     void pollForDataOnBus();
     void replyFinished(QNetworkReply* reply);
+
+private Q_SLOTS:
+    void onNewConnection();
+    void processTextMessage(QString message);
+    void processBinaryMessage(QByteArray message);
+    void socketDisconnected();
+
+Q_SIGNALS:
+    void closed();
 
 private:
     config cfg;
@@ -48,6 +62,15 @@ private:
     util_skyw read;
     QStringList calc_temp;
     QStringList calc_logsheet;
+    QWebSocketServer *m_pWebSocketServer;
+    QList<QWebSocket *> m_clients;
+
+    tcp_modbus obj_tcp_modbus;
+    QThread ThreadTcpModbus;
+    data_mysql obj_data_mysql;
+    QThread ThreadDataMysql;
+    data_visual obj_data_visual;
+    QThread ThreadDataVisual;
 
     struct sky_wave_ship *marine;
     struct sky_wave_account *acc;

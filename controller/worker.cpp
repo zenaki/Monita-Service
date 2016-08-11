@@ -2,8 +2,8 @@
 
 #include "modbus-tcp.h"
 
-Worker::Worker(QObject *parent) : QObject(parent)
-{
+Worker::Worker(quint16 port, QObject *parent) : QObject(parent)
+{   
     monita_cfg.jml_sumber = 0;
     monita_cfg.source_config = cfg.read("SOURCE");
     if (monita_cfg.source_config.length() > 7) {monita_cfg.jml_sumber = monita_cfg.source_config.length()/7;
@@ -14,10 +14,16 @@ Worker::Worker(QObject *parent) : QObject(parent)
 
     monita_cfg.config = cfg.read("CONFIG");
     monita_cfg.calc_config = cfg.read("CALC");
+    port = monita_cfg.config.at(5).toInt();
+    m_pWebSocketServer = new QWebSocketServer(QStringLiteral("WebSocket Server"), QWebSocketServer::NonSecureMode, this);
+    if (m_pWebSocketServer->listen(QHostAddress::Any, port)) {
+        log.write("WebSocket","Server listening on port : " + QString::number(port));
+        connect(m_pWebSocketServer, &QWebSocketServer::newConnection,this, &Worker::onNewConnection);
+        connect(m_pWebSocketServer, &QWebSocketServer::closed, this, &Worker::closed);
+    }
 
-    connect(&timer, SIGNAL(timeout()), this, SLOT(doWork()));
-//    timer.start((1000 * 60 * 10) / 2); /* 5 menit */
-    timer.start(monita_cfg.config.at(1).toInt());
+//    connect(&timer, SIGNAL(timeout()), this, SLOT(doWork()));
+//    timer.start(monita_cfg.config.at(1).toInt());
 
     monita_cfg.modbus_period = 0;
 
@@ -35,57 +41,76 @@ Worker::Worker(QObject *parent) : QObject(parent)
     cnt_panggil = 0;
     calc_temp.clear();
 
+//    obj_tcp_modbus = new tcp_modbus();
+//    ThreadTcpModbus = new QThread(this);
+
     this->doWork();
+}
+
+Worker::~Worker()
+{
+    if (ThreadTcpModbus.isRunning()) ThreadTcpModbus.terminate();
+    if (ThreadDataMysql.isRunning()) ThreadDataMysql.terminate();
+    if (ThreadDataVisual.isRunning()) ThreadDataVisual.terminate();
+    m_pWebSocketServer->close();
+    qDeleteAll(m_clients.begin(), m_clients.end());
 }
 
 void Worker::doWork()
 {
-//    timer.stop();
-    QDateTime dateTime = QDateTime::currentDateTime();
-    for (int i = 0; i < monita_cfg.jml_sumber; i++) {
-        if (monita_cfg.source_config.at(6) == "TCP") {
-            m_tcpModbus = NULL;
-            this->connectTcpModbus(monita_cfg.source_config.at(i*7), monita_cfg.source_config.at(i*7+1).toInt());
-            if (!m_tcpModbus) {
-                monita_cfg.jml_sumber = 0;
-                monita_cfg.source_config = cfg.read("SOURCE");
-                if (monita_cfg.source_config.length() > 7) {monita_cfg.jml_sumber = monita_cfg.source_config.length()/7;
-                } else {monita_cfg.jml_sumber++;}
+    obj_tcp_modbus.doSetup(ThreadTcpModbus);
+    obj_tcp_modbus.moveToThread(&ThreadTcpModbus);
+    ThreadTcpModbus.start();
 
-                this->connectTcpModbus(monita_cfg.source_config.at(i*7), monita_cfg.source_config.at(i*7+1).toInt());
-                if (m_tcpModbus) {
-                    this->request_modbus(i, dateTime);
-                    if (monita_cfg.modbus_period >= monita_cfg.config.at(0).toInt()*monita_cfg.jml_sumber) {
-                        log.write("Debug",
-                                  "Modbus_Periode : " + QString::number(monita_cfg.modbus_period) + "; " +
-                                  "Modbus_Interval : " + monita_cfg.config.at(0) +"; " +
-                                  "Jumlah_Sumber : " + QString::number(monita_cfg.jml_sumber));
-                        monita_cfg.redis_config = cfg.read("REDIS");
-                        this->set_dataHarian(monita_cfg.redis_config.at(0), monita_cfg.redis_config.at(1).toInt(), dateTime);
-                        monita_cfg.modbus_period = 0;
-                    }
-                    releaseTcpModbus();
-                }
-                releaseTcpModbus();
-            } else {
-                this->request_modbus(i, dateTime);
-                if (monita_cfg.modbus_period >= monita_cfg.config.at(0).toInt()*monita_cfg.jml_sumber) {
-                    log.write("Debug",
-                              "Modbus_Periode : " + QString::number(monita_cfg.modbus_period) + "; " +
-                              "Modbus_Interval : " + monita_cfg.config.at(0) +"; " +
-                              "Jumlah_Sumber : " + QString::number(monita_cfg.jml_sumber));
-                    QStringList redis_config = cfg.read("REDIS");
-                    this->set_dataHarian(redis_config.at(0), redis_config.at(1).toInt(), dateTime);
-                    monita_cfg.modbus_period = 0;
-                }
-                releaseTcpModbus();
-            }
-            monita_cfg.modbus_period++;
-        } else if (monita_cfg.source_config.at(6) == "SKYW") {
-//            this->request_sky_wave();
-        }
-    }
-//    timer.start(monita_cfg.config.at(1).toInt());
+    obj_data_mysql.doSetup(ThreadDataMysql);
+    obj_data_mysql.moveToThread(&ThreadDataMysql);
+    ThreadDataMysql.start();
+////    timer.stop();
+//    QDateTime dateTime = QDateTime::currentDateTime();
+//    for (int i = 0; i < monita_cfg.jml_sumber; i++) {
+//        if (monita_cfg.source_config.at(6) == "TCP") {
+//            m_tcpModbus = NULL;
+//            this->connectTcpModbus(monita_cfg.source_config.at(i*7), monita_cfg.source_config.at(i*7+1).toInt());
+//            if (!m_tcpModbus) {
+//                monita_cfg.jml_sumber = 0;
+//                monita_cfg.source_config = cfg.read("SOURCE");
+//                if (monita_cfg.source_config.length() > 7) {monita_cfg.jml_sumber = monita_cfg.source_config.length()/7;
+//                } else {monita_cfg.jml_sumber++;}
+
+//                this->connectTcpModbus(monita_cfg.source_config.at(i*7), monita_cfg.source_config.at(i*7+1).toInt());
+//                if (m_tcpModbus) {
+//                    this->request_modbus(i, dateTime);
+//                    if (monita_cfg.modbus_period >= monita_cfg.config.at(0).toInt()*monita_cfg.jml_sumber) {
+//                        log.write("Debug",
+//                                  "Modbus_Periode : " + QString::number(monita_cfg.modbus_period) + "; " +
+//                                  "Modbus_Interval : " + monita_cfg.config.at(0) +"; " +
+//                                  "Jumlah_Sumber : " + QString::number(monita_cfg.jml_sumber));
+//                        monita_cfg.redis_config = cfg.read("REDIS");
+//                        this->set_dataHarian(monita_cfg.redis_config.at(0), monita_cfg.redis_config.at(1).toInt(), dateTime);
+//                        monita_cfg.modbus_period = 0;
+//                    }
+//                    releaseTcpModbus();
+//                }
+//                releaseTcpModbus();
+//            } else {
+//                this->request_modbus(i, dateTime);
+//                if (monita_cfg.modbus_period >= monita_cfg.config.at(0).toInt()*monita_cfg.jml_sumber) {
+//                    log.write("Debug",
+//                              "Modbus_Periode : " + QString::number(monita_cfg.modbus_period) + "; " +
+//                              "Modbus_Interval : " + monita_cfg.config.at(0) +"; " +
+//                              "Jumlah_Sumber : " + QString::number(monita_cfg.jml_sumber));
+//                    QStringList redis_config = cfg.read("REDIS");
+//                    this->set_dataHarian(redis_config.at(0), redis_config.at(1).toInt(), dateTime);
+//                    monita_cfg.modbus_period = 0;
+//                }
+//                releaseTcpModbus();
+//            }
+//            monita_cfg.modbus_period++;
+//        } else if (monita_cfg.source_config.at(6) == "SKYW") {
+////            this->request_sky_wave();
+//        }
+//    }
+////    timer.start(monita_cfg.config.at(1).toInt());
 }
 
 void Worker::set_dataHarian(QString address, int port, QDateTime dt_sdh)
@@ -119,7 +144,7 @@ void Worker::set_dataHarian(QString address, int port, QDateTime dt_sdh)
             log.write("Database","Error : Connecting Fail ..!!");
             QThread::msleep(DELAY_DB_CONNECT);
             t++;
-            if (t >= 3) {emit finish();}
+//            if (t >= 3) {emit finish();}
         }
     }
     if (!get.check_table_is_available(db, monita_cfg.config.at(4) + dt_sdh.date().toString("yyyy_MM_dd"))) {
@@ -148,7 +173,7 @@ void Worker::set_dataHarian(QString address, int port, QDateTime dt_sdh)
             log.write("Database","Error : Connecting Fail ..!!");
             QThread::msleep(DELAY_DB_CONNECT);
             t++;
-            if (t >= 3) {emit finish();}
+//            if (t >= 3) {emit finish();}
         }
     }
     set.data_harian(db, monita_cfg.config.at(4), dt_sdh.date().toString("yyyy_MM_dd"), data);
@@ -639,5 +664,44 @@ void Worker::replyFinished(QNetworkReply* reply){
     else{
         monita_cfg.gateway_count = 0;
 //        timer.start((1000 * 60 * 10) / 2);
+    }
+}
+
+void Worker::onNewConnection()
+{
+    QWebSocket *pSocket = m_pWebSocketServer->nextPendingConnection();
+
+    connect(pSocket, &QWebSocket::textMessageReceived, this, &Worker::processTextMessage);
+    connect(pSocket, &QWebSocket::binaryMessageReceived, this, &Worker::processBinaryMessage);
+    connect(pSocket, &QWebSocket::disconnected, this, &Worker::socketDisconnected);
+
+    pSocket->ignoreSslErrors();
+    log.write("WebSocket","Socket Connect : " + pSocket->localAddress().toString() + ":" + pSocket->localPort());
+    pSocket->sendTextMessage("Berhasil Connect cuy ..");
+
+    m_clients << pSocket;
+}
+
+void Worker::processTextMessage(QString message)
+{
+    QWebSocket *pClient = qobject_cast<QWebSocket *>(sender());
+    log.write("WebSocket","Message received : " + message);
+    if (pClient) {pClient->sendTextMessage(message);}
+}
+
+void Worker::processBinaryMessage(QByteArray message)
+{
+    QWebSocket *pClient = qobject_cast<QWebSocket *>(sender());
+    log.write("WebSocket","Binary Message received : " + message);
+    if (pClient) {pClient->sendBinaryMessage(message);}
+}
+
+void Worker::socketDisconnected()
+{
+    QWebSocket *pClient = qobject_cast<QWebSocket *>(sender());
+    log.write("WebSocket","Socket Disconnect : " + pClient->localAddress().toString() + ":" + pClient->localPort());
+    if (pClient) {
+        m_clients.removeAll(pClient);
+        pClient->deleteLater();
     }
 }

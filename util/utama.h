@@ -37,9 +37,9 @@
 #define  MAX_MEASUREMENT_POINT 999
 
 #define DELAY_DB_CONNECT 5000
-#define PATH_DB_CONNECTION "monita_configuration/monita-db.dbe"
-#define PATH_CONFIGURATION_JSON "monita_configuration/monita-cfg.json"
-#define PATH_CONFIGURATION_BIN "monita_configuration/monita-cfg.dat"
+#define PATH_DB_CONNECTION ".MonSerConfig/monita-db.dbe"
+#define PATH_CONFIGURATION_JSON ".MonSerConfig/monita-cfg.json"
+#define PATH_CONFIGURATION_BIN ".MonSerConfig/monita-cfg.dat"
 
 struct ship {
     int id_ship;

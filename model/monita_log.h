@@ -15,7 +15,7 @@ public:
 //    char *buf_lay;
 //    char *buf_dateTime;
 
-    void write(QString path, QString type, QString message);
+    void write(QString type, QString message);
 };
 
 #endif // MONITA_LOG_H

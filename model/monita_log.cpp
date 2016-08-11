@@ -6,12 +6,13 @@ monita_log::monita_log()
 //    buf_dateTime = (char *) malloc(32);
 }
 
-void monita_log::write(QString path, QString type, QString message)
+void monita_log::write(QString type, QString message)
 {
+    QString path = ".MonSerConfig/monita-log.txt";
     QFile outFile(path);
     if (!outFile.exists()) {
         QDir dir;
-        dir.mkpath("monita_configuration");
+        dir.mkpath(".MonSerConfig");
     }
     outFile.open(QIODevice::WriteOnly | QIODevice::Append);
     QTextStream ts(&outFile);

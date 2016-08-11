@@ -50,17 +50,19 @@ QStringList config::read(QString obj)
                     result.append(QString::number(v.toObject().value("DB_PERIOD").toInt()));
                     result.append(QString::number(v.toObject().value("INTERVAL").toInt()));
                     result.append(QString::number(v.toObject().value("TIMESTAMP").toInt()));
-                    result.append(v.toObject().value("LOG_PATH").toString());
                     result.append(v.toObject().value("REDIS_KEY").toString());
                     result.append(v.toObject().value("TABLE_NAME").toString());
+                    result.append(v.toObject().value("LUA_CALCULATION").toString());
+                    result.append(v.toObject().value("LUA_SET_MYSQL").toString());
                 }
             } else {
                 result.append(QString::number(value.toObject().value("DB_PERIOD").toInt()));
                 result.append(QString::number(value.toObject().value("INTERVAL").toInt()));
                 result.append(QString::number(value.toObject().value("TIMESTAMP").toInt()));
-                result.append(value.toObject().value("LOG_PATH").toString());
                 result.append(value.toObject().value("REDIS_KEY").toString());
                 result.append(value.toObject().value("TABLE_NAME").toString());
+                result.append(value.toObject().value("LUA_CALCULATION").toString());
+                result.append(value.toObject().value("LUA_SET_MYSQL").toString());
             }
         } else if (obj == "CALC") {
             if (object.value(obj).isArray()) {
@@ -96,7 +98,7 @@ void config::write(QJsonObject &json) const //Default
     temp = "TCP";
     sourceObject["MODE"] = temp;
     sourceArray.append(sourceObject);
-    json["source"] = sourceArray;
+    json["SOURCE"] = sourceArray;
 
     QJsonArray redisArray;
     QJsonObject redisObject;
@@ -104,17 +106,17 @@ void config::write(QJsonObject &json) const //Default
     redisObject["IP"] = temp;
     redisObject["PORT"] = 6379;
     redisArray.append(redisObject);
-    json["redis"] = redisArray;
+    json["REDIS"] = redisArray;
 
     QJsonArray configArray;
     QJsonObject configObject;
     configObject["INTERVAL"] = 1000;    //milis
     configObject["DB_PERIOD"] = 60;     //detik
     configObject["TIMESTAMP"] = 3;     //TimeStamp
-    temp = "monita_configuration/log.txt";
+    temp = ".MonSerConfig/log.txt";
     configObject["LOG_PATH"] = temp;
     configArray.append(configObject);
-    json["config"] = configArray;
+    json["CONFIG"] = configArray;
 }
 
 bool config::loadConfig(config::SaveFormat saveFormat)
@@ -128,7 +130,7 @@ bool config::loadConfig(config::SaveFormat saveFormat)
     QFile loadFile(path);
     if (!loadFile.exists()) {
         QDir dir;
-        dir.mkpath("monita_configuration");
+        dir.mkpath(".MonSerConfig");
     }
     if (loadFile.open(QIODevice::ReadWrite)) {
         QByteArray readFile = loadFile.readAll();

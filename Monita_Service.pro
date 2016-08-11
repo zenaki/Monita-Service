@@ -1,4 +1,4 @@
-QT += core sql network
+QT += core sql network websockets
 QT -= gui
 
 TARGET = monita-service

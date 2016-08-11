@@ -22,16 +22,16 @@ void util_modbus::connectTcpModbus(const QString &address, int portNbr)
     get_source();
     if( modbus_connect( m_tcpModbus ) == -1 )
     {
-        log.write(monita_cfg.config.at(2),"TcpModbus",address + ":" + QString::number(portNbr) + " Could not connect ..");
+        log.write("TcpModbus",address + ":" + QString::number(portNbr) + " Could not connect ..");
         releaseTcpModbus();
     } else {
-        log.write(monita_cfg.config.at(2),"TcpModbus",address + ":" + QString::number(portNbr) + " Connected ..");
+        log.write("TcpModbus",address + ":" + QString::number(portNbr) + " Connected ..");
     }
 }
 
 void util_modbus::resetStatus()
 {
-    log.write(monita_cfg.config.at(2),"TcpModbus","Reset : Ready ..");
+    log.write("TcpModbus","Reset : Ready ..");
 }
 
 void util_modbus::pollForDataOnBus()

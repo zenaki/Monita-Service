@@ -22,7 +22,6 @@ HEADERS += \
         util/redis.h \
         util/util_skyw.h \
         util/parsing_fuction.h \
-        util/util_modbus.h \
     controller/tcp_modbus.h \
     controller/data_mysql.h \
     controller/data_visual.h
@@ -41,7 +40,6 @@ SOURCES += main.cpp \
         util/redis.cpp \
         util/util_skyw.cpp \
         util/parsing_fuction.cpp \
-        util/util_modbus.cpp \
     controller/tcp_modbus.cpp \
     controller/data_mysql.cpp \
     controller/data_visual.cpp

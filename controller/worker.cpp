@@ -2,19 +2,19 @@
 
 #include "modbus-tcp.h"
 
-Worker::Worker(quint16 port, QObject *parent) : QObject(parent)
+Worker::Worker(QObject *parent) : QObject(parent)
 {   
     manager = new QNetworkAccessManager();
     connect(manager, SIGNAL(finished(QNetworkReply*)), this, SLOT(replyFinished(QNetworkReply *)));
 
-    monita_cfg.config = cfg.read("CONFIG");
-    port = monita_cfg.config.at(5).toInt();
-    m_pWebSocketServer = new QWebSocketServer(QStringLiteral("WebSocket Server"), QWebSocketServer::NonSecureMode, this);
-    if (m_pWebSocketServer->listen(QHostAddress::Any, port)) {
-        log.write("WebSocket","Server listening on port : " + QString::number(port));
-        connect(m_pWebSocketServer, &QWebSocketServer::newConnection,this, &Worker::onNewConnection);
-        connect(m_pWebSocketServer, &QWebSocketServer::closed, this, &Worker::closed);
-    }
+//    monita_cfg.config = cfg.read("CONFIG");
+//    port = monita_cfg.config.at(5).toInt();
+//    m_pWebSocketServer = new QWebSocketServer(QStringLiteral("WebSocket Server"), QWebSocketServer::NonSecureMode, this);
+//    if (m_pWebSocketServer->listen(QHostAddress::Any, port)) {
+//        log.write("WebSocket","Server listening on port : " + QString::number(port));
+//        connect(m_pWebSocketServer, &QWebSocketServer::newConnection,this, &Worker::onNewConnection);
+//        connect(m_pWebSocketServer, &QWebSocketServer::closed, this, &Worker::closed);
+//    }
 
 //    connect(&timer, SIGNAL(timeout()), this, SLOT(doWork()));
 //    timer.start(monita_cfg.config.at(1).toInt());
@@ -42,10 +42,10 @@ Worker::~Worker()
     if (ThreadTcpModbus.isRunning()) ThreadTcpModbus.terminate();
     if (ThreadDataMysql.isRunning()) ThreadDataMysql.terminate();
     if (ThreadDataVisual.isRunning()) ThreadDataVisual.terminate();
-    if (m_pWebSocketServer->isListening()) {
-        m_pWebSocketServer->close();
-        qDeleteAll(m_clients.begin(), m_clients.end());
-    }
+//    if (m_pWebSocketServer->isListening()) {
+//        m_pWebSocketServer->close();
+//        qDeleteAll(m_clients.begin(), m_clients.end());
+//    }
 }
 
 void Worker::doWork()
@@ -94,41 +94,41 @@ void Worker::replyFinished(QNetworkReply* reply){
     }
 }
 
-void Worker::onNewConnection()
-{
-    QWebSocket *pSocket = m_pWebSocketServer->nextPendingConnection();
+//void Worker::onNewConnection()
+//{
+//    QWebSocket *pSocket = m_pWebSocketServer->nextPendingConnection();
 
-    connect(pSocket, &QWebSocket::textMessageReceived, this, &Worker::processTextMessage);
-    connect(pSocket, &QWebSocket::binaryMessageReceived, this, &Worker::processBinaryMessage);
-    connect(pSocket, &QWebSocket::disconnected, this, &Worker::socketDisconnected);
+//    connect(pSocket, &QWebSocket::textMessageReceived, this, &Worker::processTextMessage);
+//    connect(pSocket, &QWebSocket::binaryMessageReceived, this, &Worker::processBinaryMessage);
+//    connect(pSocket, &QWebSocket::disconnected, this, &Worker::socketDisconnected);
 
-    pSocket->ignoreSslErrors();
-    log.write("WebSocket","Socket Connect : " + pSocket->localAddress().toString() + ":" + pSocket->localPort());
-    pSocket->sendTextMessage("Berhasil Connect cuy ..");
+//    pSocket->ignoreSslErrors();
+//    log.write("WebSocket","Socket Connect : " + pSocket->localAddress().toString() + ":" + pSocket->localPort());
+//    pSocket->sendTextMessage("Berhasil Connect cuy ..");
 
-    m_clients << pSocket;
-}
+//    m_clients << pSocket;
+//}
 
-void Worker::processTextMessage(QString message)
-{
-    QWebSocket *pClient = qobject_cast<QWebSocket *>(sender());
-    log.write("WebSocket","Message received : " + message);
-    if (pClient) {pClient->sendTextMessage(message);}
-}
+//void Worker::processTextMessage(QString message)
+//{
+//    QWebSocket *pClient = qobject_cast<QWebSocket *>(sender());
+//    log.write("WebSocket","Message received : " + message);
+//    if (pClient) {pClient->sendTextMessage(message);}
+//}
 
-void Worker::processBinaryMessage(QByteArray message)
-{
-    QWebSocket *pClient = qobject_cast<QWebSocket *>(sender());
-    log.write("WebSocket","Binary Message received : " + message);
-    if (pClient) {pClient->sendBinaryMessage(message);}
-}
+//void Worker::processBinaryMessage(QByteArray message)
+//{
+//    QWebSocket *pClient = qobject_cast<QWebSocket *>(sender());
+//    log.write("WebSocket","Binary Message received : " + message);
+//    if (pClient) {pClient->sendBinaryMessage(message);}
+//}
 
-void Worker::socketDisconnected()
-{
-    QWebSocket *pClient = qobject_cast<QWebSocket *>(sender());
-    log.write("WebSocket","Socket Disconnect : " + pClient->localAddress().toString() + ":" + pClient->localPort());
-    if (pClient) {
-        m_clients.removeAll(pClient);
-        pClient->deleteLater();
-    }
-}
+//void Worker::socketDisconnected()
+//{
+//    QWebSocket *pClient = qobject_cast<QWebSocket *>(sender());
+//    log.write("WebSocket","Socket Disconnect : " + pClient->localAddress().toString() + ":" + pClient->localPort());
+//    if (pClient) {
+//        m_clients.removeAll(pClient);
+//        pClient->deleteLater();
+//    }
+//}

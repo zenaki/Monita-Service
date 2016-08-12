@@ -7,8 +7,8 @@ int main(int argc, char *argv[])
     QCoreApplication a(argc, argv);
     printf(":: Monita Service Started ::\n");
 
-    Worker *worker = new Worker(1234);
-    QObject::connect(worker, &Worker::closed, &a, &QCoreApplication::quit);
+    Worker *worker = new Worker();
+//    QObject::connect(worker, &Worker::closed, &a, &QCoreApplication::quit);
 
     return a.exec();
 }

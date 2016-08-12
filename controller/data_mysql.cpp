@@ -7,7 +7,6 @@ data_mysql::data_mysql(QObject *parent) : QObject(parent)
 void data_mysql::doSetup(QThread &cThread)
 {
     connect(&cThread,SIGNAL(started()),this,SLOT(set_dataHarian()));
-    monita_cfg.config = cfg.read("CONFIG");
 
     QTimer *t = new QTimer(this);
     connect(t, SIGNAL(timeout()), this, SLOT(set_dataHarian()));

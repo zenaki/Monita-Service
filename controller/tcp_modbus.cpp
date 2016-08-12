@@ -222,6 +222,11 @@ void tcp_modbus::request_modbus(int index, QDateTime dt_req_mod)
                             logsheet = true;
                         }
                     }
+                    rds.reqRedis("hset vismon " +
+                                   QString::number(slave) + ":" +
+                                   QString::number(addr+i) +
+                                   " " +
+                                   data_real, redis_config.at(0), redis_config.at(1).toInt());
                     log.write("TcpModbus",
                               QString::number(slave) + " - " +
                               QString::number(addr+i) + " - " +

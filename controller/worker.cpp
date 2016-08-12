@@ -42,8 +42,10 @@ Worker::~Worker()
     if (ThreadTcpModbus.isRunning()) ThreadTcpModbus.terminate();
     if (ThreadDataMysql.isRunning()) ThreadDataMysql.terminate();
     if (ThreadDataVisual.isRunning()) ThreadDataVisual.terminate();
-    m_pWebSocketServer->close();
-    qDeleteAll(m_clients.begin(), m_clients.end());
+    if (m_pWebSocketServer->isListening()) {
+        m_pWebSocketServer->close();
+        qDeleteAll(m_clients.begin(), m_clients.end());
+    }
 }
 
 void Worker::doWork()
@@ -55,6 +57,12 @@ void Worker::doWork()
     obj_data_mysql.doSetup(ThreadDataMysql);
     obj_data_mysql.moveToThread(&ThreadDataMysql);
     ThreadDataMysql.start();
+
+    obj_data_visual.doSetup(ThreadDataVisual);
+    obj_data_visual.moveToThread(&ThreadDataVisual);
+    ThreadDataVisual.start();
+
+//    this->request_sky_wave();
 }
 
 void Worker::request_sky_wave()

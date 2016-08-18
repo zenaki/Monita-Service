@@ -71,15 +71,17 @@ QStringList config::read(QString obj)
                 QJsonArray array = value.toArray();
                 foreach (const QJsonValue & v, array) {
                     result.append(QString::number(v.toObject().value("ID").toInt()));
+//                    result.append(v.toObject().value("ID").toString());
                     result.append(v.toObject().value("OPERATOR").toString());
                     result.append(v.toObject().value("SLAVE;REG").toString());
-                    result.append(QString::number(v.toObject().value("CUSTOM_ID").toInt()));
+                    result.append(QString::number(v.toObject().value("DEST_ID").toInt()));
                 }
             } else {
                 result.append(QString::number(value.toObject().value("ID").toInt()));
+//                result.append(value.toObject().value("ID").toString());
                 result.append(value.toObject().value("OPERATOR").toString());
                 result.append(value.toObject().value("SLAVE;REG").toString());
-                result.append(QString::number(value.toObject().value("CUSTOM_ID").toInt()));
+                result.append(QString::number(value.toObject().value("DEST_ID").toInt()));
             }
         }
     }
@@ -90,22 +92,19 @@ void config::write(QJsonObject &json) const //Default
 {
     QJsonArray sourceArray;
     QJsonObject sourceObject;
-    QString temp = "192.168.1.1";
-    sourceObject["IP"] = temp;
+    sourceObject["IP"] = QString("192.168.1.1");
     sourceObject["PORT"] = 502;
     sourceObject["SLAVE_ID"] = 1;
     sourceObject["FUNCT_ID"] = 3;
     sourceObject["START"] = 1;
     sourceObject["COILS"] = 1;
-    temp = "TCP";
-    sourceObject["MODE"] = temp;
+    sourceObject["MODE"] = QString("TCP");
     sourceArray.append(sourceObject);
     json["SOURCE"] = sourceArray;
 
     QJsonArray redisArray;
     QJsonObject redisObject;
-    temp = "127.0.0.1";
-    redisObject["IP"] = temp;
+    redisObject["IP"] = QString("127.0.0.1");
     redisObject["PORT"] = 6379;
     redisArray.append(redisObject);
     json["REDIS"] = redisArray;
@@ -115,11 +114,11 @@ void config::write(QJsonObject &json) const //Default
     configObject["INTERVAL"] = 1000;    //milis
     configObject["DB_PERIOD"] = 60;     //detik
     configObject["TIMESTAMP"] = 3;     //TimeStamp
-    temp = "data_jaman_";
-    configObject["REDIS_KEY"] = temp;
-    temp = "data_harian_";
-    configObject["TABLE_NAME"] = temp;
+    configObject["REDIS_KEY"] = QString("data_jaman_");
+    configObject["TABLE_NAME"] = QString("data_harian_");
     configObject["WEBSOCKET_PORT"] = 1234;
+    configObject["LUA_CALCULATION"] = QString(".MonSerConfig/lua/calc.lua");
+    configObject["LUA_SET_MYSQL"] = QString(".MonSerConfig/lua/mysql.lua");
     configArray.append(configObject);
     json["CONFIG"] = configArray;
 }

@@ -11,6 +11,8 @@ void data_mysql::doSetup(QThread &cThread)
     QTimer *t = new QTimer(this);
     connect(t, SIGNAL(timeout()), this, SLOT(set_dataHarian()));
     t->start(60000);
+
+    db = mysql.connect_db();
 }
 
 void data_mysql::set_dataHarian()
@@ -20,13 +22,13 @@ void data_mysql::set_dataHarian()
     QString address = redis_config.at(0);
     int port = redis_config.at(1).toInt();
     QDateTime dt_sdh = QDateTime::currentDateTime();
-//    QStringList request = rds.reqRedis("hlen data_jaman_" + QDate::currentDate().toString("dd_MM_yyyy"), address, port);
-    QStringList request = rds.reqRedis("hlen temp", address, port);
+//    QStringList request = rds.reqRedis("hlen monita_service:data_jaman_" + QDate::currentDate().toString("dd_MM_yyyy"), address, port);
+    QStringList request = rds.reqRedis("hlen monita_service:temp", address, port);
     log.write("Redis",request.at(0) + " Data ..");
     int redis_len = request.at(0).toInt();
 
-//    request = rds.reqRedis("hgetall data_jaman_" + QDate::currentDate().toString("dd_MM_yyyy"), address, port, redis_len*2);
-    request = rds.reqRedis("hgetall temp", address, port, redis_len*2);
+//    request = rds.reqRedis("hgetall monita_service:data_jaman_" + QDate::currentDate().toString("dd_MM_yyyy"), address, port, redis_len*2);
+    request = rds.reqRedis("hgetall monita_service:temp", address, port, redis_len*2);
 //    qSort(request.begin(), request.end());
     QStringList temp1; QStringList temp2; QString data;
     QStringList slave; QStringList id_titik_ukur;
@@ -43,7 +45,7 @@ void data_mysql::set_dataHarian()
     int t = 0;
     while (!db.isOpen()) {
         db.close();
-        db = mysql.connect_db();
+//        db = mysql.connect_db();
         db.open();
         if (!db.isOpen()) {
             log.write("Database","Error : Connecting Fail ..!!");
@@ -72,7 +74,7 @@ void data_mysql::set_dataHarian()
     }
     while (!db.isOpen()) {
         db.close();
-        db = mysql.connect_db();
+//        db = mysql.connect_db();
         db.open();
         if (!db.isOpen()) {
             log.write("Database","Error : Connecting Fail ..!!");
@@ -82,7 +84,7 @@ void data_mysql::set_dataHarian()
         }
     }
     set.data_harian(db, monita_cfg.config.at(4), dt_sdh.date().toString("yyyy_MM_dd"), data);
-    db.close();
+//    db.close();
     log.write("Database","Data Inserted on table data_" + QDate::currentDate().toString("dd_MM_yyyy") + " ..");
 //    rds.reqRedis("del data_jaman_" + QDate::currentDate().toString("dd_MM_yyyy"), address, port);
     rds.reqRedis("del temp", address, port);

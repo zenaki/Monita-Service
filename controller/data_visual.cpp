@@ -35,8 +35,10 @@ void data_visual::doSetup(QThread &cThread)
 void data_visual::RedisToJson(QStringList data, QDateTime dt)
 {
     monita_cfg.source_config = cfg.read("SOURCE");
+    monita_cfg.calc_config = cfg.read("CALC");
     if (monita_cfg.source_config.length() > 7) {monita_cfg.jml_sumber = monita_cfg.source_config.length()/7;
     } else {monita_cfg.jml_sumber++;}
+    if (!monita_cfg.calc_config.isEmpty()) {monita_cfg.jml_sumber = monita_cfg.jml_sumber + (monita_cfg.calc_config.length()/4);}
 
     QJsonObject json;
     QJsonArray slaveArray[monita_cfg.jml_sumber];
@@ -44,7 +46,7 @@ void data_visual::RedisToJson(QStringList data, QDateTime dt)
 
     QStringList list_temp; QString temp; int index = 0;
     for (int i = 0; i < data.length(); i+=2) {
-        list_temp = data.at(i).split(":");
+        list_temp = data.at(i).split(";");
         if ((i > 0 && temp != list_temp.at(0))) {
             slaveArray[index].append(idTitikUkurObject[index]);
             json["SLAVE_ID:"+temp] = slaveArray[index];
@@ -68,7 +70,11 @@ void data_visual::WriteToJson(QJsonObject json, QDateTime dt)
     if (!visual_json_file.exists()) {
         QDir dir;
         dir.mkpath(".MonSerConfig");
-    }
+    }/* else {
+        visual_json_file.remove();
+        QDir dir;
+        dir.mkpath(".MonSerConfig");
+    }*/
     if (visual_json_file.open(QIODevice::ReadWrite|QIODevice::Truncate)) {
         QJsonDocument saveDoc(json);
         visual_json_file.write(saveDoc.toJson());
@@ -89,12 +95,14 @@ void data_visual::doWork()
     QString address = redis_config.at(0);
     int port = redis_config.at(1).toInt();
     QDateTime dt = QDateTime::currentDateTime();
-    QStringList request = rds.reqRedis("hlen vismon", address, port);
+    QStringList request = rds.reqRedis("hlen monita_service:vismon", address, port);
     log.write("Redis",request.at(0) + " Data ..");
     int redis_len = request.at(0).toInt();
-    request = rds.reqRedis("hgetall vismon", address, port, redis_len*2);
+    request = rds.reqRedis("hgetall monita_service:vismon", address, port, redis_len*2);
 
     this->RedisToJson(request, dt);
+
+//    request = rds.reqRedis("del monita_service:vismon", address, port, redis_len*2);
 }
 
 void data_visual::onNewConnection()

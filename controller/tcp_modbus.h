@@ -32,12 +32,17 @@ private:
     QString embracedString(const QString s);
     QString descriptiveDataTypeName(int funcCode);
 
-    void calculation(int slave_id, int reg, float data, bool logsheet, QDateTime dt_calc);
-    QString funct_sum(int id, int reg, QStringList calc_list, float data);
-    QString funct_ave(int id, int reg, QStringList calc_list, float data, int jml);
-    QString funct_mul(int id, int reg, QStringList calc_list, float data);
-    QString funct_min(int id, int reg, QStringList calc_list, float data);
-    QString funct_max(int id, int reg, QStringList calc_list, float data);
+    bool logsheet;
+
+    void calculation(QDateTime dt_calc);
+    void send_CalcToRedis(QStringList calc_data, QDateTime dt_calc);
+    void funct_sum(int id, int reg, QStringList calc_list, float data);
+    void funct_ave(int id, int reg, QStringList calc_list, float data, int jml);
+    void funct_mul(int id, int reg, QStringList calc_list, float data);
+    void funct_min(int id, int reg, QStringList calc_list, float data);
+    void funct_max(int id, int reg, QStringList calc_list, float data);
+
+    QByteArray readLua(QString pth);
 
 public slots:
     void doWork();

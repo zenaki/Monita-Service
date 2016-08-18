@@ -7,9 +7,6 @@
 #include "util/config.h"
 #include <util/util_skyw.h>
 
-//#include <QWebSocketServer>
-//#include <QWebSocket>
-
 #include "controller/tcp_modbus.h"
 #include "controller/data_mysql.h"
 #include "controller/data_visual.h"
@@ -25,23 +22,12 @@ private slots:
     void doWork();
     void replyFinished(QNetworkReply* reply);           /** veranda **/
 
-//private Q_SLOTS:
-//    void onNewConnection();
-//    void processTextMessage(QString message);
-//    void processBinaryMessage(QByteArray message);
-//    void socketDisconnected();
-
-//Q_SIGNALS:
-//    void closed();
-
 private:
     config cfg;
     monita_log log;
     QSqlDatabase db;                                    /** veranda **/
     QNetworkAccessManager *manager;                     /** veranda **/
     util_skyw read;                                     /** veranda **/
-//    QWebSocketServer *m_pWebSocketServer;
-//    QList<QWebSocket *> m_clients;
 
     tcp_modbus obj_tcp_modbus;
     QThread ThreadTcpModbus;
@@ -61,4 +47,4 @@ private:
     void request_sky_wave();                            /** veranda **/
 };
 
-#endif // TIMER_H
+#endif

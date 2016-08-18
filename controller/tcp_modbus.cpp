@@ -15,6 +15,8 @@ void tcp_modbus::doSetup(QThread &cThread)
 
     monita_cfg.config = cfg.read("CONFIG");
     monita_cfg.calc_config = cfg.read("CALC");
+    QStringList redis_config = cfg.read("REDIS");
+    rds.reqRedis("del monita_service:vismon", redis_config.at(0), redis_config.at(1).toInt());
 
     monita_cfg.modbus_period = 0;
     calc_temp.clear();
@@ -40,36 +42,17 @@ void tcp_modbus::doWork()
                 this->connectTcpModbus(monita_cfg.source_config.at(i*7), monita_cfg.source_config.at(i*7+1).toInt());
                 if (m_tcpModbus) {
                     this->request_modbus(i, dateTime);
-//                    if (monita_cfg.modbus_period >= monita_cfg.config.at(0).toInt()*monita_cfg.jml_sumber) {
-//                        log.write("Debug",
-//                                  "Modbus_Periode : " + QString::number(monita_cfg.modbus_period) + "; " +
-//                                  "Modbus_Interval : " + monita_cfg.config.at(0) +"; " +
-//                                  "Jumlah_Sumber : " + QString::number(monita_cfg.jml_sumber));
-//                        monita_cfg.redis_config = cfg.read("REDIS");
-//                        this->set_dataHarian(monita_cfg.redis_config.at(0), monita_cfg.redis_config.at(1).toInt(), dateTime);
-//                        monita_cfg.modbus_period = 0;
-//                    }
                     releaseTcpModbus();
                 }
                 releaseTcpModbus();
             } else {
                 this->request_modbus(i, dateTime);
-//                if (monita_cfg.modbus_period >= monita_cfg.config.at(0).toInt()*monita_cfg.jml_sumber) {
-//                    log.write("Debug",
-//                              "Modbus_Periode : " + QString::number(monita_cfg.modbus_period) + "; " +
-//                              "Modbus_Interval : " + monita_cfg.config.at(0) +"; " +
-//                              "Jumlah_Sumber : " + QString::number(monita_cfg.jml_sumber));
-//                    QStringList redis_config = cfg.read("REDIS");
-//                    this->set_dataHarian(redis_config.at(0), redis_config.at(1).toInt(), dateTime);
-//                    monita_cfg.modbus_period = 0;
-//                }
                 releaseTcpModbus();
             }
             monita_cfg.modbus_period++;
-        } else if (monita_cfg.source_config.at(6) == "SKYW") {
-//            this->request_sky_wave();
         }
     }
+    this->calculation(dateTime);
 }
 
 void tcp_modbus::request_modbus(int index, QDateTime dt_req_mod)
@@ -169,7 +152,7 @@ void tcp_modbus::request_modbus(int index, QDateTime dt_req_mod)
             int data_before;
             QByteArray array;
             QString data_real;
-            bool logsheet = false;
+            logsheet = false;
 
             for( int i = 0; i < num; ++i )
             {
@@ -198,7 +181,7 @@ void tcp_modbus::request_modbus(int index, QDateTime dt_req_mod)
 
                 if (!data_real.isEmpty()) {
                     QStringList redis_config = cfg.read("REDIS");
-                    rds.reqRedis("hset " + monita_cfg.config.at(3) + dt_req_mod.date().toString("dd_MM_yyyy") + " " +
+                    rds.reqRedis("hset monita_service:" + monita_cfg.config.at(3) + dt_req_mod.date().toString("dd_MM_yyyy") + " " +
                                    QString::number(slave) + ";" +
                                    QString::number(addr+i) +
                                    "_" +
@@ -211,7 +194,7 @@ void tcp_modbus::request_modbus(int index, QDateTime dt_req_mod)
                                 (monita_cfg.modbus_period > (monita_cfg.config.at(0).toInt()/j) * monita_cfg.jml_sumber &&
                                 monita_cfg.modbus_period <= ((monita_cfg.config.at(0).toInt()/j)+1) * monita_cfg.jml_sumber)
                            ) {
-                            rds.reqRedis("hset temp " +
+                            rds.reqRedis("hset monita_service:temp " +
                                            QString::number(slave) + ";" +
                                            QString::number(addr+i) +
                                            "_" +
@@ -222,8 +205,8 @@ void tcp_modbus::request_modbus(int index, QDateTime dt_req_mod)
                             logsheet = true;
                         }
                     }
-                    rds.reqRedis("hset vismon " +
-                                   QString::number(slave) + ":" +
+                    rds.reqRedis("hset monita_service:vismon " +
+                                   QString::number(slave) + ";" +
                                    QString::number(addr+i) +
                                    " " +
                                    data_real, redis_config.at(0), redis_config.at(1).toInt());
@@ -233,7 +216,6 @@ void tcp_modbus::request_modbus(int index, QDateTime dt_req_mod)
                               data_int + " - " +
                               data_hex + " - " +
                               data_real);
-                    this->calculation(slave, addr+i, data_real.toFloat(), logsheet, dt_req_mod);
                 }
                 data_real.clear();
             }
@@ -302,60 +284,83 @@ QString tcp_modbus::descriptiveDataTypeName(int funcCode)
     return "Unknown";
 }
 
-void tcp_modbus::calculation(int slave_id, int reg, float data, bool logsheet, QDateTime dt_calc)
+void tcp_modbus::calculation(QDateTime dt_calc)
 {
-    QStringList list_temp1; QStringList list_temp2; QString temp;
-    monita_cfg.calc_config = cfg.read("CALC");
-    for (int k = 0; k < monita_cfg.calc_config.length(); k+=4) {
-        list_temp1 = monita_cfg.calc_config.at(k+2).split(",");
-        for (int l = 0; l < list_temp1.length(); l++) {
-            list_temp2 = list_temp1.at(l).split(";");
-            if (list_temp2.at(0) == QString::number(slave_id) && list_temp2.at(1) == QString::number(reg)) {
-                if (monita_cfg.calc_config.at(k+1) == "SUM") {
-                    if (list_temp2.length()>2) {if (list_temp2.at(2) == "ABS") {if (data < 0) {data = data * -1.0;}}}
-                    temp = funct_sum(monita_cfg.calc_config.at(k).toInt(), monita_cfg.calc_config.at(k+3).toInt(), calc_temp, data);
-                } else if (monita_cfg.calc_config.at(k+1) == "AVE") {
-                    if (list_temp2.length()>2) {if (list_temp2.at(2) == "ABS") {if (data < 0) {data = data * -1.0;}}}
-                    temp = funct_ave(monita_cfg.calc_config.at(k).toInt(), monita_cfg.calc_config.at(k+3).toInt(), calc_temp, data, list_temp1.length());
-                } else if (monita_cfg.calc_config.at(k+1) == "MUL") {
-                    if (list_temp2.length()>2) {if (list_temp2.at(2) == "ABS") {if (data < 0) {data = data * -1.0;}}}
-                    temp = funct_mul(monita_cfg.calc_config.at(k).toInt(), monita_cfg.calc_config.at(k+3).toInt(), calc_temp, data);
-                } else if (monita_cfg.calc_config.at(k+1) == "MIN") {
-                    if (list_temp2.length()>2) {if (list_temp2.at(2) == "ABS") {if (data < 0) {data = data * -1.0;}}}
-                    temp = funct_min(monita_cfg.calc_config.at(k).toInt(), monita_cfg.calc_config.at(k+3).toInt(), calc_temp, data);
-                } else if (monita_cfg.calc_config.at(k+1) == "MAX") {
-                    if (list_temp2.length()>2) {if (list_temp2.at(2) == "ABS") {if (data < 0) {data = data * -1.0;}}}
-                    temp = funct_max(monita_cfg.calc_config.at(k).toInt(), monita_cfg.calc_config.at(k+3).toInt(), calc_temp, data);
+    QStringList dt; int slave_id; int reg; float data; QStringList list_temp;
+    QStringList list_temp1; QStringList list_temp2;
+    QStringList redis_config = cfg.read("REDIS");
+    dt = rds.reqRedis("hlen monita_service:vismon", redis_config.at(0), redis_config.at(1).toInt());
+    int redis_len = dt.at(0).toInt();
+    dt = rds.reqRedis("hgetall monita_service:vismon", redis_config.at(0), redis_config.at(1).toInt(), redis_len*2);
+//    monita_cfg.calc_config = cfg.read("CALC");
+    for (int j = 0; j < dt.length(); j+=2) {
+        list_temp = dt.at(j).split(";");
+        slave_id = list_temp.at(0).toInt();
+        reg = list_temp.at(1).toInt();
+        data = dt.at(j+1).toFloat();
+        for (int k = 0; k < monita_cfg.calc_config.length(); k+=4) {
+            list_temp1 = monita_cfg.calc_config.at(k+2).split(",");
+            for (int l = 0; l < list_temp1.length(); l++) {
+                list_temp2 = list_temp1.at(l).split(";");
+                if (list_temp2.at(0) == QString::number(slave_id) && list_temp2.at(1) == QString::number(reg)) {
+                    if (monita_cfg.calc_config.at(k+1) == "SUM") {
+                        if (list_temp2.length()>2) {if (list_temp2.at(2) == "ABS") {if (data < 0) {data = data * -1.0;}}}
+                        this->funct_sum(monita_cfg.calc_config.at(k).toInt(), monita_cfg.calc_config.at(k+3).toInt(), calc_temp, data);
+                    } else if (monita_cfg.calc_config.at(k+1) == "AVG") {
+                        if (list_temp2.length()>2) {if (list_temp2.at(2) == "ABS") {if (data < 0) {data = data * -1.0;}}}
+                        this->funct_ave(monita_cfg.calc_config.at(k).toInt(), monita_cfg.calc_config.at(k+3).toInt(), calc_temp, data, list_temp1.length());
+                    } else if (monita_cfg.calc_config.at(k+1) == "MUL") {
+                        if (list_temp2.length()>2) {if (list_temp2.at(2) == "ABS") {if (data < 0) {data = data * -1.0;}}}
+                        this->funct_mul(monita_cfg.calc_config.at(k).toInt(), monita_cfg.calc_config.at(k+3).toInt(), calc_temp, data);
+                    } else if (monita_cfg.calc_config.at(k+1) == "MIN") {
+                        if (list_temp2.length()>2) {if (list_temp2.at(2) == "ABS") {if (data < 0) {data = data * -1.0;}}}
+                        this->funct_min(monita_cfg.calc_config.at(k).toInt(), monita_cfg.calc_config.at(k+3).toInt(), calc_temp, data);
+                    } else if (monita_cfg.calc_config.at(k+1) == "MAX") {
+                        if (list_temp2.length()>2) {if (list_temp2.at(2) == "ABS") {if (data < 0) {data = data * -1.0;}}}
+                        this->funct_max(monita_cfg.calc_config.at(k).toInt(), monita_cfg.calc_config.at(k+3).toInt(), calc_temp, data);
+                    }
                 }
             }
         }
-        if (!temp.isEmpty()) {
-            QStringList redis_config = cfg.read("REDIS");
-            list_temp1 = temp.split("*");
-            rds.reqRedis("hset " + monita_cfg.config.at(3) + dt_calc.date().toString("dd_MM_yyyy") + " " +
-                           list_temp1.at(0) + ";" +
-                           list_temp1.at(1) +
-                           "_" +
-                           dt_calc.toString("dd-MM-yyyy_HH:mm:ss:zzz") +
-                           " " +
-                           list_temp1.at(2), redis_config.at(0), redis_config.at(1).toInt());
-            if (logsheet) {
-                rds.reqRedis("hset temp " +
-                             list_temp1.at(0) + ";" +
-                             list_temp1.at(1) +
-                             "_" +
-                             dt_calc.toString("dd-MM-yyyy_HH:mm:ss:zzz") +
-                             " " +
-                             list_temp1.at(2), redis_config.at(0), redis_config.at(1).toInt());
-//                log.write("Debug","Calc On Temp Redis");
-            } else {
-//                log.write("Debug","Calc Not On Temp Redis");
-            }
+    }
+    this->send_CalcToRedis(calc_temp, dt_calc);
+    calc_temp.clear();
+}
+
+void tcp_modbus::send_CalcToRedis(QStringList calc_data, QDateTime dt_calc)
+{
+    QStringList redis_config = cfg.read("REDIS");
+    QStringList list_temp;
+    for (int i = 0; i < calc_data.length(); i++) {
+        list_temp = calc_data.at(i).split("*");
+        rds.reqRedis("hset monita_service:" + monita_cfg.config.at(3) + dt_calc.date().toString("dd_MM_yyyy") + " " +
+                     list_temp.at(0) + ";" +
+                     list_temp.at(1) +
+                     "_" +
+                     dt_calc.toString("dd-MM-yyyy_HH:mm:ss:zzz") +
+                     " " +
+                     list_temp.at(2), redis_config.at(0), redis_config.at(1).toInt());
+        rds.reqRedis("hset monita_service:vismon " +
+                     list_temp.at(0) + ";" +
+                     list_temp.at(1) +
+                     " " +
+                     list_temp.at(2), redis_config.at(0), redis_config.at(1).toInt());
+        if (logsheet) {
+            rds.reqRedis("hset monita_service:temp " +
+                         list_temp.at(0) + ";" +
+                         list_temp.at(1) +
+                         "_" +
+                         dt_calc.toString("dd-MM-yyyy_HH:mm:ss:zzz") +
+                         " " +
+                         list_temp.at(2), redis_config.at(0), redis_config.at(1).toInt());
+//            log.write("Debug","Calc On Temp Redis");
+        } else {
+//            log.write("Debug","Calc Not On Temp Redis");
         }
     }
 }
 
-QString tcp_modbus::funct_sum(int id, int reg, QStringList calc_list, float data)
+void tcp_modbus::funct_sum(int id, int reg, QStringList calc_list, float data)
 {
     QString temp; QStringList list_temp; QString data_temp; bool exc = false;
     if (calc_list.length() > 0) {
@@ -378,10 +383,9 @@ QString tcp_modbus::funct_sum(int id, int reg, QStringList calc_list, float data
         calc_list.insert(calc_list.length(), temp);
     }
     calc_temp = calc_list;
-    return temp;
 }
 
-QString tcp_modbus::funct_ave(int id, int reg, QStringList calc_list, float data, int jml)
+void tcp_modbus::funct_ave(int id, int reg, QStringList calc_list, float data, int jml)
 {
     QString temp; QStringList list_temp; QString data_temp; bool exc = false;
     if (calc_list.length() > 0) {
@@ -404,10 +408,9 @@ QString tcp_modbus::funct_ave(int id, int reg, QStringList calc_list, float data
         calc_list.insert(calc_list.length(), temp);
     }
     calc_temp = calc_list;
-    return temp;
 }
 
-QString tcp_modbus::funct_mul(int id, int reg, QStringList calc_list, float data)
+void tcp_modbus::funct_mul(int id, int reg, QStringList calc_list, float data)
 {
     QString temp; QStringList list_temp; QString data_temp; bool exc = false;
     if (calc_list.length() > 0) {
@@ -430,10 +433,9 @@ QString tcp_modbus::funct_mul(int id, int reg, QStringList calc_list, float data
         calc_list.insert(calc_list.length(), temp);
     }
     calc_temp = calc_list;
-    return temp;
 }
 
-QString tcp_modbus::funct_min(int id, int reg, QStringList calc_list, float data)
+void tcp_modbus::funct_min(int id, int reg, QStringList calc_list, float data)
 {
     QString temp; QStringList list_temp; QString data_temp; bool exc = false;
     if (calc_list.length() > 0) {
@@ -461,10 +463,9 @@ QString tcp_modbus::funct_min(int id, int reg, QStringList calc_list, float data
         calc_list.insert(calc_list.length(), temp);
     }
     calc_temp = calc_list;
-    return temp;
 }
 
-QString tcp_modbus::funct_max(int id, int reg, QStringList calc_list, float data)
+void tcp_modbus::funct_max(int id, int reg, QStringList calc_list, float data)
 {
     QString temp; QStringList list_temp; QString data_temp; bool exc = false;
     if (calc_list.length() > 0) {
@@ -492,7 +493,20 @@ QString tcp_modbus::funct_max(int id, int reg, QStringList calc_list, float data
         calc_list.insert(calc_list.length(), temp);
     }
     calc_temp = calc_list;
-    return temp;
+}
+
+QByteArray tcp_modbus::readLua(QString pth)
+{
+    QFile LuaFile(pth);
+    QByteArray readFile;
+    if (!LuaFile.exists()) {
+        QDir dir;
+        dir.mkpath(".MonSerConfig/Lua");
+    }
+    if (LuaFile.open(QIODevice::ReadWrite)) {
+        readFile = LuaFile.readLine();
+    }
+    return readFile;
 }
 
 void tcp_modbus::releaseTcpModbus()

@@ -115,8 +115,11 @@ void config::write(QJsonObject &json) const //Default
     configObject["INTERVAL"] = 1000;    //milis
     configObject["DB_PERIOD"] = 60;     //detik
     configObject["TIMESTAMP"] = 3;     //TimeStamp
-    temp = ".MonSerConfig/log.txt";
-    configObject["LOG_PATH"] = temp;
+    temp = "data_jaman_";
+    configObject["REDIS_KEY"] = temp;
+    temp = "data_harian_";
+    configObject["TABLE_NAME"] = temp;
+    configObject["WEBSOCKET_PORT"] = 1234;
     configArray.append(configObject);
     json["CONFIG"] = configArray;
 }

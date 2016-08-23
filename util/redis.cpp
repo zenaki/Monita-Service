@@ -56,6 +56,7 @@ QStringList redis::eval(QByteArray script, QString keys, QString argv, QString a
     QStringList result;
     r_context = redisConnect(address.toStdString().c_str(), port);
 //    qDebug() << script;
+
 //    QString command =  "eval " +
 //            QString(script)  + " " +
 //            QString::number(len_key) + " " +

@@ -24,10 +24,10 @@
 #include <QThread>
 #include <QUrl>
 
+#include <model/monita_log.h>
 #include <util/redis.h>
 #include <model/save_db.h>
 #include <model/init_mysql.h>
-#include <model/monita_log.h>
 
 #define  MODEM_KURAYGEO   1
 #define  MODEM_IMANIPRIMA 2
@@ -77,6 +77,7 @@ struct monita_config {
     QStringList source_config;
     QStringList redis_config;
     QStringList calc_config;
+    QStringList funct_config;
 
     QString urls;
     int gateway_count;

@@ -29,16 +29,18 @@ void data_visual::doSetup(QThread &cThread)
 
     QTimer *t = new QTimer(this);
     connect(t, SIGNAL(timeout()), this, SLOT(doWork()));
-    t->start(1000);
+    t->start(500);
 }
 
 void data_visual::RedisToJson(QStringList data, QDateTime dt)
 {
     monita_cfg.source_config = cfg.read("SOURCE");
     monita_cfg.calc_config = cfg.read("CALC");
-    if (monita_cfg.source_config.length() > 7) {monita_cfg.jml_sumber = monita_cfg.source_config.length()/7;
+    monita_cfg.funct_config = cfg.read("FUNCT");
+    if (monita_cfg.source_config.length() > 9) {monita_cfg.jml_sumber = monita_cfg.source_config.length()/9;
     } else {monita_cfg.jml_sumber++;}
     if (!monita_cfg.calc_config.isEmpty()) {monita_cfg.jml_sumber = monita_cfg.jml_sumber + (monita_cfg.calc_config.length()/4);}
+    if (!monita_cfg.funct_config.isEmpty()) {monita_cfg.jml_sumber = monita_cfg.jml_sumber + (monita_cfg.funct_config.length()/3);}
 
     QJsonObject json;
     QJsonArray slaveArray[monita_cfg.jml_sumber];
@@ -99,9 +101,11 @@ void data_visual::doWork()
     log.write("Redis",request.at(0) + " Data ..");
     int redis_len = request.at(0).toInt();
     request = rds.reqRedis("hgetall monita_service:vismon", address, port, redis_len*2);
-
+//    if (request.length() > 0) {
+//        this->RedisToJson(request, dt);
+//        request = rds.reqRedis("del monita_service:vismon", address, port, redis_len*2);
+//    }
     this->RedisToJson(request, dt);
-
 //    request = rds.reqRedis("del monita_service:vismon", address, port, redis_len*2);
 }
 

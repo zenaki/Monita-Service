@@ -23,6 +23,7 @@ public:
     monita_log log;
     struct monita_config monita_cfg;
     QStringList calc_temp;
+    QStringList funct_temp;
 
     void doSetup(QThread &cThread);
 
@@ -42,6 +43,7 @@ private:
     void funct_min(int id, int reg, QStringList calc_list, float data);
     void funct_max(int id, int reg, QStringList calc_list, float data);
 
+    void LuaRedis_function(QDateTime dt_lua);
     QByteArray readLua(QString pth);
 
 public slots:

@@ -33,6 +33,8 @@ QStringList config::read(QString obj)
                     result.append(QString::number(v.toObject().value("START").toInt()));
                     result.append(QString::number(v.toObject().value("COILS").toInt()));
                     result.append(v.toObject().value("MODE").toString());
+                    result.append(QString::number(v.toObject().value("BYTE").toInt()));
+                    result.append(v.toObject().value("TYPE").toString());
                 }
             } else {
                 result.append(value.toObject().value("IP").toString());
@@ -42,6 +44,8 @@ QStringList config::read(QString obj)
                 result.append(QString::number(value.toObject().value("START").toInt()));
                 result.append(QString::number(value.toObject().value("COILS").toInt()));
                 result.append(value.toObject().value("MODE").toString());
+                result.append(QString::number(value.toObject().value("BYTE").toInt()));
+                result.append(value.toObject().value("TYPE").toString());
             }
         } else if (obj == "CONFIG") {
             if (object.value(obj).isArray()) {
@@ -83,6 +87,19 @@ QStringList config::read(QString obj)
                 result.append(value.toObject().value("SLAVE;REG").toString());
                 result.append(QString::number(value.toObject().value("DEST_ID").toInt()));
             }
+        } else if (obj == "FUNCT") {
+            if (object.value(obj).isArray()) {
+                QJsonArray array = value.toArray();
+                foreach (const QJsonValue & v, array) {
+                    result.append(v.toObject().value("LUA_FILE").toString());
+                    result.append(v.toObject().value("KEYS").toString());
+                    result.append(v.toObject().value("ARGV").toString());
+                }
+            } else {
+                result.append(value.toObject().value("LUA_FILE").toString());
+                result.append(value.toObject().value("KEYS").toString());
+                result.append(value.toObject().value("ARGV").toString());
+            }
         }
     }
     return result;
@@ -99,6 +116,8 @@ void config::write(QJsonObject &json) const //Default
     sourceObject["START"] = 1;
     sourceObject["COILS"] = 1;
     sourceObject["MODE"] = QString("TCP");
+    sourceObject["BYTE"] = 2;
+    sourceObject["TYPE"] = QString("FLOAT");
     sourceArray.append(sourceObject);
     json["SOURCE"] = sourceArray;
 

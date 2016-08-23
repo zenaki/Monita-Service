@@ -1,4 +1,5 @@
 #include "redis.h"
+#include <QDebug>
 
 redis::redis()
 {
@@ -26,9 +27,10 @@ QStringList redis::reqRedis(QString command, QString address, int port, int len)
     void *pointer = NULL;
     pointer = redisCommand(r_context, bytes.constData());
     r_reply = (redisReply*)pointer;
-    if ( r_reply->type == REDIS_REPLY_ERROR )
+    if ( r_reply->type == REDIS_REPLY_ERROR ) {
         printf( "Error: %s\n", r_reply->str );
-    else if ( r_reply->type != REDIS_REPLY_ARRAY ) {
+//        result.insert(result.length(), r_reply->str);
+    } else if ( r_reply->type != REDIS_REPLY_ARRAY ) {
         if ( r_reply->type == REDIS_REPLY_INTEGER ) {
             result.insert(result.length(), QString::number(r_reply->integer));
 //            qDebug() << "Monita::Redis::Result: " << QString::number(r_reply->integer);
@@ -49,3 +51,47 @@ QStringList redis::reqRedis(QString command, QString address, int port, int len)
     return result;
 }
 
+QStringList redis::eval(QByteArray script, QString keys, QString argv, QString address, int port)
+{
+    QStringList result;
+    r_context = redisConnect(address.toStdString().c_str(), port);
+//    qDebug() << script;
+//    QString command =  "eval " +
+//            QString(script)  + " " +
+//            QString::number(len_key) + " " +
+//            keys_argv;
+//    QByteArray bytes = command.toLocal8Bit();
+//    r_reply = (redisReply *) redisCommand( r_context, "EVAL %s %d %s %s %s %s %s ",
+//                                           QString(script).toLatin1().constData(),
+//                                           len_key,
+//                                           keys.toLatin1().constData(),
+//                                           argv1.toLatin1().constData(),
+//                                           argv2.toLatin1().constData(),
+//                                           argv3.toLatin1().constData(),
+//                                           argv4.toLatin1().constData());
+    QStringList list_argv = argv.split(" ");
+    r_reply = (redisReply *) redisCommand( r_context, "EVAL %s %d %s %s %s %s %s ",
+                                           QString(script).toLatin1().constData(),
+                                           1,
+                                           keys.toLatin1().constData(),
+                                           list_argv.at(0).toLatin1().constData(),
+                                           list_argv.at(1).toLatin1().constData(),
+                                           list_argv.at(2).toLatin1().constData(),
+                                           list_argv.at(3).toLatin1().constData());
+
+    if ( r_reply->type == REDIS_REPLY_ERROR ) {
+        printf( "Error: %s\n", r_reply->str );
+        result.insert(result.length(), r_reply->str);
+    } else if (r_reply->type == REDIS_REPLY_ARRAY) {
+        for (int i = 0; i < r_reply->elements; i++) {
+            result.insert(result.length(), r_reply->element[i]->str);
+        }
+    } else {
+        result.insert(result.length(), r_reply->str);
+    }
+//    cout<<"EVAL: "<< r_reply->str<<endl;
+
+    freeReplyObject(r_reply);
+    redisFree(r_context);
+    return result;
+}

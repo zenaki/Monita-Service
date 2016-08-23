@@ -10,7 +10,7 @@ void tcp_modbus::doSetup(QThread &cThread)
 
     monita_cfg.jml_sumber = 0;
     monita_cfg.source_config = cfg.read("SOURCE");
-    if (monita_cfg.source_config.length() > 7) {monita_cfg.jml_sumber = monita_cfg.source_config.length()/7;
+    if (monita_cfg.source_config.length() > 9) {monita_cfg.jml_sumber = monita_cfg.source_config.length()/9;
     } else {monita_cfg.jml_sumber++;}
 
     monita_cfg.config = cfg.read("CONFIG");
@@ -32,17 +32,29 @@ void tcp_modbus::doWork()
     for (int i = 0; i < monita_cfg.jml_sumber; i++) {
         if (monita_cfg.source_config.at(6) == "TCP") {
             m_tcpModbus = NULL;
-            this->connectTcpModbus(monita_cfg.source_config.at(i*7), monita_cfg.source_config.at(i*7+1).toInt());
+            this->connectTcpModbus(monita_cfg.source_config.at(i*9), monita_cfg.source_config.at(i*9+1).toInt());
             if (!m_tcpModbus) {
                 monita_cfg.jml_sumber = 0;
                 monita_cfg.source_config = cfg.read("SOURCE");
-                if (monita_cfg.source_config.length() > 7) {monita_cfg.jml_sumber = monita_cfg.source_config.length()/7;
+                if (monita_cfg.source_config.length() > 9) {monita_cfg.jml_sumber = monita_cfg.source_config.length()/9;
                 } else {monita_cfg.jml_sumber++;}
 
-                this->connectTcpModbus(monita_cfg.source_config.at(i*7), monita_cfg.source_config.at(i*7+1).toInt());
+                this->connectTcpModbus(monita_cfg.source_config.at(i*9), monita_cfg.source_config.at(i*9+1).toInt());
                 if (m_tcpModbus) {
                     this->request_modbus(i, dateTime);
                     releaseTcpModbus();
+                } else {
+                    QStringList redis_config = cfg.read("REDIS");
+                    const int slave = monita_cfg.source_config.at(i*9+2).toInt();
+                    const int addr = monita_cfg.source_config.at(i*9+4).toInt();
+                    int num = monita_cfg.source_config.at(i*9+5).toInt();
+                    for( int i = 0; i < num; ++i ) {
+                        rds.reqRedis("hset monita_service:vismon " +
+                                       QString::number(slave) + ";" +
+                                       QString::number(addr+i) +
+                                       " " +
+                                       "N/A", redis_config.at(0), redis_config.at(1).toInt());
+                    }
                 }
                 releaseTcpModbus();
             } else {
@@ -53,6 +65,7 @@ void tcp_modbus::doWork()
         }
     }
     this->calculation(dateTime);
+    this->LuaRedis_function(dateTime);
 }
 
 void tcp_modbus::request_modbus(int index, QDateTime dt_req_mod)
@@ -62,10 +75,12 @@ void tcp_modbus::request_modbus(int index, QDateTime dt_req_mod)
         return;
     }
 
-    const int slave = monita_cfg.source_config.at(index*7+2).toInt();
-    const int func = monita_cfg.source_config.at(index*7+3).toInt();
-    const int addr = monita_cfg.source_config.at(index*7+4).toInt();
-    int num = monita_cfg.source_config.at(index*7+5).toInt();
+    const int slave = monita_cfg.source_config.at(index*9+2).toInt();
+    const int func = monita_cfg.source_config.at(index*9+3).toInt();
+    const int addr = monita_cfg.source_config.at(index*9+4).toInt();
+    int num = monita_cfg.source_config.at(index*9+5).toInt();
+    const int byte = monita_cfg.source_config.at(index*9+7).toInt();
+    QString type = monita_cfg.source_config.at(index*9+8);
 
     uint8_t dest[1024];
     uint16_t *dest16 = (uint16_t *) dest;
@@ -75,11 +90,11 @@ void tcp_modbus::request_modbus(int index, QDateTime dt_req_mod)
     int ret = -1;
     bool is16Bit = false;
     bool writeAccess = false;
-    const QString dataType = descriptiveDataTypeName(func);
+//    const QString dataType = descriptiveDataTypeName(func);
 
     modbus_set_slave( m_tcpModbus, slave );
     log.write("TcpModbus", "Request from : " +
-              monita_cfg.source_config.at(index*7) + ":" + monita_cfg.source_config.at(index*7+1));
+              monita_cfg.source_config.at(index*9) + ":" + monita_cfg.source_config.at(index*9+1));
     switch( func )
     {
         case MODBUS_FC_READ_COILS:
@@ -146,44 +161,65 @@ void tcp_modbus::request_modbus(int index, QDateTime dt_req_mod)
         }
         else
         {
-            QString qs_num;
+//            QString qs_num;
             QString data_int;
             QString data_hex;
             int data_before;
             QByteArray array;
             QString data_real;
+            QString data_temp1; QString data_temp2;
             logsheet = false;
 
-            for( int i = 0; i < num; ++i )
+            for( int i = 1; i < num+1; ++i )
             {
-                int data = is16Bit ? dest16[i] : dest[i];
+                int data = is16Bit ? dest16[(i-1)] : dest[(i-1)];
                 data_int.sprintf("%d", data);
                 data_hex.sprintf("0x%04x", data);
-                if (i % 2 == 1) {
-                    data_real.sprintf("%04x%04x", data_before, data);
-                    bool ok;
-                    int sign = 1;
-                    array = data_real.toUtf8();
-                    array = QByteArray::number(array.toLongLong(&ok,16),2); //convert hex to binary -you don't need this since your incoming data is binary
-                    if(array.length()==32) {
-                        if(array.at(0)=='1')  sign =-1;                       // if bit 0 is 1 number is negative
-                        array.remove(0,1);                                     // remove sign bit
+                if (i % byte == 0) {
+                    if (byte == 1) {
+                        data_temp2.sprintf("%04x", data);
+                    } else if (byte == 2) {
+                        data_temp2.sprintf("%04x%04x", data_before, data);
+                    } else if (byte == 4) {
+                        data_temp1.sprintf("%04x", data);
+                        data_temp2.append(data_temp1);
                     }
-                    QByteArray fraction =array.right(23);   //get the fractional part
-                    double mantissa = 0;
-                    for(int i=0;i<fraction.length();i++)     // iterate through the array to claculate the fraction as a decimal.
-                        if(fraction.at(i)=='1')     mantissa += 1.0/(pow(2,i+1));
-                    int exponent = array.left(array.length()-23).toLongLong(&ok,2)-127;     //claculate the exponent
-                    data_real = QString::number( sign*pow(2,exponent)*(mantissa+1.0),'f', 5 );
+                    bool ok;
+                    if (type == "FLOAT") {
+                        int sign = 1;
+                        array = data_temp2.toUtf8();
+                        array = QByteArray::number(array.toLongLong(&ok,16),2); //convert hex to binary -you don't need this since your incoming data is binary
+                        if(array.length()==32) {
+                            if(array.at(0)=='1')  sign =-1;                       // if bit 0 is 1 number is negative
+                            array.remove(0,1);                                     // remove sign bit
+                        }
+                        QByteArray fraction =array.right(23);   //get the fractional part
+                        double mantissa = 0;
+                        for(int i=0;i<fraction.length();i++)     // iterate through the array to claculate the fraction as a decimal.
+                            if(fraction.at(i)=='1')     mantissa += 1.0/(pow(2,i+1));
+                        int exponent = array.left(array.length()-23).toLongLong(&ok,2)-127;     //claculate the exponent
+                        data_real = QString::number( sign*pow(2,exponent)*(mantissa+1.0),'f', 5 );
+                        data_before = 0;
+                        data_temp2.clear();
+                    } else if (type == "DEC") {
+                        data_real = QString::number(data_temp2.toLongLong(&ok, 16));
+                        data_before = 0;
+                        data_temp2.clear();
+                    }
                 } else {
-                    data_before = data;
+                    if (byte == 4) {
+                        data_temp1.sprintf("%04x", data);
+                        data_temp2.append(data_temp1);
+                    } else if (byte == 2) {
+                        data_before = data;
+                    }
                 }
 
                 if (!data_real.isEmpty()) {
                     QStringList redis_config = cfg.read("REDIS");
                     rds.reqRedis("hset monita_service:" + monita_cfg.config.at(3) + dt_req_mod.date().toString("dd_MM_yyyy") + " " +
                                    QString::number(slave) + ";" +
-                                   QString::number(addr+i) +
+                                   QString::number(addr+(i-1)) +
                                    "_" +
                                    dt_req_mod.toString("dd-MM-yyyy_HH:mm:ss:zzz") +
                                    " " +
@@ -196,7 +232,7 @@ void tcp_modbus::request_modbus(int index, QDateTime dt_req_mod)
                            ) {
                             rds.reqRedis("hset monita_service:temp " +
                                            QString::number(slave) + ";" +
-                                           QString::number(addr+i) +
+                                           QString::number(addr+(i-1)) +
                                            "_" +
                                            dt_req_mod.toString("dd-MM-yyyy_HH:mm:ss:zzz") +
                                            " " +
@@ -207,12 +243,12 @@ void tcp_modbus::request_modbus(int index, QDateTime dt_req_mod)
                     }
                     rds.reqRedis("hset monita_service:vismon " +
                                    QString::number(slave) + ";" +
-                                   QString::number(addr+i) +
+                                   QString::number(addr+(i-1)) +
                                    " " +
                                    data_real, redis_config.at(0), redis_config.at(1).toInt());
                     log.write("TcpModbus",
                               QString::number(slave) + " - " +
-                              QString::number(addr+i) + " - " +
+                              QString::number(addr+(i-1)) + " - " +
                               data_int + " - " +
                               data_hex + " - " +
                               data_real);
@@ -495,6 +531,39 @@ void tcp_modbus::funct_max(int id, int reg, QStringList calc_list, float data)
     calc_temp = calc_list;
 }
 
+void tcp_modbus::LuaRedis_function(QDateTime dt_lua)
+{
+    QStringList redis_config = cfg.read("REDIS");
+//    dt = rds.reqRedis("hlen monita_service:vismon", redis_config.at(0), redis_config.at(1).toInt());
+//    int redis_len = dt.at(0).toInt();
+//    dt = rds.reqRedis("hgetall monita_service:vismon", redis_config.at(0), redis_config.at(1).toInt(), redis_len*2);
+    monita_cfg.funct_config = cfg.read("FUNCT");
+    QStringList result; QString script_path; QString keys; QString argv;
+//    redis-cli eval "$(cat calc.lua)" 1 monita_service:vismon '1;1001;ABS,2;3028,3;1001,6;1001' SUM 77 112345
+//    QString keys_argv = "monita_service:vismon '1;1001;ABS,2;3028,3;1001,6;1001' SUM 77 112345";
+    for (int i = 0; i < monita_cfg.funct_config.length(); i+=3) {
+        script_path = monita_cfg.funct_config.at(i+0);
+        keys = monita_cfg.funct_config.at(i+1);
+        argv = monita_cfg.funct_config.at(i+2);
+
+        result = rds.eval(this->readLua(script_path), keys, argv, redis_config.at(0), redis_config.at(1).toInt());
+        if (result.length() < 2) {
+            if (result.at(0).indexOf("Err") > 0) {log.write("Lua", result.at(0)); result.clear();}
+        }
+    }
+    funct_temp = result;
+//    QString keys = "monita_service:vismon";
+//    QString keys = "10";
+//    QString argv1 = "1;1001;ABS,2;3028,3;1001,6;1001";
+//    QString argv1 = "1;1001;ABS,2;3210,6;1001";
+//    QString argv1 = "-15";
+//    QString argv2 = "SUM";
+//    QString argv3 = "77";
+//    QString argv4 = "112345";
+
+    this->send_CalcToRedis(funct_temp, dt_lua);
+}
+
 QByteArray tcp_modbus::readLua(QString pth)
 {
     QFile LuaFile(pth);
@@ -504,7 +573,7 @@ QByteArray tcp_modbus::readLua(QString pth)
         dir.mkpath(".MonSerConfig/Lua");
     }
     if (LuaFile.open(QIODevice::ReadWrite)) {
-        readFile = LuaFile.readLine();
+        readFile = LuaFile.readAll();
     }
     return readFile;
 }

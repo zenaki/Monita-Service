@@ -548,10 +548,15 @@ void tcp_modbus::LuaRedis_function(QDateTime dt_lua)
 
         result = rds.eval(this->readLua(script_path), keys, argv, redis_config.at(0), redis_config.at(1).toInt());
         if (result.length() < 2) {
-            if (result.at(0).indexOf("Err") > 0) {log.write("Lua", result.at(0)); result.clear();}
+            if (result.at(0).indexOf("Err") > 0) {
+                log.write("Lua", result.at(0));
+                result.clear();
+            } else {
+                funct_temp.append(result.at(0));
+            }
         }
     }
-    funct_temp = result;
+//    funct_temp = result;
 //    QString keys = "monita_service:vismon";
 //    QString keys = "10";
 //    QString argv1 = "1;1001;ABS,2;3028,3;1001,6;1001";
@@ -562,6 +567,7 @@ void tcp_modbus::LuaRedis_function(QDateTime dt_lua)
 //    QString argv4 = "112345";
 
     this->send_CalcToRedis(funct_temp, dt_lua);
+    funct_temp.clear();
 }
 
 QByteArray tcp_modbus::readLua(QString pth)

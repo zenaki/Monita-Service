@@ -34,31 +34,29 @@ void data_visual::doSetup(QThread &cThread)
 
 void data_visual::RedisToJson(QStringList data, QDateTime dt)
 {
-    monita_cfg.source_config = cfg.read("SOURCE");
-    monita_cfg.calc_config = cfg.read("CALC");
-    monita_cfg.funct_config = cfg.read("FUNCT");
-    if (monita_cfg.source_config.length() > 9) {monita_cfg.jml_sumber = monita_cfg.source_config.length()/9;
-    } else {monita_cfg.jml_sumber++;}
-    if (!monita_cfg.calc_config.isEmpty()) {monita_cfg.jml_sumber = monita_cfg.jml_sumber + (monita_cfg.calc_config.length()/4);}
-    if (!monita_cfg.funct_config.isEmpty()) {monita_cfg.jml_sumber = monita_cfg.jml_sumber + (monita_cfg.funct_config.length()/3);}
-
     QJsonObject json;
-    QJsonArray slaveArray[monita_cfg.jml_sumber];
-    QJsonObject idTitikUkurObject[monita_cfg.jml_sumber];
+    QJsonArray slaveArray[JUMLAH_MAX_TITIK_UKUR];            // Jumlah Maksimal titik Ukut
+    QJsonObject idTitikUkurObject[JUMLAH_MAX_TITIK_UKUR];    // Jumlah Maksimal titik Ukut
+    QJsonObject errorObject;
 
     QStringList list_temp; QString temp; int index = 0;
     for (int i = 0; i < data.length(); i+=2) {
-        list_temp = data.at(i).split(";");
-        if ((i > 0 && temp != list_temp.at(0))) {
-            slaveArray[index].append(idTitikUkurObject[index]);
-            json["SLAVE_ID:"+temp] = slaveArray[index];
-            index++;
-        }
-        idTitikUkurObject[index]["ID_TITIK_UKUR:"+list_temp.at(1)] = data.at(i+1);
-        temp = list_temp.at(0);
-        if (i >= data.length()-2) {
-            slaveArray[index].append(idTitikUkurObject[index]);
-            json["SLAVE_ID:"+temp] = slaveArray[index];
+        if (data.at(i).indexOf("UNKNOWN") > 0) {
+            errorObject[data.at(i)] = data.at(i+1);
+            json[data.at(i)] = errorObject;
+        } else {
+            list_temp = data.at(i).split(";");
+            if ((i > 0 && temp != list_temp.at(0))) {
+                slaveArray[index].append(idTitikUkurObject[index]);
+                json["SLAVE_ID:"+temp] = slaveArray[index];
+                index++;
+            }
+            idTitikUkurObject[index]["ID_TITIK_UKUR:"+list_temp.at(1)] = data.at(i+1);
+            temp = list_temp.at(0);
+            if (i >= data.length()-2) {
+                slaveArray[index].append(idTitikUkurObject[index]);
+                json["SLAVE_ID:"+temp] = slaveArray[index];
+            }
         }
     }
 

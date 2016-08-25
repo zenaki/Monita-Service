@@ -57,8 +57,6 @@ QStringList config::read(QString obj)
                     result.append(v.toObject().value("REDIS_KEY").toString());
                     result.append(v.toObject().value("TABLE_NAME").toString());
                     result.append(QString::number(v.toObject().value("WEBSOCKET_PORT").toInt()));
-                    result.append(v.toObject().value("LUA_CALCULATION").toString());
-                    result.append(v.toObject().value("LUA_SET_MYSQL").toString());
                 }
             } else {
                 result.append(QString::number(value.toObject().value("DB_PERIOD").toInt()));
@@ -67,38 +65,15 @@ QStringList config::read(QString obj)
                 result.append(value.toObject().value("REDIS_KEY").toString());
                 result.append(value.toObject().value("TABLE_NAME").toString());
                 result.append(QString::number(value.toObject().value("WEBSOCKET_PORT").toInt()));
-                result.append(value.toObject().value("LUA_CALCULATION").toString());
-                result.append(value.toObject().value("LUA_SET_MYSQL").toString());
-            }
-        } else if (obj == "CALC") {
-            if (object.value(obj).isArray()) {
-                QJsonArray array = value.toArray();
-                foreach (const QJsonValue & v, array) {
-                    result.append(QString::number(v.toObject().value("ID").toInt()));
-//                    result.append(v.toObject().value("ID").toString());
-                    result.append(v.toObject().value("OPERATOR").toString());
-                    result.append(v.toObject().value("SLAVE;REG").toString());
-                    result.append(QString::number(v.toObject().value("DEST_ID").toInt()));
-                }
-            } else {
-                result.append(QString::number(value.toObject().value("ID").toInt()));
-//                result.append(value.toObject().value("ID").toString());
-                result.append(value.toObject().value("OPERATOR").toString());
-                result.append(value.toObject().value("SLAVE;REG").toString());
-                result.append(QString::number(value.toObject().value("DEST_ID").toInt()));
             }
         } else if (obj == "FUNCT") {
             if (object.value(obj).isArray()) {
                 QJsonArray array = value.toArray();
                 foreach (const QJsonValue & v, array) {
                     result.append(v.toObject().value("LUA_FILE").toString());
-                    result.append(v.toObject().value("KEYS").toString());
-                    result.append(v.toObject().value("ARGV").toString());
                 }
             } else {
                 result.append(value.toObject().value("LUA_FILE").toString());
-                result.append(value.toObject().value("KEYS").toString());
-                result.append(value.toObject().value("ARGV").toString());
             }
         }
     }
@@ -136,8 +111,6 @@ void config::write(QJsonObject &json) const //Default
     configObject["REDIS_KEY"] = QString("data_jaman_");
     configObject["TABLE_NAME"] = QString("data_harian_");
     configObject["WEBSOCKET_PORT"] = 1234;
-    configObject["LUA_CALCULATION"] = QString(".MonSerConfig/lua/calc.lua");
-    configObject["LUA_SET_MYSQL"] = QString(".MonSerConfig/lua/mysql.lua");
     configArray.append(configObject);
     json["CONFIG"] = configArray;
 }

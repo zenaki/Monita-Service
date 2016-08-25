@@ -41,6 +41,8 @@
 #define PATH_CONFIGURATION_JSON ".MonSerConfig/monita-cfg.json"
 #define PATH_CONFIGURATION_BIN ".MonSerConfig/monita-cfg.dat"
 
+#define JUMLAH_MAX_TITIK_UKUR 10000
+
 struct ship {
     int id_ship;
     char name[32];
@@ -76,7 +78,6 @@ struct monita_config {
     QStringList config;
     QStringList source_config;
     QStringList redis_config;
-    QStringList calc_config;
     QStringList funct_config;
 
     QString urls;

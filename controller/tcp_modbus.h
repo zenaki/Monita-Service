@@ -22,7 +22,6 @@ public:
     redis rds;
     monita_log log;
     struct monita_config monita_cfg;
-    QStringList calc_temp;
     QStringList funct_temp;
 
     void doSetup(QThread &cThread);
@@ -35,15 +34,8 @@ private:
 
     bool logsheet;
 
-    void calculation(QDateTime dt_calc);
-    void send_CalcToRedis(QStringList calc_data, QDateTime dt_calc);
-    void funct_sum(int id, int reg, QStringList calc_list, float data);
-    void funct_ave(int id, int reg, QStringList calc_list, float data, int jml);
-    void funct_mul(int id, int reg, QStringList calc_list, float data);
-    void funct_min(int id, int reg, QStringList calc_list, float data);
-    void funct_max(int id, int reg, QStringList calc_list, float data);
-
     void LuaRedis_function(QDateTime dt_lua);
+    void send_ResultToRedis(QStringList result_data, QDateTime dt_result);
     QByteArray readLua(QString pth);
 
 public slots:

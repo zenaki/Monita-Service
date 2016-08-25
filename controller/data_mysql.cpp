@@ -87,6 +87,8 @@ void data_mysql::set_dataHarian()
 //    db.close();
     log.write("Database","Data Inserted on table data_" + QDate::currentDate().toString("dd_MM_yyyy") + " ..");
 //    rds.reqRedis("del data_jaman_" + QDate::currentDate().toString("dd_MM_yyyy"), address, port);
-    rds.reqRedis("del temp", address, port);
+    rds.reqRedis("del monita_service:temp", address, port);
+    rds.reqRedis("del monita_service:" + monita_cfg.config.at(3) + QDate::currentDate().toString("dd_MM_yyyy"), address, port);
+//    rds.reqRedis("del monita_service:vismon", address, port);
 }
 

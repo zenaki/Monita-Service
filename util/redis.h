@@ -5,6 +5,8 @@
 
 #include <QString>
 #include <QStringList>
+#include <QFile>
+#include <QDir>
 
 extern "C"
 {
@@ -17,11 +19,13 @@ public:
     redis();
 
     QStringList reqRedis(QString command, QString address, int port, int len = 0);
-    QStringList eval(QByteArray script, QString keys, QString argv, QString address, int port);
+    QStringList eval(QByteArray script, QString address, int port);
     redisReply *r_reply;
     redisContext *r_context;
 //    QStringList result;
 //    monita_log log;
+
+    QByteArray readLua(QString pth);
 };
 
 #endif // REDIS_H

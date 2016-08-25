@@ -51,7 +51,7 @@ QStringList redis::reqRedis(QString command, QString address, int port, int len)
     return result;
 }
 
-QStringList redis::eval(QByteArray script, QString keys, QString argv, QString address, int port)
+QStringList redis::eval(QByteArray script, QString address, int port)
 {
     QStringList result;
     r_context = redisConnect(address.toStdString().c_str(), port);
@@ -70,18 +70,12 @@ QStringList redis::eval(QByteArray script, QString keys, QString argv, QString a
 //                                           argv2.toLatin1().constData(),
 //                                           argv3.toLatin1().constData(),
 //                                           argv4.toLatin1().constData());
-    QStringList list_argv = argv.split(" ");
-    r_reply = (redisReply *) redisCommand( r_context, "EVAL %s %d %s %s %s %s %s ",
-                                           QString(script).toLatin1().constData(),
-                                           1,
-                                           keys.toLatin1().constData(),
-                                           list_argv.at(0).toLatin1().constData(),
-                                           list_argv.at(1).toLatin1().constData(),
-                                           list_argv.at(2).toLatin1().constData(),
-                                           list_argv.at(3).toLatin1().constData());
+//    QStringList list_argv = argv.split(" ");
+    r_reply = (redisReply *) redisCommand( r_context, "EVAL %s %d ", QString(script).toLatin1().constData(), 0);
 
     if ( r_reply->type == REDIS_REPLY_ERROR ) {
-        printf( "Error: %s\n", r_reply->str );
+//        printf( "Error: %s\n", r_reply->str );
+        printf("Monita::Redis::Error : %s\n", r_reply->str);
         result.insert(result.length(), r_reply->str);
     } else if (r_reply->type == REDIS_REPLY_ARRAY) {
         for (int i = 0; i < r_reply->elements; i++) {
@@ -95,4 +89,18 @@ QStringList redis::eval(QByteArray script, QString keys, QString argv, QString a
     freeReplyObject(r_reply);
     redisFree(r_context);
     return result;
+}
+
+QByteArray redis::readLua(QString pth)
+{
+    QFile LuaFile(pth);
+    QByteArray readFile;
+    if (!LuaFile.exists()) {
+        QDir dir;
+        dir.mkpath(".MonSerConfig/lua");
+    }
+    if (LuaFile.open(QIODevice::ReadWrite)) {
+        readFile = LuaFile.readAll();
+    }
+    return readFile;
 }

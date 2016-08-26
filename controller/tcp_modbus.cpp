@@ -234,7 +234,7 @@ void tcp_modbus::request_modbus(int index, QDateTime dt_req_mod)
                                            dt_req_mod.toString("dd-MM-yyyy_HH:mm:ss:zzz") +
                                            " " +
                                            data_real, redis_config.at(0), redis_config.at(1).toInt());
-                            log.write("Debug","On Temp Redis");
+//                            log.write("Debug","On Temp Redis");
                             logsheet = true;
                         }
                     }
@@ -374,8 +374,8 @@ void tcp_modbus::send_ResultToRedis(QStringList result_data, QDateTime dt_result
 //                log.write("Debug","Result Not On Temp Redis");
             }
         } else {
-            rds.reqRedis("hset monita_service:vismon UNKNOWN" +
-                         result_data.at(i), redis_config.at(0), redis_config.at(1).toInt());
+//            rds.reqRedis("hset monita_service:vismon UNKNOWN" +
+//                         result_data.at(i), redis_config.at(0), redis_config.at(1).toInt());
         }
     }
 }

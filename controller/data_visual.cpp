@@ -95,14 +95,12 @@ void data_visual::doWork()
     QString address = redis_config.at(0);
     int port = redis_config.at(1).toInt();
     QDateTime dt = QDateTime::currentDateTime();
+
     QStringList request = rds.reqRedis("hlen monita_service:vismon", address, port);
     log.write("Redis",request.at(0) + " Data ..");
     int redis_len = request.at(0).toInt();
     request = rds.reqRedis("hgetall monita_service:vismon", address, port, redis_len*2);
-//    if (request.length() > 0) {
-//        this->RedisToJson(request, dt);
-//        request = rds.reqRedis("del monita_service:vismon", address, port, redis_len*2);
-//    }
+
     this->RedisToJson(request, dt);
 //    request = rds.reqRedis("del monita_service:vismon", address, port, redis_len*2);
 }

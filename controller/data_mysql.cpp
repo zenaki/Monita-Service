@@ -42,15 +42,15 @@ void data_mysql::set_dataHarian()
         waktu.append(temp1.at(2).split(":"));
         data_tunggal.append(request.at(i+1));
     }
-    int t = 0;
+//    int t = 0;
     while (!db.isOpen()) {
         db.close();
-//        db = mysql.connect_db();
         db.open();
         if (!db.isOpen()) {
             log.write("Database","Error : Connecting Fail ..!!");
             QThread::msleep(DELAY_DB_CONNECT);
-            t++;
+            db = mysql.connect_db();
+//            t++;
 //            if (t >= 3) {emit finish();}
         }
     }
@@ -74,12 +74,12 @@ void data_mysql::set_dataHarian()
     }
     while (!db.isOpen()) {
         db.close();
-//        db = mysql.connect_db();
         db.open();
         if (!db.isOpen()) {
             log.write("Database","Error : Connecting Fail ..!!");
             QThread::msleep(DELAY_DB_CONNECT);
-            t++;
+            db = mysql.connect_db();
+//            t++;
 //            if (t >= 3) {emit finish();}
         }
     }
@@ -89,6 +89,6 @@ void data_mysql::set_dataHarian()
 //    rds.reqRedis("del data_jaman_" + QDate::currentDate().toString("dd_MM_yyyy"), address, port);
     rds.reqRedis("del monita_service:temp", address, port);
     rds.reqRedis("del monita_service:" + monita_cfg.config.at(3) + QDate::currentDate().toString("dd_MM_yyyy"), address, port);
-//    rds.reqRedis("del monita_service:vismon", address, port);
+    rds.reqRedis("del monita_service:vismon", address, port);
 }
 

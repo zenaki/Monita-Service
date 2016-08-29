@@ -1,0 +1,105 @@
+
+<!-- saved from url=(0094)file:///home/zenaki/Qt5.6.0/Examples/Qt-5.6/qtwebsockets/websockets/echoserver/echoclient.html -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+        <title>WebSocket Echo Client</title>
+    </head>
+    <body>
+        <h1>WebSocket Echo Client</h1>
+        <p>
+            <button onclick="initWebSocket();">Connect</button>
+            <button onclick="stopWebSocket();">Disconnect</button>
+            <button onclick="checkSocket();">State</button>
+        </p>
+        <p>
+            <textarea id="debugTextArea" style="width: 778px; height: 490px; margin: 0px;"></textarea>
+        </p>
+        <p>
+            <input type="text" id="inputText" onkeydown="if(event.keyCode==13)sendMessage();">
+            <button onclick="sendMessage();">Send</button>
+        </p>
+
+        <script type="text/javascript">
+            var debugTextArea = document.getElementById("debugTextArea");
+            function debug(message) {
+                // debugTextArea.value += message + "\n";
+                // debugTextArea.scrollTop = debugTextArea.scrollHeight;
+                debugTextArea.value = message;
+            }
+
+            function sendMessage() {
+                var msg = document.getElementById("inputText").value;
+                if ( websocket != null )
+                {
+                    document.getElementById("inputText").value = "";
+                    websocket.send( msg );
+                    console.log( "string sent :", '"'+msg+'"' );
+                }
+            }
+
+            var wsUri = "ws://localhost:1234";
+            var websocket = null;
+
+            function initWebSocket() {
+                try {
+                    if (typeof MozWebSocket == 'function')
+                        WebSocket = MozWebSocket;
+                    if ( websocket && websocket.readyState == 1 )
+                        websocket.close();
+                    websocket = new WebSocket( wsUri );
+                    websocket.onopen = function (evt) {
+                        debug("CONNECTED");
+                    };
+                    websocket.onclose = function (evt) {
+                        debug("DISCONNECTED");
+                    };
+                    websocket.onmessage = function (evt) {
+                        console.log( "Message received :", evt.data );
+                        debug( evt.data );
+                    };
+                    websocket.onerror = function (evt) {
+                        debug('ERROR: ' + evt.data);
+                    };
+                } catch (exception) {
+                    debug('ERROR: ' + exception);
+                }
+            }
+
+            function stopWebSocket() {
+                if (websocket)
+                    websocket.close();
+            }
+
+            function checkSocket() {
+                if (websocket != null) {
+                    var stateStr;
+                    switch (websocket.readyState) {
+                        case 0: {
+                            stateStr = "CONNECTING";
+                            break;
+                        }
+                        case 1: {
+                            stateStr = "OPEN";
+                            break;
+                        }
+                        case 2: {
+                            stateStr = "CLOSING";
+                            break;
+                        }
+                        case 3: {
+                            stateStr = "CLOSED";
+                            break;
+                        }
+                        default: {
+                            stateStr = "UNKNOW";
+                            break;
+                        }
+                    }
+                    debug("WebSocket state = " + websocket.readyState + " ( " + stateStr + " )");
+                } else {
+                    debug("WebSocket is null");
+                }
+            }
+        </script>
+    
+
+</body></html>

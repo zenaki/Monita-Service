@@ -83,7 +83,9 @@ void data_visual::WriteToJson(QJsonObject json, QDateTime dt)
     if (visual_json_file.open(QIODevice::ReadWrite)) {
         QByteArray readFile = visual_json_file.readAll();
         for (int i = 0; i < m_clients.length(); i++) {
-            m_clients.at(i)->sendTextMessage(readFile);
+            if (m_clients.at(i)->isValid()) {
+                m_clients.at(i)->sendTextMessage(readFile);
+            }
         }
     }
 }

@@ -4,8 +4,8 @@
 
 Worker::Worker(QObject *parent) : QObject(parent)
 {   
-    manager = new QNetworkAccessManager();
-    connect(manager, SIGNAL(finished(QNetworkReply*)), this, SLOT(replyFinished(QNetworkReply *)));
+//    manager = new QNetworkAccessManager();
+//    connect(manager, SIGNAL(finished(QNetworkReply*)), this, SLOT(replyFinished(QNetworkReply *)));
 
 //    monita_cfg.config = cfg.read("CONFIG");
 //    port = monita_cfg.config.at(5).toInt();
@@ -19,20 +19,20 @@ Worker::Worker(QObject *parent) : QObject(parent)
 //    connect(&timer, SIGNAL(timeout()), this, SLOT(doWork()));
 //    timer.start(monita_cfg.config.at(1).toInt());
 
-    monita_cfg.modbus_period = 0;
+//    monita_cfg.modbus_period = 0;
 
-    marine = (struct sky_wave_ship *) malloc( sizeof (struct sky_wave_ship));
-    memset((char *) marine, 0, sizeof(struct sky_wave_ship));
+//    marine = (struct sky_wave_ship *) malloc( sizeof (struct sky_wave_ship));
+//    memset((char *) marine, 0, sizeof(struct sky_wave_ship));
 
-    acc = (struct sky_wave_account *) malloc ( sizeof (struct sky_wave_account));
-    memset((char *) acc, 0, sizeof(struct sky_wave_account));
+//    acc = (struct sky_wave_account *) malloc ( sizeof (struct sky_wave_account));
+//    memset((char *) acc, 0, sizeof(struct sky_wave_account));
 
 //    get.modem_info(db, marine);
 //    get.modem_getway(db, acc);
 
-    ship_count = 0;
-    gateway_count = 0;
-    cnt_panggil = 0;
+//    ship_count = 0;
+//    gateway_count = 0;
+//    cnt_panggil = 0;
 
     this->doWork();
 }
@@ -42,6 +42,7 @@ Worker::~Worker()
     if (ThreadTcpModbus.isRunning()) ThreadTcpModbus.terminate();
     if (ThreadDataMysql.isRunning()) ThreadDataMysql.terminate();
     if (ThreadDataVisual.isRunning()) ThreadDataVisual.terminate();
+    if (ThreadSkyWave.isRunning()) ThreadSkyWave.terminate();
 //    if (m_pWebSocketServer->isListening()) {
 //        m_pWebSocketServer->close();
 //        qDeleteAll(m_clients.begin(), m_clients.end());
@@ -50,6 +51,34 @@ Worker::~Worker()
 
 void Worker::doWork()
 {
+//    bool ok;
+//    QByteArray array;
+//    QString data = "4eaf8c9c";
+
+//    int sign = 1;
+//    array = data.toUtf8();
+//    array = QByteArray::number(array.toLongLong(&ok,16),2); //convert hex to binary -you don't need this since your incoming data is binary
+//    if(array.length()==32) {
+//        if(array.at(0)=='1')  sign =-1;                       // if bit 0 is 1 number is negative
+//        array.remove(0,1);                                     // remove sign bit
+//    }
+//    QByteArray fraction =array.right(23);   //get the fractional part
+//    double mantissa = 0;
+//    for(int i=0;i<fraction.length();i++)     // iterate through the array to claculate the fraction as a decimal.
+//        if(fraction.at(i)=='1')     mantissa += 1.0/(pow(2,i+1));
+//    int exponent = array.left(array.length()-23).toLongLong(&ok,2)-127;     //claculate the exponent
+
+//    QString result_dec = QString::number(data.toLongLong(&ok, 16));
+//    QString result_float = QString::number( sign*pow(2,exponent)*(mantissa+1.0),'f', 5 );
+
+//    int epoch = result_float.toInt();
+
+//    QString unixTimeStr = QString::number(result_float.toInt());
+
+//    const uint s = unixTimeStr.toUInt( &ok );
+//    const QDateTime dt = QDateTime::fromTime_t( s );
+//    const QString result_textdate = dt.toString( Qt::TextDate );
+
     obj_tcp_modbus.doSetup(ThreadTcpModbus);
     obj_tcp_modbus.moveToThread(&ThreadTcpModbus);
     ThreadTcpModbus.start();
@@ -62,37 +91,41 @@ void Worker::doWork()
     obj_data_visual.moveToThread(&ThreadDataVisual);
     ThreadDataVisual.start();
 
+    obj_sky_wave.doSetup(ThreadSkyWave);
+    obj_sky_wave.moveToThread(&ThreadSkyWave);
+    ThreadSkyWave.start();
+
 //    this->request_sky_wave();
 }
 
-void Worker::request_sky_wave()
-{
-    QNetworkRequest request;
+//void Worker::request_sky_wave()
+//{
+//    QNetworkRequest request;
 
-    monita_cfg.urls.sprintf("%s%s", acc->gway[monita_cfg.gateway_count].link, acc->gway[monita_cfg.gateway_count].nextutc);
-    QUrl url =  QUrl::fromEncoded(monita_cfg.urls.toLocal8Bit().data());
+//    monita_cfg.urls.sprintf("%s%s", acc->gway[monita_cfg.gateway_count].link, acc->gway[monita_cfg.gateway_count].nextutc);
+//    QUrl url =  QUrl::fromEncoded(monita_cfg.urls.toLocal8Bit().data());
 
-    request.setUrl(url);
-    manager->get(request);
-}
+//    request.setUrl(url);
+//    manager->get(request);
+//}
 
-void Worker::replyFinished(QNetworkReply* reply){
-    QString xmlStr;
-    xmlStr.clear();
+//void Worker::replyFinished(QNetworkReply* reply){
+//    QString xmlStr;
+//    xmlStr.clear();
 
-    xmlStr=reply->readAll();
-    read.parse_xml_account_methode(xmlStr, db, marine, acc, acc->gway[monita_cfg.gateway_count].id, monita_cfg.gateway_count);
+//    xmlStr=reply->readAll();
+//    read.parse_xml_account_methode(xmlStr, db, marine, acc, acc->gway[monita_cfg.gateway_count].id, monita_cfg.gateway_count);
 
-    monita_cfg.gateway_count++;
+//    monita_cfg.gateway_count++;
 
-    if (monita_cfg.gateway_count < acc->sum_getway){
-        this->request_sky_wave();
-    }
-    else{
-        monita_cfg.gateway_count = 0;
-//        timer.start((1000 * 60 * 10) / 2);
-    }
-}
+//    if (monita_cfg.gateway_count < acc->sum_getway){
+//        this->request_sky_wave();
+//    }
+//    else{
+//        monita_cfg.gateway_count = 0;
+////        timer.start((1000 * 60 * 10) / 2);
+//    }
+//}
 
 //void Worker::onNewConnection()
 //{

@@ -20,6 +20,8 @@ public:
     QString decode_base64(QString data);
     QString hex_to_bin_conversion(QString hex);
     QString hex_to_bin(char dat);
+    QString bin_to_hex_conversion(QString bin);
+    QString bin_to_hex(QString dat);
     QString format_5cut_32get(QString biner);
 
     void parse_data(QSqlQuery *q, QString dat, int id_ship,int f_mUTC, int flag);
@@ -36,7 +38,6 @@ private:
     float data_vtes[MAX_MEASUREMENT_POINT];
     int measurement_point[MAX_MEASUREMENT_POINT];
     int index;
-
 };
 
 #endif // PARSING_FUCTION_H

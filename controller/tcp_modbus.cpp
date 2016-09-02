@@ -11,7 +11,7 @@ void tcp_modbus::doSetup(QThread &cThread)
     monita_cfg.jml_sumber = 0;
     monita_cfg.source_config = cfg.read("SOURCE");
     if (monita_cfg.source_config.length() > 9) {monita_cfg.jml_sumber = monita_cfg.source_config.length()/9;
-    } else {monita_cfg.jml_sumber++;}
+    } else {if (monita_cfg.source_config.length() > 0) monita_cfg.jml_sumber++;}
 
     monita_cfg.config = cfg.read("CONFIG");
     QStringList redis_config = cfg.read("REDIS");
@@ -35,7 +35,7 @@ void tcp_modbus::doWork()
                 monita_cfg.jml_sumber = 0;
                 monita_cfg.source_config = cfg.read("SOURCE");
                 if (monita_cfg.source_config.length() > 9) {monita_cfg.jml_sumber = monita_cfg.source_config.length()/9;
-                } else {monita_cfg.jml_sumber++;}
+                } else {if (monita_cfg.source_config.length() > 0) monita_cfg.jml_sumber++;}
 
                 this->connectTcpModbus(monita_cfg.source_config.at(i*9), monita_cfg.source_config.at(i*9+1).toInt());
                 if (m_tcpModbus) {

@@ -63,12 +63,25 @@ struct getway {
     int SIN;
     int MIN;
     int status;
-
 };
 
 struct sky_wave_account {
     int sum_getway;
     struct getway gway[10];
+};
+
+struct modem {
+    QString modem_id;
+    QStringList id_tu;
+};
+
+struct sky_wave_config {
+    QString url;
+    QDateTime next_utc;
+    int SIN;
+    int MIN;
+    int jml_modem;
+    struct modem mdm[20];
 };
 
 struct monita_config {
@@ -77,11 +90,15 @@ struct monita_config {
     int jml_sumber;
     QStringList config;
     QStringList source_config;
+    QStringList sky_config;
     QStringList redis_config;
     QStringList funct_config;
 
     QString urls;
     int gateway_count;
+    int jml_gateWay;
+    struct sky_wave_config sky[10];
+
 };
 
 #endif // UTAMA_H

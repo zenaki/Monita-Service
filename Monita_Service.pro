@@ -24,7 +24,8 @@ HEADERS += \
         util/parsing_fuction.h \
     controller/tcp_modbus.h \
     controller/data_mysql.h \
-    controller/data_visual.h
+    controller/data_visual.h \
+    controller/sky_wave.h
 
 SOURCES += main.cpp \
         model/get_db.cpp \
@@ -42,7 +43,8 @@ SOURCES += main.cpp \
         util/parsing_fuction.cpp \
     controller/tcp_modbus.cpp \
     controller/data_mysql.cpp \
-    controller/data_visual.cpp
+    controller/data_visual.cpp \
+    controller/sky_wave.cpp
 
 INCLUDEPATH += 3rdparty/libmodbus \
                3rdparty/libmodbus/src \

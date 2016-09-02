@@ -75,6 +75,19 @@ QStringList config::read(QString obj)
             } else {
                 result.append(value.toObject().value("LUA_FILE").toString());
             }
+        } else if (obj == "SKYWAVE") {
+            if (object.value(obj).isArray()) {
+                QJsonArray array = value.toArray();
+                foreach (const QJsonValue & v, array) {
+                    result.append(QString::number(v.toObject().value("INTERVAL").toInt()));
+                    result.append(v.toObject().value("MODE").toString());
+                    result.append(v.toObject().value("TYPE").toString());
+                }
+            } else {
+                result.append(QString::number(value.toObject().value("INTERVAL").toInt()));
+                result.append(value.toObject().value("MODE").toString());
+                result.append(value.toObject().value("TYPE").toString());
+            }
         }
     }
     return result;

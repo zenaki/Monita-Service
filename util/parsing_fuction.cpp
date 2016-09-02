@@ -26,7 +26,11 @@ QString parsing_function::hex_to_bin_conversion(QString hex){
     /* 4 bit pertama di buang, karena hanya sbg penanda
        SIN / MIN dari data SkyWave */
 
-    for (int i = 4; i < hex.size(); i++){
+//    for (int i = 4; i < hex.size(); i++){
+//        biner.sprintf("%s%s", biner.toLocal8Bit().data(), hex_to_bin(dat[i]).toLocal8Bit().data());
+//    }
+
+    for (int i = 0; i < hex.size(); i++){
         biner.sprintf("%s%s", biner.toLocal8Bit().data(), hex_to_bin(dat[i]).toLocal8Bit().data());
     }
 
@@ -56,6 +60,44 @@ QString parsing_function::hex_to_bin(char dat){
     return (QString) biner;
 }
 
+QString parsing_function::bin_to_hex_conversion(QString bin){
+    QString hexa = "";
+    QString temp;
+
+    char dat[bin.size()+1];
+
+    strcpy(dat, bin.toLatin1());
+
+    for (int i = 0; i < bin.size(); i+=4){
+        temp.sprintf("%c%c%c%c", bin.at(i), bin.at(i+1), bin.at(i+2), bin.at(i+3));
+        hexa.sprintf("%s%s", hexa.toLocal8Bit().data(), bin_to_hex(temp).toLocal8Bit().data());
+    }
+
+    return (QString) hexa;
+}
+
+QString parsing_function::bin_to_hex(QString dat){
+    QString hexa;
+
+    if (dat == "1111") hexa = 'F';
+    if (dat == "1110") hexa = 'E';
+    if (dat == "1101") hexa = 'D';
+    if (dat == "1100") hexa = 'C';
+    if (dat == "1011") hexa = 'B';
+    if (dat == "1010") hexa = 'A';
+    if (dat == "1001") hexa = '9';
+    if (dat == "1000") hexa = '8';
+    if (dat == "0111") hexa = '7';
+    if (dat == "0110") hexa = '6';
+    if (dat == "0101") hexa = '5';
+    if (dat == "0100") hexa = '4';
+    if (dat == "0011") hexa = '3';
+    if (dat == "0010") hexa = '2';
+    if (dat == "0001") hexa = '1';
+    if (dat == "0000") hexa = '0';
+
+    return (QString) hexa;
+}
 
 QString parsing_function::format_5cut_32get(QString biner){
 

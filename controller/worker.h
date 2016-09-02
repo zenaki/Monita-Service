@@ -5,11 +5,12 @@
 
 #include "util/utama.h"
 #include "util/config.h"
-#include <util/util_skyw.h>
+//#include <util/util_skyw.h>
 
 #include "controller/tcp_modbus.h"
 #include "controller/data_mysql.h"
 #include "controller/data_visual.h"
+#include "controller/sky_wave.h"
 
 class Worker : public QObject
 {
@@ -20,14 +21,14 @@ public:
 
 private slots:
     void doWork();
-    void replyFinished(QNetworkReply* reply);           /** veranda **/
+//    void replyFinished(QNetworkReply* reply);           /** veranda **/
 
 private:
     config cfg;
     monita_log log;
-    QSqlDatabase db;                                    /** veranda **/
-    QNetworkAccessManager *manager;                     /** veranda **/
-    util_skyw read;                                     /** veranda **/
+//    QSqlDatabase db;                                    /** veranda **/
+//    QNetworkAccessManager *manager;                     /** veranda **/
+//    util_skyw read;                                     /** veranda **/
 
     tcp_modbus obj_tcp_modbus;
     QThread ThreadTcpModbus;
@@ -35,16 +36,18 @@ private:
     QThread ThreadDataMysql;
     data_visual obj_data_visual;
     QThread ThreadDataVisual;
+    sky_wave obj_sky_wave;
+    QThread ThreadSkyWave;
 
-    struct sky_wave_ship *marine;                       /** veranda **/
-    struct sky_wave_account *acc;                       /** veranda **/
-    struct monita_config monita_cfg;
+//    struct sky_wave_ship *marine;                       /** veranda **/
+//    struct sky_wave_account *acc;                       /** veranda **/
+//    struct monita_config monita_cfg;
 
-    int ship_count;                                     /** veranda **/
-    int gateway_count;                                  /** veranda **/
-    int cnt_panggil;                                    /** veranda **/
+//    int ship_count;                                     /** veranda **/
+//    int gateway_count;                                  /** veranda **/
+//    int cnt_panggil;                                    /** veranda **/
 
-    void request_sky_wave();                            /** veranda **/
+//    void request_sky_wave();                            /** veranda **/
 };
 
 #endif

@@ -9,7 +9,7 @@ public:
     get_db();
 
     bool check_table_is_available(QSqlDatabase db, QString table_name);
-    QStringList get_config(QSqlDatabase db);
+    void skyWave_config(QSqlDatabase db, struct monita_config *mon);
 
     ///** SKY WAVE **///
     int sum_ship(QSqlDatabase db);

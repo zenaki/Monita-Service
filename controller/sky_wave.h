@@ -27,6 +27,7 @@ private:
     QNetworkAccessManager *manager;
     util_skyw read;
     get_db get;
+    save_db set;
     parsing_function parse;
 
     struct sky_wave_ship *marine;
@@ -37,7 +38,7 @@ private:
     int cnt_panggil;
     QJsonDocument JsonDoc;
 
-    void parsing(QByteArray data_json);
+    void parsing(QByteArray data_json, int indexGateWay);
     QStringList parsingRawPayload(QString RawData);
 
 signals:

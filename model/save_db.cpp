@@ -4,21 +4,11 @@ save_db::save_db()
 {
 }
 
-void save_db::data_harian(QSqlDatabase db, QString tb_name, QString tanggal, QString data){
+void save_db::data_harian(QSqlDatabase db, QString tb_name, QString data){
     QString query;
     QSqlQuery q(db);
 
-/*    query = "REPLACE INTO data_" + tanggal + " ( \
-                id_titik_ukur, \
-                slave_id, \
-                waktu, \
-                data_tunggal, \
-                hour, \
-                minute, \
-                second \
-            ) VALUES ";
-*/
-    query = "REPLACE INTO " + tb_name + tanggal + " ( \
+    query = "REPLACE INTO " + tb_name + " ( \
                 id_titik_ukur, \
                 waktu, \
                 data_tunggal, \
@@ -27,37 +17,16 @@ void save_db::data_harian(QSqlDatabase db, QString tb_name, QString tanggal, QSt
                 second \
             ) VALUES ";
     query = query + data + ";";
-//    qDebug() << query;
-
     q.prepare(query);
-
-//    q->bindValue(":id_titik_ukur", id_titik_ukur);
-//    q->bindValue(":waktu", waktu);
-//    q->bindValue(":data_tunggal", data_tunggal);
-//    q->bindValue(":hour", hour);
-//    q->bindValue(":minute", minute);
-//    q->bindValue(":second", second);
-
     q.exec();
 }
 
-void save_db::create_tabel_data_harian(QSqlDatabase db, QString tb_name, QString tanggal){
+void save_db::create_tabel_data_harian(QSqlDatabase db, QString tb_name){
     QString query;
     QSqlQuery q(db);
 
     query.clear();
-/*    query = "CREATE TABLE if not exists " + tb_name + tanggal + " (\
-                id_titik_ukur INT(11) NOT NULL, \
-                slave_id INT(3) NOT NULL, \
-                waktu bigint(17) NOT NULL, \
-                data_tunggal float NOT NULL, \
-                hour tinyint(4) NOT NULL, \
-                minute tinyint(4) NOT NULL, \
-                second tinyint(4) NOT NULL, \
-                PRIMARY KEY (id_titik_ukur, slave_id, waktu) \
-    );";
-*/
-    query = "CREATE TABLE if not exists " + tb_name + tanggal + " (\
+    query = "CREATE TABLE if not exists " + tb_name + " (\
                 id_titik_ukur INT(11) NOT NULL, \
                 waktu bigint(17) NOT NULL, \
                 data_tunggal float NOT NULL, \
@@ -69,12 +38,73 @@ void save_db::create_tabel_data_harian(QSqlDatabase db, QString tb_name, QString
     q.exec(query);
 }
 
+void save_db::create_table_data_punya_skywave(QSqlDatabase db, QString tb_name)
+{
+    QString query;
+    QSqlQuery q(db);
+
+    query.clear();
+    query = "CREATE TABLE if not exists " + tb_name + " ("
+                "id_titik_ukur INT NOT NULL, "
+                "value FLOAT NOT NULL, "
+                "id_trip INT NULL DEFAULT NULL, "
+                "epochtime INT NOT NULL, "
+                "data_time DATETIME NOT NULL, "
+                "flag_data INT, "
+                "PRIMARY KEY (id_titik_ukur, data_time)"
+            ")";
+    q.exec(query);
+}
+
+void save_db::data_punya_skywave(QSqlDatabase db, QString tb_name, QString data)
+{
+    QString query;
+    QSqlQuery q(db);
+
+    query = "REPLACE INTO " + tb_name + " ( \
+                id_titik_ukur, \
+                value, \
+                id_trip, \
+                epochtime, \
+                data_time, \
+                flag_data \
+            ) VALUES ";
+    query = query + data + ";";
+//    qDebug() << query;
+    q.prepare(query);
+    q.exec();
+}
+
+void save_db::create_tabel_data_skywave(QSqlQuery *q)
+{
+    QString query;
+
+    query.clear();
+    query.sprintf("CREATE TABLE if not exists data ("
+                  "id_titik_ukur INT NOT NULL, "
+                  "value FLOAT NOT NULL, "
+                  "id_trip INT NULL DEFAULT NULL, "
+                  "epochtime INT NOT NULL, "
+                  "data_time DATETIME NOT NULL, "
+                  "flag_data INT, "
+                  "PRIMARY KEY (id_titik_ukur, data_time)"
+                  ")");
+    q->exec(query);
+}
+
 void save_db::create_tabel_data_harian_skywave(QSqlQuery *q, int index){
     QString query;
 
     query.clear();
-    query.sprintf("CREATE TABLE if not exists data_%d (id_titik_ukur INT NOT NULL, value FLOAT NOT NULL, id_trip INT NULL DEFAULT NULL, \
-                  epochtime INT NOT NULL, data_time DATETIME NOT NULL, flag_data INT, PRIMARY KEY (id_titik_ukur, data_time))", index);
+    query.sprintf("CREATE TABLE if not exists data_%d ("
+                  "id_titik_ukur INT NOT NULL, "
+                  "value FLOAT NOT NULL, "
+                  "id_trip INT NULL DEFAULT NULL, "
+                  "epochtime INT NOT NULL, "
+                  "data_time DATETIME NOT NULL, "
+                  "flag_data INT, "
+                  "PRIMARY KEY (id_titik_ukur, data_time)"
+                  ")", index);
     q->exec(query);
 }
 
@@ -82,7 +112,16 @@ void save_db::data_skywave(QSqlQuery *q, float value, int id_tu, int id_trip, in
     //printf("insert id_tu : %d --> value : %.2f\n", id_tu, value);
 
     QString query;
-    query.sprintf("REPLACE INTO data(id_titik_ukur, value, id_trip, epochtime, data_time, flag_data) VALUES(%d, %.2f, %d, %d, '%s', %d)",
+    query.sprintf("REPLACE INTO data ("
+                  "id_titik_ukur, "
+                  "value, "
+                  "id_trip, "
+                  "epochtime, "
+                  "data_time, "
+                  "flag_data"
+                  ") VALUES ("
+                  "%d, "
+                  "%.2f, %d, %d, '%s', %d)",
                   id_tu, value, id_trip, epochtime, data_time.toUtf8().data(), flag);
 
     printf("%s\n", query.toUtf8().data());

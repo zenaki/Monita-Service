@@ -72,14 +72,18 @@ struct sky_wave_account {
 
 struct modem {
     QString modem_id;
+    QString last_utc;
     QStringList id_tu;
+    QStringList val_tu;
+    QString query;
 };
 
 struct sky_wave_config {
     QString url;
     QDateTime next_utc;
-    int SIN;
-    int MIN;
+//    int SIN;
+//    int MIN;
+    QString SIN_MIN;
     int jml_modem;
     struct modem mdm[20];
 };

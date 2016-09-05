@@ -27,8 +27,9 @@ void get_db::skyWave_config(QSqlDatabase db, monita_config *mon) {
               "gw.password,"
               "gw.next_utc,"
               "sh.modem_id,"
-              "gw.SIN,"
-              "gw.MIN,"
+//              "gw.SIN,"
+//              "gw.MIN,"
+              "gw.config,"
 //              "pr.urutan_data_monita,"
               "pr.id_tu "
           "from "
@@ -39,7 +40,13 @@ void get_db::skyWave_config(QSqlDatabase db, monita_config *mon) {
               "gw.id = sh.gateway and "
               "sh.id_ship = pr.id_ship and "
               "gw.status = 1 and "
-              "sh.status = 1 "
+              "sh.status = 1 and "
+              "gw.config is not null and "
+              "sh.modem_id is not null and "
+              "gw.next_utc is not null and "
+              "gw.password is not null and "
+              "gw.access_id is not null and "
+              "gw.url is not null "
           "order by "
               "gw.url, sh.id_ship, pr.urutan_data_monita;");
     if(!q.exec()){
@@ -53,15 +60,14 @@ void get_db::skyWave_config(QSqlDatabase db, monita_config *mon) {
                 if (
                         (mon->sky[mon->jml_gateWay-1].url == url) &&
                         (mon->sky[mon->jml_gateWay-1].next_utc == q.value(3).toDateTime()) &&
-                        (mon->sky[mon->jml_gateWay-1].SIN == q.value(5).toInt()) &&
-                        (mon->sky[mon->jml_gateWay-1].MIN == q.value(6).toInt())
+                        (mon->sky[mon->jml_gateWay-1].SIN_MIN == q.value(5).toString())
                         ) {
                     if (mon->sky[mon->jml_gateWay-1].mdm[mon->sky[mon->jml_gateWay-1].jml_modem].modem_id == q.value(4).toString()) {
-                        mon->sky[mon->jml_gateWay-1].mdm[mon->sky[mon->jml_gateWay-1].jml_modem].id_tu.append(q.value(7).toString());
+                        mon->sky[mon->jml_gateWay-1].mdm[mon->sky[mon->jml_gateWay-1].jml_modem].id_tu.append(q.value(6).toString());
                     } else {
                         mon->sky[mon->jml_gateWay-1].jml_modem++;
                         mon->sky[mon->jml_gateWay-1].mdm[mon->sky[mon->jml_gateWay-1].jml_modem].modem_id = q.value(4).toString();
-                        mon->sky[mon->jml_gateWay-1].mdm[mon->sky[mon->jml_gateWay-1].jml_modem].id_tu.append(q.value(7).toString());
+                        mon->sky[mon->jml_gateWay-1].mdm[mon->sky[mon->jml_gateWay-1].jml_modem].id_tu.append(q.value(6).toString());
                     }
                 } else {
                     mon->sky[mon->jml_gateWay].jml_modem = 0;
@@ -70,9 +76,8 @@ void get_db::skyWave_config(QSqlDatabase db, monita_config *mon) {
                     mon->sky[mon->jml_gateWay].url = url;
                     mon->sky[mon->jml_gateWay].next_utc = q.value(3).toDateTime();
                     mon->sky[mon->jml_gateWay].mdm[mon->sky[mon->jml_gateWay].jml_modem].modem_id = q.value(4).toString();
-                    mon->sky[mon->jml_gateWay].SIN = q.value(5).toInt();
-                    mon->sky[mon->jml_gateWay].MIN = q.value(6).toInt();
-                    mon->sky[mon->jml_gateWay].mdm[mon->sky[mon->jml_gateWay].jml_modem].id_tu.append(q.value(7).toString());
+                    mon->sky[mon->jml_gateWay].SIN_MIN = q.value(5).toString();
+                    mon->sky[mon->jml_gateWay].mdm[mon->sky[mon->jml_gateWay].jml_modem].id_tu.append(q.value(6).toString());
                     mon->jml_gateWay++;
                 }
             } else {
@@ -82,9 +87,8 @@ void get_db::skyWave_config(QSqlDatabase db, monita_config *mon) {
                 mon->sky[mon->jml_gateWay].url = url;
                 mon->sky[mon->jml_gateWay].next_utc = q.value(3).toDateTime();
                 mon->sky[mon->jml_gateWay].mdm[mon->sky[mon->jml_gateWay].jml_modem].modem_id = q.value(4).toString();
-                mon->sky[mon->jml_gateWay].SIN = q.value(5).toInt();
-                mon->sky[mon->jml_gateWay].MIN = q.value(6).toInt();
-                mon->sky[mon->jml_gateWay].mdm[mon->sky[mon->jml_gateWay].jml_modem].id_tu.append(q.value(7).toString());
+                mon->sky[mon->jml_gateWay].SIN_MIN = q.value(5).toString();
+                mon->sky[mon->jml_gateWay].mdm[mon->sky[mon->jml_gateWay].jml_modem].id_tu.append(q.value(6).toString());
                 mon->jml_gateWay++;
             }
         }

@@ -80,13 +80,17 @@ QStringList config::read(QString obj)
                 QJsonArray array = value.toArray();
                 foreach (const QJsonValue & v, array) {
                     result.append(QString::number(v.toObject().value("INTERVAL").toInt()));
-                    result.append(v.toObject().value("MODE").toString());
-                    result.append(v.toObject().value("TYPE").toString());
+//                    result.append(QString::number(v.toObject().value("GMT").toInt()));
+                    result.append(v.toObject().value("TABLE_NAME").toString());
+                    result.append(v.toObject().value("TABLE_HARIAN_NAME").toString());
+                    result.append(v.toObject().value("DATE_FORMAT").toString());
                 }
             } else {
                 result.append(QString::number(value.toObject().value("INTERVAL").toInt()));
-                result.append(value.toObject().value("MODE").toString());
-                result.append(value.toObject().value("TYPE").toString());
+//                result.append(QString::number(value.toObject().value("GMT").toInt()));
+                result.append(value.toObject().value("TABLE_NAME").toString());
+                result.append(value.toObject().value("TABLE_HARIAN_NAME").toString());
+                result.append(value.toObject().value("DATE_FORMAT").toString());
             }
         }
     }
@@ -126,6 +130,16 @@ void config::write(QJsonObject &json) const //Default
     configObject["WEBSOCKET_PORT"] = 1234;
     configArray.append(configObject);
     json["CONFIG"] = configArray;
+
+    QJsonArray skyArray;
+    QJsonObject skyObject;
+    skyObject["INTERVAL"] = 5;
+//    skyObject["GMT"] = 7;
+    skyObject["TABLE_NAME"] = QString("data");
+    skyObject["TABLE_HARIAN_NAME"] = QString("data_");
+    skyObject["DATE_FORMAT"] = QString("yyyyMMdd");
+    skyArray.append(skyObject);
+    json["SKYWAVE"] = skyArray;
 }
 
 bool config::loadConfig(config::SaveFormat saveFormat)

@@ -54,8 +54,8 @@ void data_mysql::set_dataHarian()
 //            if (t >= 3) {emit finish();}
         }
     }
-    if (!get.check_table_is_available(db, monita_cfg.config.at(4) + dt_sdh.date().toString("yyyy_MM_dd"))) {
-        set.create_tabel_data_harian(db, monita_cfg.config.at(4), dt_sdh.date().toString("yyyy_MM_dd"));
+    if (!get.check_table_is_available(db, dt_sdh.date().toString(monita_cfg.config.at(4)))) {
+        set.create_tabel_data_harian(db, dt_sdh.date().toString(monita_cfg.config.at(4)));
     }
     for (int i = 0; i < redis_len; i++) {
         data = data + "(" +
@@ -83,7 +83,7 @@ void data_mysql::set_dataHarian()
 //            if (t >= 3) {emit finish();}
         }
     }
-    set.data_harian(db, monita_cfg.config.at(4), dt_sdh.date().toString("yyyy_MM_dd"), data);
+    set.data_harian(db, dt_sdh.date().toString(monita_cfg.config.at(4)), data);
 //    db.close();
     log.write("Database","Data Inserted on table data_" + QDate::currentDate().toString("dd_MM_yyyy") + " ..");
 //    rds.reqRedis("del data_jaman_" + QDate::currentDate().toString("dd_MM_yyyy"), address, port);

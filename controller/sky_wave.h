@@ -23,7 +23,7 @@ public:
     void doSetup(QThread &cThread);
 
 private:
-    QSqlDatabase db;
+    QSqlDatabase db_skywave;
     QNetworkAccessManager *manager;
     util_skyw read;
     get_db get;

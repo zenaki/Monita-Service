@@ -75,6 +75,39 @@ void save_db::data_punya_skywave(QSqlDatabase db, QString tb_name, QString data)
     q.exec();
 }
 
+void save_db::update_multiple_row_punya_skywave(QSqlDatabase db, QString tb_name, QString col_target, QString col_clause, QString data1, QString data2)
+{
+    QString query;
+    QSqlQuery q(db);
+
+    query = "UPDATE " + tb_name + " " +
+            "SET " + col_target + " = "
+                "CASE " + col_clause + " " + data1 + " " +
+//                    "WHEN 1 THEN 53 "
+//                    "WHEN 2 THEN 65 "
+//                    "WHEN 3 THEN 47 "
+//                    "WHEN 4 THEN 53 "
+//                    "WHEN 5 THEN 47 "
+                "END "
+//            "WHERE id IN (1,2,3,4,5)";
+            "WHERE " + col_clause + " IN (" + data2 + ");";
+//    qDebug() << query;
+    q.prepare(query);
+    q.exec();
+}
+
+void save_db::delete_data_jaman_punya_skywave(QSqlDatabase db, QString tb_name, int epochtime)
+{
+    QString query;
+    QSqlQuery q(db);
+
+    query = "DELETE FROM " + tb_name + " " +
+            "WHERE epochtime <= " + QString::number(epochtime) + ";";
+//    qDebug() << query;
+    q.prepare(query);
+    q.exec();
+}
+
 void save_db::create_tabel_data_skywave(QSqlQuery *q)
 {
     QString query;

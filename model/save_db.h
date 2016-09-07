@@ -17,6 +17,8 @@ public:
 
     void create_table_data_punya_skywave(QSqlDatabase db, QString tb_name);
     void data_punya_skywave(QSqlDatabase db, QString tb_name, QString data);
+    void update_multiple_row_punya_skywave(QSqlDatabase db, QString tb_name, QString col_target, QString col_clause, QString data1, QString data2);
+    void delete_data_jaman_punya_skywave(QSqlDatabase db, QString tb_name, int epochtime);
 
     void create_tabel_data_skywave(QSqlQuery *q);
     void create_tabel_data_harian_skywave(QSqlQuery *q, int index);

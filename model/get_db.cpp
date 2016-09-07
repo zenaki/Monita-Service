@@ -22,6 +22,7 @@ void get_db::skyWave_config(QSqlDatabase db, monita_config *mon) {
     QString url;
     mon->jml_gateWay = 0;
     q.prepare("select "
+              "gw.id,"
               "gw.url,"
               "gw.access_id,"
               "gw.password,"
@@ -56,39 +57,41 @@ void get_db::skyWave_config(QSqlDatabase db, monita_config *mon) {
         while(q.next()){
             if (mon->jml_gateWay > 0) {
                 url.sprintf("%sget_return_messages.json/?access_id=%s&password=%s&start_utc=",
-                             q.value(0).toString().toUtf8().data(), q.value(1).toString().toUtf8().data(), q.value(2).toString().toUtf8().data());
-                if (
-                        (mon->sky[mon->jml_gateWay-1].url == url) &&
-                        (mon->sky[mon->jml_gateWay-1].next_utc == q.value(3).toDateTime()) &&
-                        (mon->sky[mon->jml_gateWay-1].SIN_MIN == q.value(5).toString())
-                        ) {
-                    if (mon->sky[mon->jml_gateWay-1].mdm[mon->sky[mon->jml_gateWay-1].jml_modem].modem_id == q.value(4).toString()) {
-                        mon->sky[mon->jml_gateWay-1].mdm[mon->sky[mon->jml_gateWay-1].jml_modem].id_tu.append(q.value(6).toString());
+                             q.value(1).toString().toUtf8().data(), q.value(2).toString().toUtf8().data(), q.value(3).toString().toUtf8().data());
+                if (mon->sky[mon->jml_gateWay-1].gateWay_id = q.value(0).toInt()) {
+//                        (mon->sky[mon->jml_gateWay-1].url == url) &&
+//                        (mon->sky[mon->jml_gateWay-1].next_utc == q.value(4).toDateTime()) &&
+//                        (mon->sky[mon->jml_gateWay-1].SIN_MIN == q.value(6).toString())
+//                        ) {
+                    if (mon->sky[mon->jml_gateWay-1].mdm[mon->sky[mon->jml_gateWay-1].jml_modem].modem_id == q.value(5).toString()) {
+                        mon->sky[mon->jml_gateWay-1].mdm[mon->sky[mon->jml_gateWay-1].jml_modem].id_tu.append(q.value(7).toString());
                     } else {
                         mon->sky[mon->jml_gateWay-1].jml_modem++;
-                        mon->sky[mon->jml_gateWay-1].mdm[mon->sky[mon->jml_gateWay-1].jml_modem].modem_id = q.value(4).toString();
-                        mon->sky[mon->jml_gateWay-1].mdm[mon->sky[mon->jml_gateWay-1].jml_modem].id_tu.append(q.value(6).toString());
+                        mon->sky[mon->jml_gateWay-1].mdm[mon->sky[mon->jml_gateWay-1].jml_modem].modem_id = q.value(5).toString();
+                        mon->sky[mon->jml_gateWay-1].mdm[mon->sky[mon->jml_gateWay-1].jml_modem].id_tu.append(q.value(7).toString());
                     }
                 } else {
                     mon->sky[mon->jml_gateWay].jml_modem = 0;
+                    mon->sky[mon->jml_gateWay].gateWay_id = q.value(0).toInt();
                     url.sprintf("%sget_return_messages.json/?access_id=%s&password=%s&start_utc=",
-                                q.value(0).toString().toUtf8().data(), q.value(1).toString().toUtf8().data(), q.value(2).toString().toUtf8().data());
+                                q.value(1).toString().toUtf8().data(), q.value(2).toString().toUtf8().data(), q.value(3).toString().toUtf8().data());
                     mon->sky[mon->jml_gateWay].url = url;
-                    mon->sky[mon->jml_gateWay].next_utc = q.value(3).toDateTime();
-                    mon->sky[mon->jml_gateWay].mdm[mon->sky[mon->jml_gateWay].jml_modem].modem_id = q.value(4).toString();
-                    mon->sky[mon->jml_gateWay].SIN_MIN = q.value(5).toString();
-                    mon->sky[mon->jml_gateWay].mdm[mon->sky[mon->jml_gateWay].jml_modem].id_tu.append(q.value(6).toString());
+                    mon->sky[mon->jml_gateWay].next_utc = q.value(4).toDateTime();
+                    mon->sky[mon->jml_gateWay].mdm[mon->sky[mon->jml_gateWay].jml_modem].modem_id = q.value(5).toString();
+                    mon->sky[mon->jml_gateWay].SIN_MIN = q.value(6).toString();
+                    mon->sky[mon->jml_gateWay].mdm[mon->sky[mon->jml_gateWay].jml_modem].id_tu.append(q.value(7).toString());
                     mon->jml_gateWay++;
                 }
             } else {
                 mon->sky[mon->jml_gateWay].jml_modem = 0;
+                mon->sky[mon->jml_gateWay].gateWay_id = q.value(0).toInt();
                 url.sprintf("%sget_return_messages.json/?access_id=%s&password=%s&start_utc=",
-                             q.value(0).toString().toUtf8().data(), q.value(1).toString().toUtf8().data(), q.value(2).toString().toUtf8().data());
+                             q.value(1).toString().toUtf8().data(), q.value(2).toString().toUtf8().data(), q.value(3).toString().toUtf8().data());
                 mon->sky[mon->jml_gateWay].url = url;
-                mon->sky[mon->jml_gateWay].next_utc = q.value(3).toDateTime();
-                mon->sky[mon->jml_gateWay].mdm[mon->sky[mon->jml_gateWay].jml_modem].modem_id = q.value(4).toString();
-                mon->sky[mon->jml_gateWay].SIN_MIN = q.value(5).toString();
-                mon->sky[mon->jml_gateWay].mdm[mon->sky[mon->jml_gateWay].jml_modem].id_tu.append(q.value(6).toString());
+                mon->sky[mon->jml_gateWay].next_utc = q.value(4).toDateTime();
+                mon->sky[mon->jml_gateWay].mdm[mon->sky[mon->jml_gateWay].jml_modem].modem_id = q.value(5).toString();
+                mon->sky[mon->jml_gateWay].SIN_MIN = q.value(6).toString();
+                mon->sky[mon->jml_gateWay].mdm[mon->sky[mon->jml_gateWay].jml_modem].id_tu.append(q.value(7).toString());
                 mon->jml_gateWay++;
             }
         }

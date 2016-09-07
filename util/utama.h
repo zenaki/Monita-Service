@@ -79,6 +79,7 @@ struct modem {
 };
 
 struct sky_wave_config {
+    int gateWay_id;
     QString url;
     QDateTime next_utc;
 //    int SIN;

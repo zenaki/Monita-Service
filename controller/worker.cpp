@@ -39,9 +39,9 @@ Worker::Worker(QObject *parent) : QObject(parent)
 
 Worker::~Worker()
 {
-//    if (ThreadTcpModbus.isRunning()) ThreadTcpModbus.terminate();
-//    if (ThreadDataMysql.isRunning()) ThreadDataMysql.terminate();
-//    if (ThreadDataVisual.isRunning()) ThreadDataVisual.terminate();
+    if (ThreadTcpModbus.isRunning()) ThreadTcpModbus.terminate();
+    if (ThreadDataMysql.isRunning()) ThreadDataMysql.terminate();
+    if (ThreadDataVisual.isRunning()) ThreadDataVisual.terminate();
     if (ThreadSkyWave.isRunning()) ThreadSkyWave.terminate();
 //    if (m_pWebSocketServer->isListening()) {
 //        m_pWebSocketServer->close();
@@ -51,45 +51,18 @@ Worker::~Worker()
 
 void Worker::doWork()
 {
-//    bool ok;
-//    QByteArray array;
-//    QString data = "4eaf8c9c";
 
-//    int sign = 1;
-//    array = data.toUtf8();
-//    array = QByteArray::number(array.toLongLong(&ok,16),2); //convert hex to binary -you don't need this since your incoming data is binary
-//    if(array.length()==32) {
-//        if(array.at(0)=='1')  sign =-1;                       // if bit 0 is 1 number is negative
-//        array.remove(0,1);                                     // remove sign bit
-//    }
-//    QByteArray fraction =array.right(23);   //get the fractional part
-//    double mantissa = 0;
-//    for(int i=0;i<fraction.length();i++)     // iterate through the array to claculate the fraction as a decimal.
-//        if(fraction.at(i)=='1')     mantissa += 1.0/(pow(2,i+1));
-//    int exponent = array.left(array.length()-23).toLongLong(&ok,2)-127;     //claculate the exponent
+    obj_tcp_modbus.doSetup(ThreadTcpModbus);
+    obj_tcp_modbus.moveToThread(&ThreadTcpModbus);
+    ThreadTcpModbus.start();
 
-//    QString result_dec = QString::number(data.toLongLong(&ok, 16));
-//    QString result_float = QString::number( sign*pow(2,exponent)*(mantissa+1.0),'f', 5 );
+    obj_data_mysql.doSetup(ThreadDataMysql);
+    obj_data_mysql.moveToThread(&ThreadDataMysql);
+    ThreadDataMysql.start();
 
-//    int epoch = result_float.toInt();
-
-//    QString unixTimeStr = QString::number(result_float.toInt());
-
-//    const uint s = unixTimeStr.toUInt( &ok );
-//    const QDateTime dt = QDateTime::fromTime_t( s );
-//    const QString result_textdate = dt.toString( Qt::TextDate );
-
-//    obj_tcp_modbus.doSetup(ThreadTcpModbus);
-//    obj_tcp_modbus.moveToThread(&ThreadTcpModbus);
-//    ThreadTcpModbus.start();
-
-//    obj_data_mysql.doSetup(ThreadDataMysql);
-//    obj_data_mysql.moveToThread(&ThreadDataMysql);
-//    ThreadDataMysql.start();
-
-//    obj_data_visual.doSetup(ThreadDataVisual);
-//    obj_data_visual.moveToThread(&ThreadDataVisual);
-//    ThreadDataVisual.start();
+    obj_data_visual.doSetup(ThreadDataVisual);
+    obj_data_visual.moveToThread(&ThreadDataVisual);
+    ThreadDataVisual.start();
 
     obj_sky_wave.doSetup(ThreadSkyWave);
     obj_sky_wave.moveToThread(&ThreadSkyWave);

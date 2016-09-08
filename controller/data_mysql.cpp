@@ -54,8 +54,8 @@ void data_mysql::set_dataHarian()
 //            if (t >= 3) {emit finish();}
         }
     }
-    if (!get.check_table_is_available(db, dt_sdh.date().toString(monita_cfg.config.at(4)))) {
-        set.create_tabel_data_harian(db, dt_sdh.date().toString(monita_cfg.config.at(4)));
+    if (!get.check_table_is_available(db, monita_cfg.config.at(4) + dt_sdh.date().toString("yyyyMMdd"))) {
+        set.create_tabel_data_harian(db, monita_cfg.config.at(4) + dt_sdh.date().toString("yyyyMMdd"));
     }
     for (int i = 0; i < redis_len; i++) {
         data = data + "(" +

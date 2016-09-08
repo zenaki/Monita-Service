@@ -57,6 +57,7 @@ QStringList config::read(QString obj)
                     result.append(v.toObject().value("REDIS_KEY").toString());
                     result.append(v.toObject().value("TABLE_NAME").toString());
                     result.append(QString::number(v.toObject().value("WEBSOCKET_PORT").toInt()));
+                    result.append(QString::number(v.toObject().value("INTERVAL_SKYWAVE").toInt()));
                 }
             } else {
                 result.append(QString::number(value.toObject().value("DB_PERIOD").toInt()));
@@ -65,6 +66,7 @@ QStringList config::read(QString obj)
                 result.append(value.toObject().value("REDIS_KEY").toString());
                 result.append(value.toObject().value("TABLE_NAME").toString());
                 result.append(QString::number(value.toObject().value("WEBSOCKET_PORT").toInt()));
+                result.append(QString::number(value.toObject().value("INTERVAL_SKYWAVE").toInt()));
             }
         } else if (obj == "FUNCT") {
             if (object.value(obj).isArray()) {
@@ -74,23 +76,6 @@ QStringList config::read(QString obj)
                 }
             } else {
                 result.append(value.toObject().value("LUA_FILE").toString());
-            }
-        } else if (obj == "SKYWAVE") {
-            if (object.value(obj).isArray()) {
-                QJsonArray array = value.toArray();
-                foreach (const QJsonValue & v, array) {
-                    result.append(QString::number(v.toObject().value("INTERVAL").toInt()));
-//                    result.append(QString::number(v.toObject().value("GMT").toInt()));
-                    result.append(v.toObject().value("TABLE_NAME").toString());
-                    result.append(v.toObject().value("TABLE_HARIAN_NAME").toString());
-                    result.append(v.toObject().value("DATE_FORMAT").toString());
-                }
-            } else {
-                result.append(QString::number(value.toObject().value("INTERVAL").toInt()));
-//                result.append(QString::number(value.toObject().value("GMT").toInt()));
-                result.append(value.toObject().value("TABLE_NAME").toString());
-                result.append(value.toObject().value("TABLE_HARIAN_NAME").toString());
-                result.append(value.toObject().value("DATE_FORMAT").toString());
             }
         }
     }
@@ -128,18 +113,19 @@ void config::write(QJsonObject &json) const //Default
     configObject["REDIS_KEY"] = QString("data_jaman_");
     configObject["TABLE_NAME"] = QString("data_harian_");
     configObject["WEBSOCKET_PORT"] = 1234;
+    configObject["INTERVAL_SKYWAVE"] = 2;
     configArray.append(configObject);
     json["CONFIG"] = configArray;
 
-    QJsonArray skyArray;
-    QJsonObject skyObject;
-    skyObject["INTERVAL"] = 5;
-//    skyObject["GMT"] = 7;
-    skyObject["TABLE_NAME"] = QString("data");
-    skyObject["TABLE_HARIAN_NAME"] = QString("data_");
-    skyObject["DATE_FORMAT"] = QString("yyyyMMdd");
-    skyArray.append(skyObject);
-    json["SKYWAVE"] = skyArray;
+//    QJsonArray skyArray;
+//    QJsonObject skyObject;
+//    skyObject["INTERVAL"] = 5;
+////    skyObject["GMT"] = 7;
+//    skyObject["TABLE_NAME"] = QString("data");
+//    skyObject["TABLE_HARIAN_NAME"] = QString("data_");
+//    skyObject["DATE_FORMAT"] = QString("yyyyMMdd");
+//    skyArray.append(skyObject);
+//    json["SKYWAVE"] = skyArray;
 }
 
 bool config::loadConfig(config::SaveFormat saveFormat)

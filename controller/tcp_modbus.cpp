@@ -28,10 +28,10 @@ void tcp_modbus::doWork()
 {
     QDateTime dateTime = QDateTime::currentDateTime();
 
-    monita_cfg.jml_sumber = 0;
-    monita_cfg.source_config = cfg.read("SOURCE");
-    if (monita_cfg.source_config.length() > 9) {monita_cfg.jml_sumber = monita_cfg.source_config.length()/9;
-    } else {if (monita_cfg.source_config.length() > 0) monita_cfg.jml_sumber++;}
+//    monita_cfg.jml_sumber = 0;
+//    monita_cfg.source_config = cfg.read("SOURCE");
+//    if (monita_cfg.source_config.length() > 9) {monita_cfg.jml_sumber = monita_cfg.source_config.length()/9;
+//    } else {if (monita_cfg.source_config.length() > 0) monita_cfg.jml_sumber++;}
 
     for (int i = 0; i < monita_cfg.jml_sumber; i++) {
         if (monita_cfg.source_config.at(6) == "TCP") {
@@ -97,7 +97,8 @@ void tcp_modbus::request_modbus(int index, QDateTime dt_req_mod)
 
     modbus_set_slave( m_tcpModbus, slave );
     log.write("TcpModbus", "Request from : " +
-              monita_cfg.source_config.at(index*9) + ":" + monita_cfg.source_config.at(index*9+1));
+              monita_cfg.source_config.at(index*9) + ":" + monita_cfg.source_config.at(index*9+1),
+              monita_cfg.config.at(7).toInt());
     switch( func )
     {
         case MODBUS_FC_READ_COILS:
@@ -159,7 +160,7 @@ void tcp_modbus::request_modbus(int index, QDateTime dt_req_mod)
         if( writeAccess )
         {
 //            printf("Monita::TcpModbus::Value successfully sent ..\n");
-            log.write("TcpModbus","Value successfully sent ..");
+            log.write("TcpModbus","Value successfully sent ..", monita_cfg.config.at(7).toInt());
             QTimer::singleShot( 2000, this, SLOT( resetStatus() ) );
         }
         else
@@ -254,7 +255,8 @@ void tcp_modbus::request_modbus(int index, QDateTime dt_req_mod)
                               QString::number(addr+(i-1)) + " - " +
                               data_int + " - " +
                               data_hex + " - " +
-                              data_real);
+                              data_real,
+                              monita_cfg.config.at(7).toInt());
                 }
                 data_real.clear();
             }
@@ -271,21 +273,24 @@ void tcp_modbus::request_modbus(int index, QDateTime dt_req_mod)
                     errno == EIO
                                                                     )
             {
-                log.write("TcpModbus","I/O error : did not receive any data from slave ..");
+                log.write("TcpModbus","I/O error : did not receive any data from slave ..",
+                          monita_cfg.config.at(7).toInt());
                 releaseTcpModbus();
             }
             else
             {
                 log.write("TcpModbus","Protocol Error : Slave threw exception " +
                           QString::fromUtf8(modbus_strerror(errno)) +
-                          " or function not implemented.");
+                          " or function not implemented.",
+                          monita_cfg.config.at(7).toInt());
                 releaseTcpModbus();
             }
         }
         else
         {
             log.write("TcpModbus","Protocol Error : "
-                                           "Number of registers returned does not match number of registers requested!");
+                                           "Number of registers returned does not match number of registers requested!",
+                      monita_cfg.config.at(7).toInt());
             releaseTcpModbus();
         }
     }
@@ -335,7 +340,8 @@ void tcp_modbus::LuaRedis_function(QDateTime dt_lua)
             result = rds.eval(rds.readLua(script_path), redis_config.at(0), redis_config.at(1).toInt());
             if (result.length() < 2) {
                 if (result.at(0).indexOf("Err") > 0) {
-                    log.write("Lua", result.at(0));
+                    log.write("Lua", result.at(0),
+                              monita_cfg.config.at(7).toInt());
 //                    funct_temp.append(script_path + ":LuaError:" + result.at(0));
                 } else {
                     funct_temp.append(result.at(0));
@@ -402,16 +408,19 @@ void tcp_modbus::connectTcpModbus(const QString &address, int portNbr)
     m_tcpModbus = modbus_new_tcp( address.toLatin1().constData(), portNbr );
     if( modbus_connect( m_tcpModbus ) == -1 )
     {
-        log.write("TcpModbus",address + ":" + QString::number(portNbr) + " Could not connect ..");
+        log.write("TcpModbus",address + ":" + QString::number(portNbr) + " Could not connect ..",
+                  monita_cfg.config.at(7).toInt());
         releaseTcpModbus();
     } else {
-        log.write("TcpModbus",address + ":" + QString::number(portNbr) + " Connected ..");
+        log.write("TcpModbus",address + ":" + QString::number(portNbr) + " Connected ..",
+                  monita_cfg.config.at(7).toInt());
     }
 }
 
 void tcp_modbus::resetStatus()
 {
-    log.write("TcpModbus","Reset : Ready ..");
+    log.write("TcpModbus","Reset : Ready ..",
+              monita_cfg.config.at(7).toInt());
 }
 
 void tcp_modbus::pollForDataOnBus()

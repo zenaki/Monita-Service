@@ -24,7 +24,8 @@ void data_mysql::set_dataHarian()
     QDateTime dt_sdh = QDateTime::currentDateTime();
 //    QStringList request = rds.reqRedis("hlen monita_service:data_jaman_" + QDate::currentDate().toString("dd_MM_yyyy"), address, port);
     QStringList request = rds.reqRedis("hlen monita_service:temp", address, port);
-    log.write("Redis",request.at(0) + " Data ..");
+    log.write("Redis",request.at(0) + " Data ..",
+              monita_cfg.config.at(7).toInt());
     int redis_len = request.at(0).toInt();
 
 //    request = rds.reqRedis("hgetall monita_service:data_jaman_" + QDate::currentDate().toString("dd_MM_yyyy"), address, port, redis_len*2);
@@ -44,10 +45,11 @@ void data_mysql::set_dataHarian()
     }
 //    int t = 0;
     while (!db.isOpen()) {
-        db.close();
+//        db.close();
         db.open();
         if (!db.isOpen()) {
-            log.write("Database","Error : Connecting Fail ..!!");
+            log.write("Database","Error : Connecting Fail ..!!",
+                      monita_cfg.config.at(7).toInt());
             QThread::msleep(DELAY_DB_CONNECT);
             db = mysql.connect_db();
 //            t++;
@@ -73,10 +75,11 @@ void data_mysql::set_dataHarian()
         }
     }
     while (!db.isOpen()) {
-        db.close();
+//        db.close();
         db.open();
         if (!db.isOpen()) {
-            log.write("Database","Error : Connecting Fail ..!!");
+            log.write("Database","Error : Connecting Fail ..!!",
+                      monita_cfg.config.at(7).toInt());
             QThread::msleep(DELAY_DB_CONNECT);
             db = mysql.connect_db();
 //            t++;
@@ -84,11 +87,14 @@ void data_mysql::set_dataHarian()
         }
     }
     set.data_harian(db, dt_sdh.date().toString(monita_cfg.config.at(4)), data);
-//    db.close();
-    log.write("Database","Data Inserted on table data_" + QDate::currentDate().toString("dd_MM_yyyy") + " ..");
+    db.close();
+    log.write("Database","Data Inserted on table data_" + QDate::currentDate().toString("dd_MM_yyyy") + " ..",
+              monita_cfg.config.at(7).toInt());
 //    rds.reqRedis("del data_jaman_" + QDate::currentDate().toString("dd_MM_yyyy"), address, port);
     rds.reqRedis("del monita_service:temp", address, port);
     rds.reqRedis("del monita_service:" + monita_cfg.config.at(3) + QDate::currentDate().toString("dd_MM_yyyy"), address, port);
     rds.reqRedis("del monita_service:vismon", address, port);
+//    mysql.close(db);
+//    db.close();
 }
 

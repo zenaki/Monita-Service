@@ -8,6 +8,10 @@
 #include "util/util_skyw.h"
 #include "util/parsing_fuction.h"
 
+#include <QNetworkAccessManager>
+#include <QNetworkRequest>
+#include <QNetworkReply>
+
 class sky_wave : public QObject
 {
     Q_OBJECT
@@ -23,7 +27,7 @@ public:
     void doSetup(QThread &cThread);
 
 private:
-    QSqlDatabase db;
+    QSqlDatabase db_skywave;
     QNetworkAccessManager *manager;
     util_skyw read;
     get_db get;

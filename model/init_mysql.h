@@ -14,6 +14,7 @@ public:
     QString password;
 
     QSqlDatabase connect_db();
+    void close(QSqlDatabase db);
 };
 
 #endif // INIT_MYSQL_H

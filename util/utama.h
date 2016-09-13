@@ -12,10 +12,6 @@
 
 #include <QXmlStreamReader>
 
-#include <QNetworkAccessManager>
-#include <QNetworkRequest>
-#include <QNetworkReply>
-
 #include <QDir>
 #include <QFile>
 #include <QSettings>
@@ -71,6 +67,7 @@ struct sky_wave_account {
 };
 
 struct modem {
+    int id_ship;
     QString modem_id;
     QString last_utc;
     QStringList id_tu;
@@ -79,6 +76,7 @@ struct modem {
 };
 
 struct sky_wave_config {
+    int id_gateWay;
     QString url;
     QDateTime next_utc;
 //    int SIN;
@@ -94,7 +92,7 @@ struct monita_config {
     int jml_sumber;
     QStringList config;
     QStringList source_config;
-    QStringList sky_config;
+//    QStringList sky_config;
     QStringList redis_config;
     QStringList funct_config;
 

@@ -6,19 +6,23 @@ monita_log::monita_log()
 //    buf_dateTime = (char *) malloc(32);
 }
 
-void monita_log::write(QString type, QString message)
+void monita_log::write(QString type, QString message, int debug)
 {
-    QString path = ".MonSerConfig/monita-log.txt";
-    QFile outFile(path);
-    if (!outFile.exists()) {
-        QDir dir;
-        dir.mkpath(".MonSerConfig");
+    if (debug) {
+        QString path = ".MonSerConfig/monita-log.txt";
+        QFile outFile(path);
+        if (!outFile.exists()) {
+            QDir dir;
+            dir.mkpath(".MonSerConfig");
+        }
+        outFile.open(QIODevice::WriteOnly | QIODevice::Append);
+        QTextStream ts(&outFile);
+        message.prepend("::").prepend(type).prepend("::").prepend(QDateTime::currentDateTime().toString("dd-MM-yyyy HH:mm:ss"));
+        qDebug() << message;
+        ts << message << endl;
+        outFile.close();
+    } else {
+        message.prepend("::").prepend(type).prepend("::").prepend(QDateTime::currentDateTime().toString("dd-MM-yyyy HH:mm:ss"));
+        qDebug() << message;
     }
-    outFile.open(QIODevice::WriteOnly | QIODevice::Append);
-    QTextStream ts(&outFile);
-    message.prepend("::").prepend(type).prepend("::").prepend(QDateTime::currentDateTime().toString("dd-MM-yyyy HH:mm:ss"));
-//    message.prepend("::").prepend(QDateTime::currentDateTime().toString("dd-MM-yyyy HH:mm:ss"));
-    qDebug() << message;
-    ts << message << endl;
-    outFile.close();
 }

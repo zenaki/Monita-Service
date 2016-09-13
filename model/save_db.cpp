@@ -75,6 +75,30 @@ void save_db::data_punya_skywave(QSqlDatabase db, QString tb_name, QString data)
     q.exec();
 }
 
+void save_db::update_multiple_punya_skywave(
+        QSqlDatabase db,
+        QString tb_name,
+        QString col_target,
+        QString col_clause,
+        QString value_clause,
+        QString data)
+{
+    QString query;
+    QSqlQuery q(db);
+
+    query = "UPDATE " + tb_name + " "
+            "SET " + col_target + " = (case "
+//            "   when user_role = 'student' then '622057' "
+//            "   when user_role = 'assistant' then '2913659' "
+//            "   when user_role = 'admin' then '6160230' "
+                + data +
+            "end ) "
+            "WHERE " + col_clause + " in (" + value_clause + ");";
+//    qDebug() << query;
+    q.prepare(query);
+    q.exec();
+}
+
 void save_db::create_tabel_data_skywave(QSqlQuery *q)
 {
     QString query;

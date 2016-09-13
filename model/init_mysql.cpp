@@ -42,3 +42,12 @@ QSqlDatabase init_mysql::connect_db(){
         return (QSqlDatabase) db;
     }
 }
+
+void init_mysql::close(QSqlDatabase db)
+{
+    QString connection;
+    connection = db.connectionName();
+    db.close();
+    db = QSqlDatabase();
+    db.removeDatabase(connection);
+}

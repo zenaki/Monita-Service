@@ -18,16 +18,13 @@ void sky_wave::doSetup(QThread &cThread)
 {
     connect(&cThread,SIGNAL(started()),this,SLOT(doWork()));
 
-    manager = new QNetworkAccessManager();
+    manager = new QNetworkAccessManager(this);
     connect(manager, SIGNAL(finished(QNetworkReply*)), this, SLOT(replyFinished(QNetworkReply *)));
 
-    monita_cfg.sky_config = cfg.read("SKYWAVE");
-//    monita_cfg.config = cfg.read("CONFIG");
-
+    monita_cfg.config = cfg.read("CONFIG");
     QTimer *t = new QTimer(this);
     connect(t, SIGNAL(timeout()), this, SLOT(doWork()));
-    t->start(monita_cfg.sky_config.at(0).toInt() * 60000);
-//    t->setInterval(monita_cfg.sky_config.at(0).toInt() * 60000);
+    t->start(monita_cfg.config.at(6).toInt() * 60000);
 
     marine = (struct sky_wave_ship *) malloc( sizeof (struct sky_wave_ship));
     memset((char *) marine, 0, sizeof(struct sky_wave_ship));
@@ -35,21 +32,22 @@ void sky_wave::doSetup(QThread &cThread)
     acc = (struct sky_wave_account *) malloc ( sizeof (struct sky_wave_account));
     memset((char *) acc, 0, sizeof(struct sky_wave_account));
 
-    db = mysql.connect_db();
-    get.modem_info(db, marine);
-    get.modem_getway(db, acc);
-    get.skyWave_config(db, &monita_cfg);
+//    mysql.close(db_skywave);
+    db_skywave = mysql.connect_db();
+    get.modem_info(db_skywave, marine);
+    get.modem_getway(db_skywave, acc);
+    get.skyWave_config(db_skywave, &monita_cfg);
 
     ship_count = 0;
     gateway_count = 0;
     cnt_panggil = 0;
     
-    this->doWork();
+//    this->doWork();
 }
 
 void sky_wave::parsing(QByteArray data_json, int indexGateway)
 {
-    monita_cfg.sky_config = cfg.read("SKYWAVE");
+    monita_cfg.config = cfg.read("CONFIG");
     bool ok;
     QString MessageUTC;
     QString RawBiner;
@@ -63,39 +61,94 @@ void sky_wave::parsing(QByteArray data_json, int indexGateway)
     monita_cfg.sky[indexGateway].next_utc = QDateTime::fromString(MessageUTC, "yyyy-MM-dd HH:mm:ss");
 
     QJsonArray array = object.value("Messages").toArray();
-    foreach (const QJsonValue & v, array) {
-        for (int i = 0; i < monita_cfg.sky[indexGateway].jml_modem; i++) {
-            if (v.toObject().value("MobileID").toString() ==
-                    monita_cfg.sky[indexGateway].mdm[i].modem_id) {
-                QStringList SIN_MIN = monita_cfg.sky[indexGateway].SIN_MIN.split(","); QStringList SIN_MIN_List;
-                for (int j = 0; j < SIN_MIN.length(); j++) {SIN_MIN_List.append(SIN_MIN.at(j).split(";"));}
-                for (int j = 0; j < SIN_MIN_List.length(); j+=2) {
-                    if (v.toObject().value("SIN").toInt() == SIN_MIN_List.at(j).toInt()) {
-                        monita_cfg.sky[indexGateway].mdm[i].val_tu.clear();
-                        QJsonArray LoadArray  = v.toObject().value("RawPayload").toArray();
-                        if (!LoadArray.isEmpty()) {
-                            if (LoadArray.at(1).toInt() == SIN_MIN_List.at(j+1).toInt()) {
-                                index = 0;
-                                foreach (const QJsonValue & vRaw, LoadArray) {
-                                    if (index > 1) {
-                                        sprintf(temp, "%c%c%c%c%c%c%c%c", BYTE_TO_BINARY(vRaw.toInt()));
-                                        RawBiner.append(temp);
+    if (!MessageUTC.isEmpty()) {
+        log.write("SkyWave","Mulai Parsing URL " + QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss:zzz"), monita_cfg.config.at(7).toInt());
+        foreach (const QJsonValue & v, array) {
+            for (int i = 0; i < monita_cfg.sky[indexGateway].jml_modem; i++) {
+                if (v.toObject().value("MobileID").toString() ==
+                        monita_cfg.sky[indexGateway].mdm[i].modem_id) {
+                    QStringList SIN_MIN = monita_cfg.sky[indexGateway].SIN_MIN.split(","); QStringList SIN_MIN_List;
+                    for (int j = 0; j < SIN_MIN.length(); j++) {SIN_MIN_List.append(SIN_MIN.at(j).split(";"));}
+                    for (int j = 0; j < SIN_MIN_List.length(); j+=2) {
+                        if (v.toObject().value("SIN").toInt() == SIN_MIN_List.at(j).toInt()) {
+                            monita_cfg.sky[indexGateway].mdm[i].val_tu.clear();
+                            QJsonArray LoadArray  = v.toObject().value("RawPayload").toArray();
+                            if (!LoadArray.isEmpty()) {
+                                if (LoadArray.at(1).toInt() == SIN_MIN_List.at(j+1).toInt()) {
+                                    index = 0;
+                                    foreach (const QJsonValue & vRaw, LoadArray) {
+                                        if (index > 1) {
+                                            sprintf(temp, "%c%c%c%c%c%c%c%c", BYTE_TO_BINARY(vRaw.toInt()));
+                                            RawBiner.append(temp);
+                                        }
+                                        index++;
                                     }
-                                    index++;
-                                }
-                                PayLoadData = parsingRawPayload(parse.format_5cut_32get(RawBiner));
-                                for (int j = 5; j < PayLoadData.length(); j++) {
-                                    if (PayLoadData.at(j) != "0.000000000") {
-                                        getData = true;
-                                        break;
+                                    PayLoadData = parsingRawPayload(parse.format_5cut_32get(RawBiner));
+                                    for (int j = 5; j < PayLoadData.length(); j++) {
+                                        if (PayLoadData.at(j) != "0.000000000") {
+                                            getData = true;
+                                            break;
+                                        }
                                     }
-                                }
-        //                        listData.append("RawPayload:" + parse.format_5cut_32get(RawBiner));
-                                if (getData) {
-                                    monita_cfg.sky[indexGateway].mdm[i].last_utc = PayLoadData.at(0);
-                                    PayLoadData.removeAt(0);
-                                    monita_cfg.sky[indexGateway].mdm[i].val_tu = PayLoadData;
+            //                        listData.append("RawPayload:" + parse.format_5cut_32get(RawBiner));
+                                    if (getData) {
+                                        monita_cfg.sky[indexGateway].mdm[i].last_utc = PayLoadData.at(0);
+                                        PayLoadData.removeAt(0);
+                                        monita_cfg.sky[indexGateway].mdm[i].val_tu = PayLoadData;
 
+                                        for (int k = 0; k < monita_cfg.sky[indexGateway].mdm[i].val_tu.length(); k++) {
+                                            QString unixTimeStr = QString::number(monita_cfg.sky[indexGateway].mdm[i].last_utc.toInt());
+                                            const uint s = unixTimeStr.toUInt( &ok );
+                                            const QDateTime dt = QDateTime::fromTime_t( s );
+                                            const QString date_gmt7 = dt.toString("yyyy-MM-dd HH:mm:ss");
+
+                                            if (!monita_cfg.sky[indexGateway].mdm[i].query.isEmpty()) {
+                                                monita_cfg.sky[indexGateway].mdm[i].query.sprintf(
+                                                            "%s,(%d, %.9f, %d, %d, '%s', %d)",
+                                                            monita_cfg.sky[indexGateway].mdm[i].query.toUtf8().data(),
+                                                            monita_cfg.sky[indexGateway].mdm[i].id_tu.at(k).toInt(),
+                                                            monita_cfg.sky[indexGateway].mdm[i].val_tu.at(k).toFloat(),
+                                                            0,
+                                                            monita_cfg.sky[indexGateway].mdm[i].last_utc.toInt(),
+                                                            date_gmt7.toUtf8().data(),
+                                                            FLAG_ENGINE_DATA);
+                                            } else {
+                                                monita_cfg.sky[indexGateway].mdm[i].query.sprintf(
+                                                            "(%d, %.9f, %d, %d, '%s', %d)",
+                                                            monita_cfg.sky[indexGateway].mdm[i].id_tu.at(k).toInt(),
+                                                            monita_cfg.sky[indexGateway].mdm[i].val_tu.at(k).toFloat(),
+                                                            0,
+                                                            monita_cfg.sky[indexGateway].mdm[i].last_utc.toInt(),
+                                                            date_gmt7.toUtf8().data(),
+                                                            FLAG_ENGINE_DATA);
+                                            }
+                                        }
+                                    }
+    //                                qDebug() << monita_cfg.sky[indexGateway].mdm[i].query;
+                                    RawBiner.clear();
+                                }
+                            }
+                            if ((v.toObject().value("Payload").toObject().value("SIN").toInt() == SIN_MIN_List.at(j).toInt()) &&
+                                    (v.toObject().value("Payload").toObject().value("MIN").toInt() == SIN_MIN_List.at(j+1).toInt())) {
+                                if (v.toObject().value("Payload").toObject().value("Name").toString() == DATA_TRACKING) {
+                                    monita_cfg.sky[indexGateway].mdm[i].val_tu.clear();
+                                    QJsonArray Field_Payload = v.toObject().value("Payload").toObject().value("Fields").toArray();
+                                    for (int j = 0; j < 4; j++) {monita_cfg.sky[indexGateway].mdm[i].val_tu.append("N/A");}
+                                    foreach (const QJsonValue vField, Field_Payload) {
+                                        if (vField.toObject().value("Name").toString() == "fixTime") {
+                                            monita_cfg.sky[indexGateway].mdm[i].last_utc = vField.toObject().value("Value").toString();
+                                        } else if (vField.toObject().value("Name").toString() == "latitude") {
+                                            monita_cfg.sky[indexGateway].mdm[i].val_tu[0] = vField.toObject().value("Value").toString();
+                                            monita_cfg.sky[indexGateway].mdm[i].val_tu[0] = QString::number(monita_cfg.sky[indexGateway].mdm[i].val_tu.at(0).toFloat()/60000.000000000, 'f', 9);
+                                        } else if (vField.toObject().value("Name").toString() == "longitude") {
+                                            monita_cfg.sky[indexGateway].mdm[i].val_tu[1] = vField.toObject().value("Value").toString();
+                                            monita_cfg.sky[indexGateway].mdm[i].val_tu[1] = QString::number(monita_cfg.sky[indexGateway].mdm[i].val_tu.at(1).toFloat()/60000.000000000, 'f', 9);
+                                        } else if (vField.toObject().value("Name").toString() == "heading") {
+                                            monita_cfg.sky[indexGateway].mdm[i].val_tu[2] = vField.toObject().value("Value").toString();
+                                        } else if (vField.toObject().value("Name").toString() == "speed") {
+                                            monita_cfg.sky[indexGateway].mdm[i].val_tu[3] = vField.toObject().value("Value").toString();
+                                        }
+                                    }
                                     for (int k = 0; k < monita_cfg.sky[indexGateway].mdm[i].val_tu.length(); k++) {
                                         QString unixTimeStr = QString::number(monita_cfg.sky[indexGateway].mdm[i].last_utc.toInt());
                                         const uint s = unixTimeStr.toUInt( &ok );
@@ -123,99 +176,73 @@ void sky_wave::parsing(QByteArray data_json, int indexGateway)
                                                         FLAG_ENGINE_DATA);
                                         }
                                     }
+    //                                qDebug() << monita_cfg.sky[indexGateway].mdm[i].query;
                                 }
-//                                qDebug() << monita_cfg.sky[indexGateway].mdm[i].query;
-                                RawBiner.clear();
                             }
+    //                        if (!LoadArray.isEmpty()) {
+    //                            listData.append("Payload:");
+    //                        }
                         }
-                        if ((v.toObject().value("Payload").toObject().value("SIN").toInt() == SIN_MIN_List.at(j).toInt()) &&
-                                (v.toObject().value("Payload").toObject().value("MIN").toInt() == SIN_MIN_List.at(j+1).toInt())) {
-                            if (v.toObject().value("Payload").toObject().value("Name").toString() == DATA_TRACKING) {
-                                monita_cfg.sky[indexGateway].mdm[i].val_tu.clear();
-                                QJsonArray Field_Payload = v.toObject().value("Payload").toObject().value("Fields").toArray();
-                                for (int j = 0; j < 4; j++) {monita_cfg.sky[indexGateway].mdm[i].val_tu.append("N/A");}
-                                foreach (const QJsonValue vField, Field_Payload) {
-                                    if (vField.toObject().value("Name").toString() == "fixTime") {
-                                        monita_cfg.sky[indexGateway].mdm[i].last_utc = vField.toObject().value("Value").toString();
-                                    } else if (vField.toObject().value("Name").toString() == "latitude") {
-                                        monita_cfg.sky[indexGateway].mdm[i].val_tu[0] = vField.toObject().value("Value").toString();
-                                        monita_cfg.sky[indexGateway].mdm[i].val_tu[0] = QString::number(monita_cfg.sky[indexGateway].mdm[i].val_tu.at(0).toFloat()/60000.000000000, 'f', 9);
-                                    } else if (vField.toObject().value("Name").toString() == "longitude") {
-                                        monita_cfg.sky[indexGateway].mdm[i].val_tu[1] = vField.toObject().value("Value").toString();
-                                        monita_cfg.sky[indexGateway].mdm[i].val_tu[1] = QString::number(monita_cfg.sky[indexGateway].mdm[i].val_tu.at(1).toFloat()/60000.000000000, 'f', 9);
-                                    } else if (vField.toObject().value("Name").toString() == "heading") {
-                                        monita_cfg.sky[indexGateway].mdm[i].val_tu[2] = vField.toObject().value("Value").toString();
-                                    } else if (vField.toObject().value("Name").toString() == "speed") {
-                                        monita_cfg.sky[indexGateway].mdm[i].val_tu[3] = vField.toObject().value("Value").toString();
-                                    }
-                                }
-                                for (int k = 0; k < monita_cfg.sky[indexGateway].mdm[i].val_tu.length(); k++) {
-                                    QString unixTimeStr = QString::number(monita_cfg.sky[indexGateway].mdm[i].last_utc.toInt());
-                                    const uint s = unixTimeStr.toUInt( &ok );
-                                    const QDateTime dt = QDateTime::fromTime_t( s );
-                                    const QString date_gmt7 = dt.toString("yyyy-MM-dd HH:mm:ss");
-
-                                    if (!monita_cfg.sky[indexGateway].mdm[i].query.isEmpty()) {
-                                        monita_cfg.sky[indexGateway].mdm[i].query.sprintf(
-                                                    "%s,(%d, %.9f, %d, %d, '%s', %d)",
-                                                    monita_cfg.sky[indexGateway].mdm[i].query.toUtf8().data(),
-                                                    monita_cfg.sky[indexGateway].mdm[i].id_tu.at(k).toInt(),
-                                                    monita_cfg.sky[indexGateway].mdm[i].val_tu.at(k).toFloat(),
-                                                    0,
-                                                    monita_cfg.sky[indexGateway].mdm[i].last_utc.toInt(),
-                                                    date_gmt7.toUtf8().data(),
-                                                    FLAG_ENGINE_DATA);
-                                    } else {
-                                        monita_cfg.sky[indexGateway].mdm[i].query.sprintf(
-                                                    "(%d, %.9f, %d, %d, '%s', %d)",
-                                                    monita_cfg.sky[indexGateway].mdm[i].id_tu.at(k).toInt(),
-                                                    monita_cfg.sky[indexGateway].mdm[i].val_tu.at(k).toFloat(),
-                                                    0,
-                                                    monita_cfg.sky[indexGateway].mdm[i].last_utc.toInt(),
-                                                    date_gmt7.toUtf8().data(),
-                                                    FLAG_ENGINE_DATA);
-                                    }
-                                }
-//                                qDebug() << monita_cfg.sky[indexGateway].mdm[i].query;
-                            }
-                        }
-//                        if (!LoadArray.isEmpty()) {
-//                            listData.append("Payload:");
-//                        }
                     }
                 }
             }
         }
-    }
-    while (!db.isOpen()) {
-        db.close();
-        db.open();
-        if (!db.isOpen()) {
-            log.write("Database","Error : Connecting Fail ..!!");
-            QThread::msleep(DELAY_DB_CONNECT);
-            db = mysql.connect_db();
-        }
-    }
-    if (!get.check_table_is_available(db, monita_cfg.sky_config.at(1))) {
-        set.create_table_data_punya_skywave(db, monita_cfg.sky_config.at(1));
-    }
-    if (!get.check_table_is_available(db, monita_cfg.sky_config.at(2) + QDateTime::currentDateTime().toString(monita_cfg.sky_config.at(3)))) {
-        set.create_table_data_punya_skywave(db, monita_cfg.sky_config.at(2) + QDateTime::currentDateTime().toString(monita_cfg.sky_config.at(3)));
-    }
-    QString dataToTable;
-    for (int i = 0; i < monita_cfg.sky[indexGateway].jml_modem; i++) {
-        if (!monita_cfg.sky[indexGateway].mdm[i].query.isEmpty()) {
-            dataToTable = dataToTable + monita_cfg.sky[indexGateway].mdm[i].query;
-            if (i < monita_cfg.sky[indexGateway].jml_modem-1) {
-                dataToTable = dataToTable + ",";
+        log.write("SkyWave","Mulai Proses ke Database " + QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss:zzz"), monita_cfg.config.at(7).toInt());
+        while (!db_skywave.isOpen()) {
+//            db_skywave.close();
+            db_skywave.open();
+            if (!db_skywave.isOpen()) {
+                log.write("Database","Error : Connecting Fail ..!!",
+                          monita_cfg.config.at(7).toInt());
+                QThread::msleep(DELAY_DB_CONNECT);
+                db_skywave = mysql.connect_db();
             }
         }
-    }
-    if (dataToTable.at(dataToTable.length()-1) == ',') {dataToTable.remove(dataToTable.length()-1, 1);}
-//    qDebug() << dataToTable;
-    if (!dataToTable.isEmpty()) {
-        set.data_punya_skywave(db, monita_cfg.sky_config.at(1), dataToTable);
-        set.data_punya_skywave(db, monita_cfg.sky_config.at(2) + QDateTime::currentDateTime().toString(monita_cfg.sky_config.at(3)), dataToTable);
+        if (!get.check_table_is_available(db_skywave, "data")) {
+            set.create_table_data_punya_skywave(db_skywave, "data");
+        }
+        if (!get.check_table_is_available(db_skywave, "data_" + QDateTime::currentDateTime().toString("yyyyMMdd"))) {
+            set.create_table_data_punya_skywave(db_skywave, "data_" + QDateTime::currentDateTime().toString("yyyyMMdd"));
+        }
+        QString dataToTable, vTarget, vIDTarget;
+        for (int i = 0; i < monita_cfg.sky[indexGateway].jml_modem; i++) {
+            if (!monita_cfg.sky[indexGateway].mdm[i].query.isEmpty()) {
+                dataToTable = dataToTable + monita_cfg.sky[indexGateway].mdm[i].query;
+                if (!monita_cfg.sky[indexGateway].mdm[i].last_utc.isEmpty()) {
+                    QString unixTimeStr = monita_cfg.sky[indexGateway].mdm[i].last_utc;
+                    const uint s = unixTimeStr.toUInt( &ok );
+                    const QDateTime dt = QDateTime::fromTime_t( s );
+                    const QString result = dt.toString("yyyy-MM-dd HH:mm:ss");
+                    vTarget = vTarget +
+                            "when id_ship = " + QString::number(monita_cfg.sky[indexGateway].mdm[i].id_ship) +
+                            " then '" + result + "' ";
+                    if (vIDTarget.isEmpty()) {
+                        vIDTarget = QString::number(monita_cfg.sky[indexGateway].mdm[i].id_ship);
+                    } else {
+                        vIDTarget = vIDTarget + "," + QString::number(monita_cfg.sky[indexGateway].mdm[i].id_ship);
+                    }
+                }
+                if (i < monita_cfg.sky[indexGateway].jml_modem-1) {
+                    dataToTable = dataToTable + ",";
+                }
+            }
+        }
+        if (dataToTable.at(dataToTable.length()-1) == ',') {dataToTable.remove(dataToTable.length()-1, 1);}
+    //    qDebug() << dataToTable;
+        if (!dataToTable.isEmpty()) {
+            set.data_punya_skywave(db_skywave, "data", dataToTable);
+            set.data_punya_skywave(db_skywave, "daata_" + QDateTime::currentDateTime().toString("yyyyMMdd"), dataToTable);
+            if (!vTarget.isEmpty()) {
+                set.update_multiple_punya_skywave(db_skywave, "ship", "nextutc", "id_ship", vIDTarget, vTarget);
+            }
+            set.update_multiple_punya_skywave(db_skywave, "gateway", "next_utc", "id", QString::number(monita_cfg.sky[indexGateway].id_gateWay),
+                                              "when id = " + QString::number(monita_cfg.sky[indexGateway].id_gateWay) + " then '" + MessageUTC + "' ");
+        }
+//        mysql.close(db_skywave);
+        db_skywave.close();
+        log.write("SkyWave","Selesai .. " + QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss:zzz"), monita_cfg.config.at(7).toInt());
+    } else {
+        log.write("SkyWave","Tidak Dapat Data " + QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss:zzz"), monita_cfg.config.at(7).toInt());
     }
 }
 
@@ -296,11 +323,13 @@ void sky_wave::doWork()
     QUrl url =  QUrl::fromEncoded(monita_cfg.urls.toLocal8Bit().data());
 
     request.setUrl(url);
+    log.write("SkyWave","Send Request to URL " + QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss:zzz"), monita_cfg.config.at(7).toInt());
     manager->get(request);
 }
 
 void sky_wave::replyFinished(QNetworkReply* reply)
 {
+    log.write("SkyWave","Get Respone from SkyWave " + QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss:zzz"), monita_cfg.config.at(7).toInt());
     QByteArray data;
     data.clear();
 

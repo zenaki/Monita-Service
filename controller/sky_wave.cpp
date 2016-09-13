@@ -60,6 +60,7 @@ void sky_wave::parsing(QByteArray data_json, int indexGateway)
     JsonDoc = QJsonDocument::fromJson(data_json);
     QJsonObject object = JsonDoc.object();
     MessageUTC = object.value("NextStartUTC").toString();
+    monita_cfg.sky[indexGateway].next_utc = QDateTime::fromString(MessageUTC, "yyyy-MM-dd HH:mm:ss");
 
     QJsonArray array = object.value("Messages").toArray();
     foreach (const QJsonValue & v, array) {

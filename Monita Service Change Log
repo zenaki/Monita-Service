@@ -1,0 +1,175 @@
+monita-service (1.5) PT. Daun Biru Engineering; urgency=low
+
+  * - Penambahan Fitur Veranda kedalam Monita Service
+    - Enable / Disable Monita Log
+
+ -- Dendy Gema <dendy@daunbiru.com>  Wed, 7 Sep 2016 17:00:00 +0700
+
+monita-service (1.4) PT. Daun Biru Engineering; urgency=low
+
+  * - Perbaikan fitur
+      -> Fitur Kalkulasi di Monita Service dihapus
+      -> Fitur Custom Function Lua Script tidak menggunakan parameter dari luar script
+      -> Penambahan setting sumber: Byte, Type
+         Contoh : Byte = 2, Type = Float
+
+    - Perbaikan beberapa bug (bug fixed)
+
+ -- Dendy Gema <dendy@daunbiru.com>  Tue, 24 Aug 2016 17:00:00 +0700
+
+monita-service (1.3) PT. Daun Biru Engineering; urgency=low
+
+  * - Penambahan fitur baru
+      -> Custom Function dengan lua script
+      -> Pengiriman data menggunakan JSON jika TCP tidak terkoneksi akan menghasilkan nilai "N/A"
+
+    - Perbaikan beberapa bug (bug fixed)
+
+ -- Dendy Gema <dendy@daunbiru.com>  Tue, 23 Aug 2016 17:00:00 +0700
+
+monita-service (1.2) PT. Daun Biru Engineering; urgency=low
+
+  * - Penambahan fitur baru
+      -> Pembagian 3 Thread
+         -> Thread TCP Modbus to Redis
+         -> Thread Redis to MySql Dataase
+         -> Thread Redis to WebSocket Client (JSON Format)
+
+    - Perbaikan beberapa bug (bug fixed)
+
+ -- Dendy Gema <dendy@daunbiru.com>  Mon, 12 Aug 2016 17:00:00 +0700
+
+monita-service (1.1) PT. Daun Biru Engineering; urgency=low
+
+  * - Penambahan fitur baru
+      -> Kalkulasi antar titik ukur, id slave, dan memiliki fungsi absolute data
+      -> SUM (Total), AVG (Rata"), MUL (Perkalian), MIN (Nilai Terendah), MAX (Nilai Tertinggi), ABS (Meng-Absolute-kan)
+      -> Contoh :
+         "CALC": [
+            {
+              "ID": 1,
+              "OPERATOR": "SUM",
+              "SLAVE;REG": "1;1001;ABS,2;3028,3;1001,6;1001",
+              "DEST_ID": 126
+            }, {
+              "ID": 2,
+              "OPERATOR": "AVE",
+              "SLAVE;REG": "1;1001,2;3028,3;1001,6;1001",
+              "DEST_ID": 226
+            }, {
+              "ID": 3,
+              "OPERATOR": "MUL",
+              "SLAVE;REG": "1;1001,2;3028,3;1001,6;1001",
+              "DEST_ID": 326
+            }, {
+              "ID": 4,
+              "OPERATOR": "MIN",
+              "SLAVE;REG": "1;1001,2;3028,3;1001,6;1001",
+              "DEST_ID": 426
+            }, {
+              "ID": 5,
+              "OPERATOR": "MAX",
+              "SLAVE;REG": "1;1001,2;3028,3;1001,6;1001",
+              "DEST_ID": 526
+            }
+         ]
+
+ -- Dendy Gema <dendy@daunbiru.com>  Mon, 8 Aug 2016 17:00:00 +0700
+
+
+monita-service (1.0) PT. Daun Biru Engineering; urgency=low
+
+  * - Rilis Awal
+    - Setting konfigurasi via file .json didalam folder "monita_cofiguration"
+      -> Contoh :
+          {
+            "CONFIG": [
+              {
+                "DB_PERIOD": 60,
+                "INTERVAL": 1000,
+                "LOG_PATH": "monita_configuration/log.txt",
+                "TIMESTAMP": 3,
+                "REDIS_KEY": "data_jaman_",
+                "TABLE_NAME": "data_harian_"
+              }
+            ],
+            "REDIS": [
+              {
+                "IP": "127.0.0.1",
+                "PORT": 6379
+              }
+            ],
+            "SOURCE": [
+              {
+                "COILS": 40,
+                "FUNCT_ID": 3,
+                "IP": "192.168.3.21",
+                "MODE": "TCP",
+                "PORT": 502,
+                "SLAVE_ID": 1,
+                "START": 1000
+              }, {
+                "COILS": 6,
+                "FUNCT_ID": 3,
+                "IP": "192.168.3.241",
+                "MODE": "TCP",
+                "PORT": 502,
+                "SLAVE_ID": 2,
+                "START": 3027
+              }, {
+                "COILS": 40,
+                "FUNCT_ID": 3,
+                "IP": "192.168.3.20",
+                "MODE": "TCP",
+                "PORT": 502,
+                "SLAVE_ID": 3,
+                "START": 1000
+              }, {
+                "COILS": 40,
+                "FUNCT_ID": 3,
+                "IP": "192.168.3.10",
+                "MODE": "TCP",
+                "PORT": 502,
+                "SLAVE_ID": 6,
+                "START": 1000
+              }
+            ],
+            "CALC": [
+              {
+                "ID": 1,
+                "OPERATOR": "SUM",
+                "SLAVE;REG": "1;1001;ABS,2;3028,3;1001,6;1001",
+                "CUSTOM_ID": 126
+              }, {
+                "ID": 2,
+                "OPERATOR": "AVE",
+                "SLAVE;REG": "1;1001,2;3028,3;1001,6;1001",
+                "CUSTOM_ID": 226
+              }, {
+                "ID": 3,
+                "OPERATOR": "MUL",
+                "SLAVE;REG": "1;1001,2;3028,3;1001,6;1001",
+                "CUSTOM_ID": 326
+              }, {
+                "ID": 4,
+                "OPERATOR": "MIN",
+                "SLAVE;REG": "1;1001,2;3028,3;1001,6;1001",
+                "CUSTOM_ID": 426
+              }, {
+                "ID": 5,
+                "OPERATOR": "MAX",
+                "SLAVE;REG": "1;1001,2;3028,3;1001,6;1001",
+                "CUSTOM_ID": 526
+              }
+            ]
+          }
+
+    - Setting koneksi database via file .dbe didalam folder "monita_cofiguration"
+      -> Contoh :
+          [General]
+          DATABASE=@ByteArray(monita_service)
+          HOST=@ByteArray(localhost)
+          PASSWORD=@ByteArray(root)
+          USERNAME=@ByteArray(root)
+
+ -- Dendy Gema <dendy@daunbiru.com>  Mon, 1 Aug 2016 17:00:00 +0700

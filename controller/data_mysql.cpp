@@ -48,6 +48,7 @@ void data_mysql::set_dataHarian()
 //        db.close();
         db.open();
         if (!db.isOpen()) {
+            mysql.close(db);
             log.write("Database","Error : Connecting Fail ..!!",
                       monita_cfg.config.at(7).toInt());
             QThread::msleep(DELAY_DB_CONNECT);
@@ -56,8 +57,8 @@ void data_mysql::set_dataHarian()
 //            if (t >= 3) {emit finish();}
         }
     }
-    if (!get.check_table_is_available(db, dt_sdh.date().toString(monita_cfg.config.at(4)))) {
-        set.create_tabel_data_harian(db, dt_sdh.date().toString(monita_cfg.config.at(4)));
+    if (!get.check_table_is_available(db, monita_cfg.config.at(4) + dt_sdh.date().toString("yyyyMMdd"))) {
+        set.create_tabel_data_harian(db, monita_cfg.config.at(4) + dt_sdh.date().toString("yyyyMMdd"));
     }
     for (int i = 0; i < redis_len; i++) {
         data = data + "(" +
@@ -74,19 +75,9 @@ void data_mysql::set_dataHarian()
             data = data + ",";
         }
     }
-    while (!db.isOpen()) {
-//        db.close();
-        db.open();
-        if (!db.isOpen()) {
-            log.write("Database","Error : Connecting Fail ..!!",
-                      monita_cfg.config.at(7).toInt());
-            QThread::msleep(DELAY_DB_CONNECT);
-            db = mysql.connect_db();
-//            t++;
-//            if (t >= 3) {emit finish();}
-        }
-    }
-    set.data_harian(db, dt_sdh.date().toString(monita_cfg.config.at(4)), data);
+    set.data_harian(db, monita_cfg.config.at(4) + dt_sdh.date().toString("yyyyMMdd"), data);
+//    if (db.isOpen()) db.close();
+//    mysql.close(db);
     db.close();
     log.write("Database","Data Inserted on table data_" + QDate::currentDate().toString("dd_MM_yyyy") + " ..",
               monita_cfg.config.at(7).toInt());

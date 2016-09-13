@@ -58,10 +58,10 @@ void sky_wave::parsing(QByteArray data_json, int indexGateway)
     JsonDoc = QJsonDocument::fromJson(data_json);
     QJsonObject object = JsonDoc.object();
     MessageUTC = object.value("NextStartUTC").toString();
-    monita_cfg.sky[indexGateway].next_utc = QDateTime::fromString(MessageUTC, "yyyy-MM-dd HH:mm:ss");
 
     QJsonArray array = object.value("Messages").toArray();
     if (!MessageUTC.isEmpty()) {
+        monita_cfg.sky[indexGateway].next_utc = QDateTime::fromString(MessageUTC, "yyyy-MM-dd HH:mm:ss");
         log.write("SkyWave","Mulai Parsing URL " + QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss:zzz"), monita_cfg.config.at(7).toInt());
         foreach (const QJsonValue & v, array) {
             for (int i = 0; i < monita_cfg.sky[indexGateway].jml_modem; i++) {
@@ -192,6 +192,7 @@ void sky_wave::parsing(QByteArray data_json, int indexGateway)
 //            db_skywave.close();
             db_skywave.open();
             if (!db_skywave.isOpen()) {
+                mysql.close(db_skywave);
                 log.write("Database","Error : Connecting Fail ..!!",
                           monita_cfg.config.at(7).toInt());
                 QThread::msleep(DELAY_DB_CONNECT);
@@ -204,6 +205,7 @@ void sky_wave::parsing(QByteArray data_json, int indexGateway)
         if (!get.check_table_is_available(db_skywave, "data_" + QDateTime::currentDateTime().toString("yyyyMMdd"))) {
             set.create_table_data_punya_skywave(db_skywave, "data_" + QDateTime::currentDateTime().toString("yyyyMMdd"));
         }
+        set.delete_last_utc_punya_skywave(db_skywave, "data", QString::number(QDateTime::currentDateTime().toTime_t() - (86400 * 2)));
         QString dataToTable, vTarget, vIDTarget;
         for (int i = 0; i < monita_cfg.sky[indexGateway].jml_modem; i++) {
             if (!monita_cfg.sky[indexGateway].mdm[i].query.isEmpty()) {
@@ -239,6 +241,7 @@ void sky_wave::parsing(QByteArray data_json, int indexGateway)
                                               "when id = " + QString::number(monita_cfg.sky[indexGateway].id_gateWay) + " then '" + MessageUTC + "' ");
         }
 //        mysql.close(db_skywave);
+//        if (db_skywave.isOpen()) db_skywave.close();
         db_skywave.close();
         log.write("SkyWave","Selesai .. " + QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss:zzz"), monita_cfg.config.at(7).toInt());
     } else {
@@ -324,6 +327,7 @@ void sky_wave::doWork()
 
     request.setUrl(url);
     log.write("SkyWave","Send Request to URL " + QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss:zzz"), monita_cfg.config.at(7).toInt());
+    log.write("SkyWave", monita_cfg.urls, monita_cfg.config.at(7).toInt());
     manager->get(request);
 }
 

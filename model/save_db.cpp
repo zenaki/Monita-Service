@@ -99,6 +99,19 @@ void save_db::update_multiple_punya_skywave(
     q.exec();
 }
 
+void save_db::delete_last_utc_punya_skywave(QSqlDatabase db, QString tb_name, QString last_utc)
+{
+    QString query;
+    QSqlQuery q(db);
+
+    query = "DELETE FROM " + tb_name + " "
+            " WHERE epochtime <= " + last_utc + ";";
+
+//    qDebug() << query;
+    q.prepare(query);
+    q.exec();
+}
+
 void save_db::create_tabel_data_skywave(QSqlQuery *q)
 {
     QString query;

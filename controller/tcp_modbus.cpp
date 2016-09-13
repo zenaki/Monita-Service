@@ -28,10 +28,10 @@ void tcp_modbus::doWork()
 {
     QDateTime dateTime = QDateTime::currentDateTime();
 
-//    monita_cfg.jml_sumber = 0;
-//    monita_cfg.source_config = cfg.read("SOURCE");
-//    if (monita_cfg.source_config.length() > 9) {monita_cfg.jml_sumber = monita_cfg.source_config.length()/9;
-//    } else {if (monita_cfg.source_config.length() > 0) monita_cfg.jml_sumber++;}
+    monita_cfg.jml_sumber = 0;
+    monita_cfg.source_config = cfg.read("SOURCE");
+    if (monita_cfg.source_config.length() > 9) {monita_cfg.jml_sumber = monita_cfg.source_config.length()/9;
+    } else {if (monita_cfg.source_config.length() > 0) monita_cfg.jml_sumber++;}
 
     for (int i = 0; i < monita_cfg.jml_sumber; i++) {
         if (monita_cfg.source_config.at(6) == "TCP") {

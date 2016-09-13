@@ -3,10 +3,12 @@
         {
             "DB_PERIOD": 60,
             "INTERVAL": 1000,
-            "LOG_PATH": "monita_configuration/log.txt",
             "TIMESTAMP": 3,
             "REDIS_KEY": "data_jaman_",
-            "TABLE_NAME": "data_harian_"
+            "TABLE_NAME": "data_harian_",
+            "WEBSOCKET_PORT": 1234,
+            "INTERVAL_SKYWAVE": 2,
+            "DEBUG": false
         }
     ],
     "REDIS": [
@@ -23,7 +25,19 @@
             "MODE": "TCP",
             "PORT": 502,
             "SLAVE_ID": 1,
-            "START": 1000
+            "START": 1000,
+            "BYTE": 2,
+            "TYPE": "FLOAT"
+        }, {
+            "COILS": 20,
+            "FUNCT_ID": 3,
+            "IP": "192.168.3.241",
+            "MODE": "TCP",
+            "PORT": 502,
+            "SLAVE_ID": 2,
+            "START": 3203,
+            "BYTE": 4,
+            "TYPE": "DEC"
         }, {
             "COILS": 6,
             "FUNCT_ID": 3,
@@ -31,7 +45,19 @@
             "MODE": "TCP",
             "PORT": 502,
             "SLAVE_ID": 2,
-            "START": 3027
+            "START": 3027,
+            "BYTE": 2,
+            "TYPE": "FLOAT"
+        }, {
+            "COILS": 40,
+            "FUNCT_ID": 3,
+            "IP": "192.168.3.11",
+            "MODE": "TCP",
+            "PORT": 502,
+            "SLAVE_ID": 11,
+            "START": 1000,
+            "BYTE": 2,
+            "TYPE": "FLOAT"
         }, {
             "COILS": 40,
             "FUNCT_ID": 3,
@@ -39,15 +65,59 @@
             "MODE": "TCP",
             "PORT": 502,
             "SLAVE_ID": 6,
-            "START": 1000
+            "START": 1000,
+            "BYTE": 2,
+            "TYPE": "FLOAT"
+        }, {
+            "COILS": 40,
+            "FUNCT_ID": 3,
+            "IP": "192.168.3.12",
+            "MODE": "TCP",
+            "PORT": 502,
+            "SLAVE_ID": 12,
+            "START": 1000,
+            "BYTE": 2,
+            "TYPE": "FLOAT"
+        }, {
+            "COILS": 40,
+            "FUNCT_ID": 3,
+            "IP": "192.168.3.13",
+            "MODE": "TCP",
+            "PORT": 502,
+            "SLAVE_ID": 13,
+            "START": 1000,
+            "BYTE": 2,
+            "TYPE": "FLOAT"
+        }, {
+            "COILS": 40,
+            "FUNCT_ID": 3,
+            "IP": "192.168.3.100",
+            "MODE": "TCP",
+            "PORT": 502,
+            "SLAVE_ID": 14,
+            "START": 1000,
+            "BYTE": 2,
+            "TYPE": "FLOAT"
+        }, {
+            "COILS": 40,
+            "FUNCT_ID": 3,
+            "IP": "192.168.3.101",
+            "MODE": "TCP",
+            "PORT": 502,
+            "SLAVE_ID": 15,
+            "START": 1000,
+            "BYTE": 2,
+            "TYPE": "FLOAT"
         }
+
+
+
     ],
-    "CALC": [
+    "FUNCT": [
         {
-            "ID": 1,
-            "OPERATOR": "+",
-            "SLAVE;REG": "1;1001,6;1001",
-            "CUSTOM_ID": 161
+            "LUA_FILE": ".MonSerConfig/lua/calc.lua"
+        }, {
+            "LUA_FILE": ".MonSerConfig/lua/simple.lua"
         }
     ]
 }

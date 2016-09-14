@@ -205,7 +205,7 @@ void sky_wave::parsing(QByteArray data_json, int indexGateway)
         if (!get.check_table_is_available(db_skywave, "data_" + QDateTime::currentDateTime().toString("yyyyMMdd"))) {
             set.create_table_data_punya_skywave(db_skywave, "data_" + QDateTime::currentDateTime().toString("yyyyMMdd"));
         }
-        set.delete_last_utc_punya_skywave(db_skywave, "data", QString::number(QDateTime::currentDateTime().toTime_t() - (86400 * 2)));
+        set.delete_last_utc_punya_skywave(db_skywave, "data", QString::number(QDateTime::currentDateTime().toTime_t() - ((86400 * 2) + (3600 * 7))));
         QString dataToTable, vTarget, vIDTarget;
         for (int i = 0; i < monita_cfg.sky[indexGateway].jml_modem; i++) {
             if (!monita_cfg.sky[indexGateway].mdm[i].query.isEmpty()) {

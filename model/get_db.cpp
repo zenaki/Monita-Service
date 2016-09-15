@@ -62,17 +62,18 @@ void get_db::skyWave_config(QSqlDatabase db, monita_config *mon) {
                             q.value(2).toString().toUtf8().data(),
                             q.value(3).toString().toUtf8().data());
                 if (
-                        (mon->sky[mon->jml_gateWay-1].url == url) &&
-                        (mon->sky[mon->jml_gateWay-1].next_utc == q.value(4).toDateTime()) &&
-                        (mon->sky[mon->jml_gateWay-1].SIN_MIN == q.value(7).toString())
+//                        (mon->sky[mon->jml_gateWay-1].url == url) &&
+//                        (mon->sky[mon->jml_gateWay-1].next_utc == q.value(4).toDateTime()) &&
+//                        (mon->sky[mon->jml_gateWay-1].SIN_MIN == q.value(7).toString())
+                        mon->sky[mon->jml_gateWay-1].id_gateWay == q.value(0).toInt()
                         ) {
-                    if (mon->sky[mon->jml_gateWay-1].mdm[mon->sky[mon->jml_gateWay-1].jml_modem].modem_id == q.value(6).toString()) {
-                        mon->sky[mon->jml_gateWay-1].mdm[mon->sky[mon->jml_gateWay-1].jml_modem].id_tu.append(q.value(8).toString());
+                    if (mon->sky[mon->jml_gateWay-1].mdm[mon->sky[mon->jml_gateWay-1].jml_modem-1].modem_id == q.value(6).toString()) {
+                        mon->sky[mon->jml_gateWay-1].mdm[mon->sky[mon->jml_gateWay-1].jml_modem-1].id_tu.append(q.value(8).toString());
                     } else {
-                        mon->sky[mon->jml_gateWay-1].jml_modem++;
                         mon->sky[mon->jml_gateWay-1].mdm[mon->sky[mon->jml_gateWay-1].jml_modem].id_ship = q.value(5).toInt();
                         mon->sky[mon->jml_gateWay-1].mdm[mon->sky[mon->jml_gateWay-1].jml_modem].modem_id = q.value(6).toString();
                         mon->sky[mon->jml_gateWay-1].mdm[mon->sky[mon->jml_gateWay-1].jml_modem].id_tu.append(q.value(8).toString());
+                        mon->sky[mon->jml_gateWay-1].jml_modem++;
                     }
                 } else {
                     mon->sky[mon->jml_gateWay].jml_modem = 0;
@@ -87,6 +88,7 @@ void get_db::skyWave_config(QSqlDatabase db, monita_config *mon) {
                     mon->sky[mon->jml_gateWay].mdm[mon->sky[mon->jml_gateWay].jml_modem].modem_id = q.value(6).toString();
                     mon->sky[mon->jml_gateWay].SIN_MIN = q.value(7).toString();
                     mon->sky[mon->jml_gateWay].mdm[mon->sky[mon->jml_gateWay].jml_modem].id_tu.append(q.value(8).toString());
+                    mon->sky[mon->jml_gateWay].jml_modem++;
                     mon->jml_gateWay++;
                 }
             } else {
@@ -102,6 +104,7 @@ void get_db::skyWave_config(QSqlDatabase db, monita_config *mon) {
                 mon->sky[mon->jml_gateWay].mdm[mon->sky[mon->jml_gateWay].jml_modem].modem_id = q.value(6).toString();
                 mon->sky[mon->jml_gateWay].SIN_MIN = q.value(7).toString();
                 mon->sky[mon->jml_gateWay].mdm[mon->sky[mon->jml_gateWay].jml_modem].id_tu.append(q.value(8).toString());
+                mon->sky[mon->jml_gateWay].jml_modem++;
                 mon->jml_gateWay++;
             }
         }

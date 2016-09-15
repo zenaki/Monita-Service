@@ -65,6 +65,10 @@ void sky_wave::parsing(QByteArray data_json, int indexGateway)
         log.write("SkyWave","Mulai Parsing URL " + QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss:zzz"), monita_cfg.config.at(7).toInt());
         foreach (const QJsonValue & v, array) {
             for (int i = 0; i < monita_cfg.sky[indexGateway].jml_modem; i++) {
+//                if (v.toObject().value("MobileID").toString() == "01093397SKY2DA6") {
+//                    int t;
+//                    t++;
+//                }
                 if (v.toObject().value("MobileID").toString() ==
                         monita_cfg.sky[indexGateway].mdm[i].modem_id) {
                     QStringList SIN_MIN = monita_cfg.sky[indexGateway].SIN_MIN.split(","); QStringList SIN_MIN_List;
@@ -96,7 +100,7 @@ void sky_wave::parsing(QByteArray data_json, int indexGateway)
                                         PayLoadData.removeAt(0);
                                         monita_cfg.sky[indexGateway].mdm[i].val_tu = PayLoadData;
 
-                                        for (int k = 0; k < monita_cfg.sky[indexGateway].mdm[i].val_tu.length(); k++) {
+                                        for (int k = 0; k < monita_cfg.sky[indexGateway].mdm[i].id_tu.length(); k++) {
                                             QString unixTimeStr = QString::number(monita_cfg.sky[indexGateway].mdm[i].last_utc.toInt());
                                             const uint s = unixTimeStr.toUInt( &ok );
                                             const QDateTime dt = QDateTime::fromTime_t( s );

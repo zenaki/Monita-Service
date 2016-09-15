@@ -83,7 +83,7 @@ struct sky_wave_config {
 //    int MIN;
     QString SIN_MIN;
     int jml_modem;
-    struct modem mdm[20];
+    struct modem mdm[50];
 };
 
 struct monita_config {

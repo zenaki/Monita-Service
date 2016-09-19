@@ -58,7 +58,10 @@ QStringList config::read(QString obj)
                     result.append(v.toObject().value("TABLE_NAME").toString());
                     result.append(QString::number(v.toObject().value("WEBSOCKET_PORT").toInt()));
                     result.append(QString::number(v.toObject().value("INTERVAL_SKYWAVE").toInt()));
-                    result.append(QString::number(v.toObject().value("DEBUG").toBool()));
+                    result.append(QString::number(v.toObject().value("DEBUG_TCPMODBUS_DATA").toBool()));
+                    result.append(QString::number(v.toObject().value("DEBUG_TCPMODBUS_DATABASE").toBool()));
+                    result.append(QString::number(v.toObject().value("DEBUG_SKYWAVE_DATA").toBool()));
+                    result.append(QString::number(v.toObject().value("DEBUG_SKYWAVE_DATABASE").toBool()));
                 }
             } else {
                 result.append(QString::number(value.toObject().value("DB_PERIOD").toInt()));
@@ -68,7 +71,10 @@ QStringList config::read(QString obj)
                 result.append(value.toObject().value("TABLE_NAME").toString());
                 result.append(QString::number(value.toObject().value("WEBSOCKET_PORT").toInt()));
                 result.append(QString::number(value.toObject().value("INTERVAL_SKYWAVE").toInt()));
-                result.append(QString::number(value.toObject().value("DEBUG").toInt()));
+                result.append(QString::number(value.toObject().value("DEBUG_TCPMODBUS_DATA").toInt()));
+                result.append(QString::number(value.toObject().value("DEBUG_TCPMODBUS_DATABASE").toInt()));
+                result.append(QString::number(value.toObject().value("DEBUG_SKYWAVE_DATA").toInt()));
+                result.append(QString::number(value.toObject().value("DEBUG_SKYWAVE_DATABASE").toInt()));
             }
         } else if (obj == "FUNCT") {
             if (object.value(obj).isArray()) {
@@ -116,7 +122,10 @@ void config::write(QJsonObject &json) const //Default
     configObject["TABLE_NAME"] = QString("data_harian_");
     configObject["WEBSOCKET_PORT"] = 1234;
     configObject["INTERVAL_SKYWAVE"] = 2;
-    configObject["DEBUG"] = false;
+    configObject["DEBUG_TCPMODBUS_DATA"] = false;
+    configObject["DEBUG_TCPMODBUS_DATABASE"] = false;
+    configObject["DEBUG_SKYWAVE_DATA"] = false;
+    configObject["DEBUG_SKYWAVE_DATABASE"] = false;
     configArray.append(configObject);
     json["CONFIG"] = configArray;
 }

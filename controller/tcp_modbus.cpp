@@ -250,13 +250,13 @@ void tcp_modbus::request_modbus(int index, QDateTime dt_req_mod)
                                    QString::number(addr+(i-1)) +
                                    " " +
                                    data_real, redis_config.at(0), redis_config.at(1).toInt());
-//                    log.write("TcpModbus",
-//                              QString::number(slave) + " - " +
-//                              QString::number(addr+(i-1)) + " - " +
-//                              data_int + " - " +
-//                              data_hex + " - " +
-//                              data_real,
-//                              monita_cfg.config.at(7).toInt());
+                    log.write("TcpModbus",
+                              QString::number(slave) + " - " +
+                              QString::number(addr+(i-1)) + " - " +
+                              data_int + " - " +
+                              data_hex + " - " +
+                              data_real,
+                              monita_cfg.config.at(7).toInt());
                 }
                 data_real.clear();
             }

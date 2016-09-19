@@ -4,53 +4,58 @@ get_db::get_db()
 {
 }
 
-bool get_db::check_table_is_available(QSqlDatabase db, QString table_name) {
+bool get_db::check_table_is_available(QSqlDatabase db, QString table_name, QString mode, int debug) {
     QString query;
     QSqlQuery q(db);
 
     query.clear();
     query = "SELECT * FROM " + table_name + ";";
 
+    log.write(mode, query, debug);
+
     q.prepare(query);
 
     return q.exec();
 }
 
-void get_db::skyWave_config(QSqlDatabase db, monita_config *mon) {
+void get_db::skyWave_config(QSqlDatabase db, monita_config *mon, QString mode, int debug) {
     db.open();
+    QString query;
     QSqlQuery q(db);
     QString url;
     mon->jml_gateWay = 0;
-    q.prepare("select "
-              "gw.id,"
-              "gw.url,"
-              "gw.access_id,"
-              "gw.password,"
-              "gw.next_utc,"
-              "sh.id_ship,"
-              "sh.modem_id,"
+    query = "select "
+            "gw.id,"
+            "gw.url,"
+            "gw.access_id,"
+            "gw.password,"
+            "gw.next_utc,"
+            "sh.id_ship,"
+            "sh.modem_id,"
 //              "gw.SIN,"
 //              "gw.MIN,"
-              "gw.config,"
+            "gw.config,"
 //              "pr.urutan_data_monita,"
-              "pr.id_tu "
-          "from "
-              "gateway gw, "
-              "ship sh, "
-              "parsing_ref pr "
-          "where "
-              "gw.id = sh.gateway and "
-              "sh.id_ship = pr.id_ship and "
-              "gw.status = 1 and "
-              "sh.status = 1 and "
-              "gw.config is not null and "
-              "sh.modem_id is not null and "
-              "gw.next_utc is not null and "
-              "gw.password is not null and "
-              "gw.access_id is not null and "
-              "gw.url is not null "
-          "order by "
-              "gw.url, sh.id_ship, pr.urutan_data_monita;");
+            "pr.id_tu "
+        "from "
+            "gateway gw, "
+            "ship sh, "
+            "parsing_ref pr "
+        "where "
+            "gw.id = sh.gateway and "
+            "sh.id_ship = pr.id_ship and "
+            "gw.status = 1 and "
+            "sh.status = 1 and "
+            "gw.config is not null and "
+            "sh.modem_id is not null and "
+            "gw.next_utc is not null and "
+            "gw.password is not null and "
+            "gw.access_id is not null and "
+            "gw.url is not null "
+        "order by "
+            "gw.url, sh.id_ship, pr.urutan_data_monita;";
+    log.write(mode, query, debug);
+    q.prepare(query);
     if(!q.exec()){
         return;
     }

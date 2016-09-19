@@ -4,7 +4,7 @@ save_db::save_db()
 {
 }
 
-void save_db::data_harian(QSqlDatabase db, QString tb_name, QString data){
+void save_db::data_harian(QSqlDatabase db, QString tb_name, QString data, QString type, int debug){
     QString query;
     QSqlQuery q(db);
 
@@ -17,11 +17,12 @@ void save_db::data_harian(QSqlDatabase db, QString tb_name, QString data){
                 second \
             ) VALUES ";
     query = query + data + ";";
+    log.write(type, query, debug);
     q.prepare(query);
     q.exec();
 }
 
-void save_db::create_tabel_data_harian(QSqlDatabase db, QString tb_name){
+void save_db::create_tabel_data_harian(QSqlDatabase db, QString tb_name, QString type, int debug){
     QString query;
     QSqlQuery q(db);
 
@@ -35,10 +36,12 @@ void save_db::create_tabel_data_harian(QSqlDatabase db, QString tb_name){
                 second tinyint(4) NOT NULL, \
                 PRIMARY KEY (id_titik_ukur, waktu) \
     );";
+    log.write(type, query, debug);
+    q.prepare(query);
     q.exec(query);
 }
 
-void save_db::create_table_data_punya_skywave(QSqlDatabase db, QString tb_name)
+void save_db::create_table_data_punya_skywave(QSqlDatabase db, QString tb_name, QString type, int debug)
 {
     QString query;
     QSqlQuery q(db);
@@ -53,10 +56,12 @@ void save_db::create_table_data_punya_skywave(QSqlDatabase db, QString tb_name)
                 "flag_data INT, "
                 "PRIMARY KEY (id_titik_ukur, data_time)"
             ")";
+    log.write(type, query, debug);
+    q.prepare(query);
     q.exec(query);
 }
 
-void save_db::data_punya_skywave(QSqlDatabase db, QString tb_name, QString data)
+void save_db::data_punya_skywave(QSqlDatabase db, QString tb_name, QString data, QString type, int debug)
 {
     QString query;
     QSqlQuery q(db);
@@ -71,6 +76,7 @@ void save_db::data_punya_skywave(QSqlDatabase db, QString tb_name, QString data)
             ) VALUES ";
     query = query + data + ";";
 //    qDebug() << query;
+    log.write(type, query, debug);
     q.prepare(query);
     q.exec();
 }
@@ -81,7 +87,9 @@ void save_db::update_multiple_punya_skywave(
         QString col_target,
         QString col_clause,
         QString value_clause,
-        QString data)
+        QString data,
+        QString type,
+        int debug)
 {
     QString query;
     QSqlQuery q(db);
@@ -95,11 +103,12 @@ void save_db::update_multiple_punya_skywave(
             "end ) "
             "WHERE " + col_clause + " in (" + value_clause + ");";
 //    qDebug() << query;
+    log.write(type, query, debug);
     q.prepare(query);
     q.exec();
 }
 
-void save_db::delete_last_utc_punya_skywave(QSqlDatabase db, QString tb_name, QString last_utc)
+void save_db::delete_last_utc_punya_skywave(QSqlDatabase db, QString tb_name, QString last_utc, QString type, int debug)
 {
     QString query;
     QSqlQuery q(db);
@@ -108,6 +117,7 @@ void save_db::delete_last_utc_punya_skywave(QSqlDatabase db, QString tb_name, QS
             " WHERE epochtime <= " + last_utc + ";";
 
 //    qDebug() << query;
+    log.write(type, query, debug);
     q.prepare(query);
     q.exec();
 }

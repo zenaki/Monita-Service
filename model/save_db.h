@@ -1,6 +1,8 @@
 #ifndef SAVE_DB_H
 #define SAVE_DB_H
 
+#include <util/utama.h>
+
 #include <QDebug>
 #include <QSqlDatabase>
 #include <QSqlQuery>
@@ -12,13 +14,15 @@ class save_db
 public:
     save_db();
 
-    void data_harian(QSqlDatabase db, QString tb_name, QString data);
-    void create_tabel_data_harian(QSqlDatabase db, QString tb_name);
+    monita_log log;
 
-    void create_table_data_punya_skywave(QSqlDatabase db, QString tb_name);
-    void data_punya_skywave(QSqlDatabase db, QString tb_name, QString data);
-    void update_multiple_punya_skywave(QSqlDatabase db, QString tb_name, QString col_target, QString col_clause, QString value_clause, QString data);
-    void delete_last_utc_punya_skywave(QSqlDatabase db, QString tb_name, QString last_utc);
+    void data_harian(QSqlDatabase db, QString tb_name, QString data, QString type, int debug);
+    void create_tabel_data_harian(QSqlDatabase db, QString tb_name, QString type, int debug);
+
+    void create_table_data_punya_skywave(QSqlDatabase db, QString tb_name, QString type, int debug);
+    void data_punya_skywave(QSqlDatabase db, QString tb_name, QString data, QString type, int debug);
+    void update_multiple_punya_skywave(QSqlDatabase db, QString tb_name, QString col_target, QString col_clause, QString value_clause, QString data, QString type, int debug);
+    void delete_last_utc_punya_skywave(QSqlDatabase db, QString tb_name, QString last_utc, QString type, int debug);
 
     void create_tabel_data_skywave(QSqlQuery *q);
     void create_tabel_data_harian_skywave(QSqlQuery *q, int index);

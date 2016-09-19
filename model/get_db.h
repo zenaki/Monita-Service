@@ -8,8 +8,10 @@ class get_db
 public:
     get_db();
 
-    bool check_table_is_available(QSqlDatabase db, QString table_name);
-    void skyWave_config(QSqlDatabase db, struct monita_config *mon);
+    monita_log log;
+
+    bool check_table_is_available(QSqlDatabase db, QString table_name, QString type, int debug);
+    void skyWave_config(QSqlDatabase db, struct monita_config *mon, QString type, int debug);
 
     ///** SKY WAVE **///
     int sum_ship(QSqlDatabase db);
@@ -19,7 +21,6 @@ public:
     bool check_available_table(QSqlQuery *q, int index);
 
     init_mysql mysql;
-    monita_log mlog;
 };
 
 #endif // GET_DB_H

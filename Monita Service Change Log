@@ -2,6 +2,10 @@ monita-service (1.5) PT. Daun Biru Engineering; urgency=low
 
   * - Penambahan Fitur Veranda kedalam Monita Service
     - Enable / Disable Monita Log
+      - Log TcpModbus Data
+      - Log TcpModbus Database
+      - Log Skywave Data
+      - Log Skywave Database
 
  -- Dendy Gema <dendy@daunbiru.com>  Wed, 7 Sep 2016 17:00:00 +0700
 

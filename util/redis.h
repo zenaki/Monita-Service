@@ -10,7 +10,8 @@
 
 extern "C"
 {
-    #include "hiredis/hiredis.h"
+//    #include "hiredis/hiredis.h"
+    #include "3rdparty/hiredis-64bit/hiredis.h"
 }
 
 class redis

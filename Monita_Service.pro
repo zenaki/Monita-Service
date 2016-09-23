@@ -63,5 +63,8 @@ win32 {
     LIBS += -lsetupapi -lws2_32
 }
 
-INCLUDEPATH += 3rdparty/hiredis-64bit
-LIBS += -L3rdparty/hiredis-64bit -lhiredis
+#INCLUDEPATH += 3rdparty/hiredis-64bit
+#LIBS += -L3rdparty/hiredis-64bit -lhiredis
+
+INCLUDEPATH += /usr/local/include/hiredis
+LIBS += -L/usr/local/lib -lhiredis

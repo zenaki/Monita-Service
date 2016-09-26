@@ -64,7 +64,6 @@ case $yn_service in
     echo "service monita-service status"
     service monita-service status
     read -r -p "installasi selesai [ENTER]"
-    break;;
 esac
 <</POSTINST>>
 <<PRERM>>

@@ -73,6 +73,8 @@ struct modem {
     QStringList id_tu;
     QStringList val_tu;
     QString query;
+//    QStringList qDateTime;
+//    int jml_query;
 };
 
 struct sky_wave_config {

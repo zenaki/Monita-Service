@@ -41,7 +41,7 @@ void sky_wave::doSetup(QThread &cThread)
     ship_count = 0;
     gateway_count = 0;
     cnt_panggil = 0;
-    
+
 //    this->doWork();
 }
 
@@ -100,7 +100,12 @@ void sky_wave::parsing(QByteArray data_json, int indexGateway)
                                         monita_cfg.sky[indexGateway].mdm[i].last_utc = PayLoadData.at(0);
                                         PayLoadData.removeAt(0);
                                         monita_cfg.sky[indexGateway].mdm[i].val_tu = PayLoadData;
-
+                                        if (monita_cfg.sky[indexGateway].mdm[i].id_tu.length() > monita_cfg.sky[indexGateway].mdm[i].val_tu.length()) {
+                                            int iVal = monita_cfg.sky[indexGateway].mdm[i].id_tu.length() - monita_cfg.sky[indexGateway].mdm[i].val_tu.length();
+                                            for(int k = 0; k < iVal; k++) {
+                                                monita_cfg.sky[indexGateway].mdm[i].val_tu.insert(monita_cfg.sky[indexGateway].mdm[i].val_tu.length(), "N/A");
+                                            }
+                                        }
                                         for (int k = 0; k < monita_cfg.sky[indexGateway].mdm[i].id_tu.length(); k++) {
                                             QString unixTimeStr = QString::number(monita_cfg.sky[indexGateway].mdm[i].last_utc.toInt());
                                             const uint s = unixTimeStr.toUInt( &ok );

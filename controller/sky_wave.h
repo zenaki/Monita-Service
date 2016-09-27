@@ -44,7 +44,7 @@ private:
 
     void parsing(QByteArray data_json, int indexGateWay);
     QStringList parsingRawPayload(QString RawData);
-//    void getQuery(int indexGateway, int i);
+    void getQuery(QString MessageUTC, int indexGateway, int i);
 
 signals:
 

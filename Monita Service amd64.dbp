@@ -79,6 +79,7 @@ monita-service (1.5) PT. Daun Biru Engineering; urgency=low
 
   * - Penambahan Fitur Veranda kedalam Monita Service
     - Enable / Disable Monita Log
+    - Validasi Nama Table Data Harian
 
  -- Dendy Gema <dendy@daunbiru.com>  Wed, 7 Sep 2016 17:00:00 +0700
 

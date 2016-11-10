@@ -38,9 +38,35 @@ void data_visual::RedisToJson(QStringList data, QDateTime dt)
     QJsonObject json;
     QJsonArray slaveArray[JUMLAH_MAX_TITIK_UKUR];            // Jumlah Maksimal titik Ukut
     QJsonObject idTitikUkurObject[JUMLAH_MAX_TITIK_UKUR];    // Jumlah Maksimal titik Ukut
+//    QJsonArray slaveArray;
+//    QJsonObject idTitikUkurObject;
     QJsonObject errorObject;
+    QJsonObject dataObject;
+    QJsonArray dataArray;
+    QJsonObject VisMonObject;
+    QJsonArray VisMonArray;
 
-    QStringList list_temp; QString temp; int index = 0;
+    QStringList list_temp; QString temp; int index = 0; int indexObject = 0;
+//    for (int i = 0; i < data.length(); i+=2) {
+//        if (data.at(i).indexOf("UNKNOWN") > 0) {
+//            errorObject[data.at(i)] = data.at(i+1);
+//            json[data.at(i)] = errorObject;
+//        } else {
+//            list_temp = data.at(i).split(";");
+//            if ((i > 0 && temp != list_temp.at(0))) {
+//                slaveArray[index].append(idTitikUkurObject[index]);
+//                json["SLAVE_ID:"+temp] = slaveArray[index];
+//                index++;
+//            }
+//            idTitikUkurObject[index]["ID_TITIK_UKUR:"+list_temp.at(1)] = data.at(i+1);
+//            temp = list_temp.at(0);
+//            if (i >= data.length()-2) {
+//                slaveArray[index].append(idTitikUkurObject[index]);
+//                json["SLAVE_ID:"+temp] = slaveArray[index];
+//            }
+//        }
+//    }
+
     for (int i = 0; i < data.length(); i+=2) {
         if (data.at(i).indexOf("UNKNOWN") > 0) {
             errorObject[data.at(i)] = data.at(i+1);
@@ -48,20 +74,36 @@ void data_visual::RedisToJson(QStringList data, QDateTime dt)
         } else {
             list_temp = data.at(i).split(";");
             if ((i > 0 && temp != list_temp.at(0))) {
-                slaveArray[index].append(idTitikUkurObject[index]);
-                json["SLAVE_ID:"+temp] = slaveArray[index];
+//                slaveArray[index].append(idTitikUkurObject[index]);
+//                slaveArray[index].append(dataArray);
+                json["slave_id"] = temp.toInt();
+                json["data"] = dataArray;
                 index++;
+                for (int j = 0; j < indexObject; j++) {
+                    dataArray.removeAt(0);
+                }
+                indexObject = 0;
+                VisMonArray.append(json);
             }
-            idTitikUkurObject[index]["ID_TITIK_UKUR:"+list_temp.at(1)] = data.at(i+1);
+            if (data.at(i+1) != "N/A") {
+                dataObject["titik_ukur"] = list_temp.at(1);
+                dataObject["value"] = data.at(i+1);
+//                idTitikUkurObject[index]["ID_TITIK_UKUR:"+list_temp.at(1)] = data.at(i+1);
+//                idTitikUkurObject[indexObject] = dataObject;
+                dataArray.append(dataObject); indexObject++;
+            }
             temp = list_temp.at(0);
             if (i >= data.length()-2) {
-                slaveArray[index].append(idTitikUkurObject[index]);
-                json["SLAVE_ID:"+temp] = slaveArray[index];
+//                slaveArray[index].append(idTitikUkurObject[index]);
+//                slaveArray[index].append(dataArray);
+                json["slave_id"] = temp.toInt();
+                json["data"] = dataArray;
+                VisMonArray.append(json);
             }
         }
     }
-
-    this->WriteToJson(json, dt);
+    VisMonObject["monita"] = VisMonArray;
+    this->WriteToJson(VisMonObject, dt);
 }
 
 void data_visual::WriteToJson(QJsonObject json, QDateTime dt)

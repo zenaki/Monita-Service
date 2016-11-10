@@ -6,7 +6,7 @@ Section: utils
 Maintainer: Dendy Gema <dendy@daunbiru.com>
 Homepage: http://www.daunbiru.com
 Priority: optional
-Architecture: amd64
+Architecture: i386
 Depends: qt56websockets, qt56base, mysql-server, redis-server
 Description: Monita Service
  Service for Monita TCP/Modbus ..
@@ -19,9 +19,9 @@ Description: Monita Service
 <</CTRL>>
 <<FILES>>
 1
-/home/zenaki/QT Project/Monita/build-Monita_Service-QT_5_6_1-Release/monita-service* -> monita-service -> /usr/local/bin
-/home/zenaki/QT Project/Monita/Package/monita-service -> monita-service -> /etc/init.d
-/usr/local/lib/libhiredis.so.0.13* -> libhiredis.so.0.13 -> /usr/lib/x86_64-linux-gnu
+/home/daun-biru/QT Project/build-Monita_Service-Desktop_5_6_1-Release/monita-service* -> monita-service -> /usr/local/bin
+/home/daun-biru/QT Project/monita-service* -> monita-service -> /etc/init.d
+/usr/local/lib/libhiredis.so.0.13* -> libhiredis.so.0.13 -> /usr/lib/i386-linux-gnu
 <</FILES>>
 <<SCRIPTS>>
 <<PREINST>>

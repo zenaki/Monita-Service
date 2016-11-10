@@ -99,7 +99,10 @@ void sky_wave::parsing(QByteArray data_json, int indexGateway)
                                     }
             //                        listData.append("RawPayload:" + parse.format_5cut_32get(RawBiner));
                                     if (getData) {
-                                        monita_cfg.sky[indexGateway].mdm[i].last_utc = PayLoadData.at(0);
+                                        monita_cfg.sky[indexGateway].mdm[i].last_utc = PayLoadData.at(0); 
+                                        if (QDateTime::fromTime_t(monita_cfg.sky[indexGateway].mdm[i].last_utc.toUInt(&ok)).toString("HH").toInt() == 7) {
+                                            qDebug() << "Debug";
+                                        }
                                         PayLoadData.removeAt(0);
                                         monita_cfg.sky[indexGateway].mdm[i].val_tu = PayLoadData;
                                         if (monita_cfg.sky[indexGateway].mdm[i].id_tu.length() > monita_cfg.sky[indexGateway].mdm[i].val_tu.length()) {
@@ -135,6 +138,9 @@ void sky_wave::parsing(QByteArray data_json, int indexGateway)
                                             monita_cfg.sky[indexGateway].mdm[i].val_tu[3] = vField.toObject().value("Value").toString();
                                         }
                                     }
+                                    if (QDateTime::fromTime_t(monita_cfg.sky[indexGateway].mdm[i].last_utc.toUInt(&ok)).toString("HH").toInt() == 7) {
+                                        qDebug() << "Debug";
+                                    }
                                     getQuery(MessageUTC, indexGateway, i);
                                 }
                             }
@@ -168,12 +174,15 @@ void sky_wave::parsing(QByteArray data_json, int indexGateway)
         QString dataToTable, vTarget, vIDTarget;
         for (int i = 0; i < monita_cfg.sky[indexGateway].jml_modem; i++) {
             if (!monita_cfg.sky[indexGateway].mdm[i].query.isEmpty()) {
+                if (monita_cfg.sky[indexGateway].mdm[i].query.indexOf("07:00:00") > 0) {
+                    qDebug() << "Debug";
+                }
                 dataToTable = dataToTable + monita_cfg.sky[indexGateway].mdm[i].query;
                 if (!monita_cfg.sky[indexGateway].mdm[i].last_utc.isEmpty()) {
                     QString unixTimeStr = monita_cfg.sky[indexGateway].mdm[i].last_utc;
                     const uint s = unixTimeStr.toUInt( &ok );
                     const QDateTime dt = QDateTime::fromTime_t( s );
-                    const QString result = dt.toString("yyyy-MM-dd HH:mm:ss");
+                    const QString result = dt.toUTC().toString("yyyy-MM-dd HH:mm:ss");
                     vTarget = vTarget +
                             "when id_ship = " + QString::number(monita_cfg.sky[indexGateway].mdm[i].id_ship) +
                             " then '" + result + "' ";
@@ -261,19 +270,23 @@ QStringList sky_wave::parsingRawPayload(QString RawData)
         data.sprintf("%s%c", data.toLocal8Bit().data(), dats[j]);
         if (cnt_p == 32) {
             cnt_d++;
-            int sign = 1;
-            dataBin = data.toUtf8();
-            if(dataBin.length()==32) {
-                if(dataBin.at(0)=='1')  sign =-1;                       // if bit 0 is 1 number is negative
-                dataBin.remove(0,1);                                     // remove sign bit
-            }
-            QByteArray fraction =dataBin.right(23);   //get the fractional part
-            double mantissa = 0;
-            for(int i=0;i<fraction.length();i++)     // iterate through the array to claculate the fraction as a decimal.
-                if(fraction.at(i)=='1')     mantissa += 1.0/(pow(2,i+1));
-            int exponent = dataBin.left(dataBin.length()-23).toLongLong(&ok,2)-127;     //claculate the exponent
-            data_real = QString::number( sign*pow(2,exponent)*(mantissa+1.0),'f', 9 );
-            data_decimal = QString::number( sign*pow(2,exponent)*(mantissa+1.0),'f', 0 );
+//            int sign = 1;
+//            dataBin = data.toUtf8();
+//            if(dataBin.length()==32) {
+//                if(dataBin.at(0)=='1')  sign =-1;                       // if bit 0 is 1 number is negative
+//                dataBin.remove(0,1);                                     // remove sign bit
+//            }
+//            QByteArray fraction =dataBin.right(23);   //get the fractional part
+//            double mantissa = 0;
+//            for(int i=0;i<fraction.length();i++)     // iterate through the array to claculate the fraction as a decimal.
+//                if(fraction.at(i)=='1')     mantissa += 1.0/(pow(2,i+1));
+//            int exponent = dataBin.left(dataBin.length()-23).toLongLong(&ok,2)-127;     //claculate the exponent
+            unsigned int data_hex = data.toUInt(&ok, 16);
+            float data_float = (*(float *) &data_hex);
+//            data_real = QString::number( sign*pow(2,exponent)*(mantissa+1.0),'f', 9 );
+            data_real = QString::number(data_float, 'f', 9);
+//            data_decimal = QString::number( sign*pow(2,exponent)*(mantissa+1.0),'f', 0 );
+            data_decimal = QString::number(data_float, 'f', 0);
             if (cnt_d == 1) {
 //                QString unixTimeStr = data_decimal;
 //                const uint s = unixTimeStr.toUInt( &ok );
@@ -306,7 +319,9 @@ void sky_wave::getQuery(QString MessageUTC, int indexGateway, int i)
             const uint s = unixTimeStr.toUInt( &ok );
             const QDateTime dt = QDateTime::fromTime_t( s );
             const QString date_gmt7 = dt.toString("yyyy-MM-dd HH:mm:ss");
-
+            if (dt.toString("HH").toInt() == 7) {
+                qDebug() << "Debug";
+            }
             if (monita_cfg.sky[indexGateway].next_utc.toString("yyyyMMdd") == dt.toUTC().toString("yyyyMMdd")) {
                 if (!monita_cfg.sky[indexGateway].mdm[i].query.isEmpty()) {
                     monita_cfg.sky[indexGateway].mdm[i].query.sprintf(
@@ -336,7 +351,9 @@ void sky_wave::getQuery(QString MessageUTC, int indexGateway, int i)
             const uint s = unixTimeStr.toUInt( &ok );
             const QDateTime dt = QDateTime::fromTime_t( s );
             const QString date_gmt7 = dt.toString("yyyy-MM-dd HH:mm:ss");
-
+            if (dt.toString("HH").toInt() == 7) {
+                qDebug() << "Debug";
+            }
             if (monita_cfg.sky[indexGateway].next_utc.toString("yyyyMMdd") == dt.toUTC().toString("yyyyMMdd")) {
                 if (!monita_cfg.sky[indexGateway].mdm[i].query.isEmpty()) {
                     monita_cfg.sky[indexGateway].mdm[i].query.sprintf(
@@ -377,6 +394,7 @@ void sky_wave::doWork()
     request.setUrl(url);
     log.write("SkyWave","Send Request to URL " + QDateTime::currentDateTime().toString("yyyy-MM-dd HH:mm:ss:zzz"), monita_cfg.config.at(7).toInt());
     log.write("SkyWave", monita_cfg.urls, monita_cfg.config.at(7).toInt());
+    qDebug() << monita_cfg.urls;
     manager->get(request);
 }
 

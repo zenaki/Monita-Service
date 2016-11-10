@@ -1,21 +1,20 @@
-
-<!-- saved from url=(0094)file:///home/zenaki/Qt5.6.0/Examples/Qt-5.6/qtwebsockets/websockets/echoserver/echoclient.html -->
-<html><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<html>
+    <head>
         <title>WebSocket Echo Client</title>
     </head>
     <body>
         <h1>WebSocket Echo Client</h1>
         <p>
-            <button onclick="initWebSocket();">Connect</button>
-            <button onclick="stopWebSocket();">Disconnect</button>
-            <button onclick="checkSocket();">State</button>
+            <button onClick="initWebSocket();">Connect</button>
+            <button onClick="stopWebSocket();">Disconnect</button>
+            <button onClick="checkSocket();">State</button>
         </p>
         <p>
-            <textarea id="debugTextArea" style="width: 778px; height: 490px; margin: 0px;"></textarea>
+            <textarea id="debugTextArea" style="width:400px;height:200px;"></textarea>
         </p>
         <p>
-            <input type="text" id="inputText" onkeydown="if(event.keyCode==13)sendMessage();">
-            <button onclick="sendMessage();">Send</button>
+            <input type="text" id="inputText" onkeydown="if(event.keyCode==13)sendMessage();"/>
+            <button onClick="sendMessage();">Send</button>
         </p>
 
         <script type="text/javascript">
@@ -36,7 +35,7 @@
                 }
             }
 
-            var wsUri = "ws://localhost:1234";
+            var wsUri = "ws://119.18.154.235:1234";
             var websocket = null;
 
             function initWebSocket() {
@@ -100,6 +99,5 @@
                 }
             }
         </script>
-    
-
-</body></html>
+    </body>
+</html>

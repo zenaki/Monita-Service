@@ -20,8 +20,8 @@ HEADERS += \
         3rdparty/libmodbus/src/modbus.h \
         util/config.h \
         util/redis.h \
-        util/util_skyw.h \
-        util/parsing_fuction.h \
+#        util/util_skyw.h \
+#        util/parsing_fuction.h \
     controller/tcp_modbus.h \
     controller/data_mysql.h \
     controller/data_visual.h \
@@ -39,8 +39,8 @@ SOURCES += main.cpp \
         3rdparty/libmodbus/src/modbus-tcp.c \
         util/config.cpp \
         util/redis.cpp \
-        util/util_skyw.cpp \
-        util/parsing_fuction.cpp \
+#        util/util_skyw.cpp \
+#        util/parsing_fuction.cpp \
     controller/tcp_modbus.cpp \
     controller/data_mysql.cpp \
     controller/data_visual.cpp \

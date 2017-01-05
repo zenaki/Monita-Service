@@ -21,7 +21,7 @@ void tcp_modbus::doSetup(QThread &cThread)
 
     QTimer *t = new QTimer(this);
     connect(t, SIGNAL(timeout()), this, SLOT(doWork()));
-    t->start(1000);
+    t->start(2000);
 }
 
 void tcp_modbus::doWork()
@@ -69,6 +69,200 @@ void tcp_modbus::doWork()
         }
     }
     this->LuaRedis_function(dateTime);
+
+//    this->connectTcpModbus("192.168.3.244", 502);
+//    for (int i = 0; i < 300; i+=2) {
+//        this->request_modbus_custom(13, 6, 1000+i, 0, 2, "FLOAT", 100+i);
+//    }
+//    this->request_modbus_custom(13, 3, 1000, 100, 2, "FLOAT", 0);
+}
+
+void tcp_modbus::request_modbus_custom(const int vSlave, const int vFunc, const int vAddr, int vNum,  const int vByte, QString vType, int value)
+{
+    if( m_tcpModbus == NULL )
+    {
+        return;
+    }
+
+    const int slave = vSlave;
+    const int func = vFunc;
+    const int addr = vAddr;
+    int num = vNum;
+    const int byte = vByte;
+    QString type = vType;
+
+    uint8_t dest[1024];
+    uint16_t *dest16 = (uint16_t *) dest;
+
+    memset( dest, 0, 1024 );
+
+    int ret = -1;
+    bool is16Bit = false;
+    bool writeAccess = false;
+//    const QString dataType = descriptiveDataTypeName(func);
+
+    modbus_set_slave( m_tcpModbus, slave );
+    switch( func )
+    {
+        case MODBUS_FC_READ_COILS:
+            ret = modbus_read_bits( m_tcpModbus, addr, num, dest );
+            break;
+        case MODBUS_FC_READ_DISCRETE_INPUTS:
+            ret = modbus_read_input_bits( m_tcpModbus, addr, num, dest );
+            break;
+        case MODBUS_FC_READ_HOLDING_REGISTERS:
+            ret = modbus_read_registers( m_tcpModbus, addr, num, dest16 );
+            is16Bit = true;
+            break;
+        case MODBUS_FC_READ_INPUT_REGISTERS:
+            ret = modbus_read_input_registers( m_tcpModbus, addr, num, dest16 );
+            is16Bit = true;
+            break;
+//        case MODBUS_FC_WRITE_SINGLE_COIL:
+//            ret = modbus_write_bit( m_tcpModbus, addr,0);
+////            ret = modbus_write_bit( m_tcpModbus, addr,
+////                    ui->regTable->item(0,2)->text().toInt(0,0)?1:0);
+//            writeAccess = true;
+//            num = 1;
+//            break;
+        case MODBUS_FC_WRITE_SINGLE_REGISTER:
+            ret = modbus_write_register( m_tcpModbus, addr, value);
+//            ret = modbus_write_register( m_tcpModbus, addr,
+//                    ui->regTable->item(0,2)->text().toInt(0,0));
+            writeAccess = true;
+            num = 1;
+            break;
+//        case MODBUS_FC_WRITE_MULTIPLE_COILS:
+//        {
+//            uint8_t * data = new uint8_t[num];
+//            for( int i = 0; i < num; ++i )
+//            {
+//                data[i] = ui->regTable->item(i,2)->text().toInt(0,0);
+//            }
+//            ret = modbus_write_bits( m_tcpModbus, addr, num, data );
+//            delete[] data;
+//            writeAccess = true;
+//            break;
+//        }
+//        case MODBUS_FC_WRITE_MULTIPLE_REGISTERS:
+//        {
+//            uint16_t * data = new uint16_t[num];
+//            for( int i = 0; i < num; ++i )
+//            {
+//                data[i] = ui->regTable->item(i,2)->text().toInt(0,0);
+//            }
+//            ret = modbus_write_registers( m_tcpModbus, addr, num, data );
+//            delete[] data;
+//            writeAccess = true;
+//            break;
+//        }
+        default:
+            break;
+    }
+
+    if( ret == num  )
+    {
+        if( writeAccess )
+        {
+//            printf("Monita::TcpModbus::Value successfully sent ..\n");
+//            log.write("TcpModbus","Value successfully sent ..", monita_cfg.config.at(7).toInt());
+            log.write("TcpModbus",
+                      "Slave: " + QString::number(slave) +
+                      " Function: " + QString::number(func) +
+                      " Address: " + QString::number(addr) +
+                      " Value: " + QString::number(value)
+                      , 1);
+//            QTimer::singleShot( 2000, this, SLOT( resetStatus() ) );
+        }
+        else
+        {
+            QString data_int;
+            QString data_hex;
+            int data_before;
+//            QByteArray array;
+            QString data_real;
+            QString data_temp1; QString data_temp2;
+            logsheet = false;
+
+            for( int i = 1; i < num+1; ++i )
+            {
+                int data = is16Bit ? dest16[(i-1)] : dest[(i-1)];
+                data_int.sprintf("%d", data);
+                data_hex.sprintf("0x%04x", data);
+                if (i % byte == 0) {
+                    if (byte == 1) {
+                        data_temp2.sprintf("%04x", data);
+                    } else if (byte == 2) {
+                        data_temp2.sprintf("%04x%04x", data, data_before);
+                    } else if (byte == 4) {
+                        data_temp1.sprintf("%04x", data);
+                        data_temp2.append(data_temp1);
+                    }
+                    bool ok;
+                    if (type == "FLOAT") {
+                        unsigned int d_hex = data_temp2.toUInt(&ok, 16);
+                        float data_float = (*(float *) &d_hex);
+                        data_real = QString::number(data_float, 'f', 5);
+                        data_before = 0;
+                        data_temp2.clear();
+                    } else if (type == "DEC") {
+                        data_real = QString::number(data_temp2.toLongLong(&ok, 16));
+                        data_before = 0;
+                        data_temp2.clear();
+                    }
+                } else {
+                    if (byte == 4) {
+                        data_temp1.sprintf("%04x", data);
+                        data_temp2.append(data_temp1);
+                    } else if (byte == 2) {
+                        data_before = data;
+                    }
+                }
+
+                if (!data_real.isEmpty()) {
+                    log.write("TcpModbus",
+                              "Slave: " + QString::number(slave) +
+                              " Function: " + QString::number(func) +
+                              " Address: " + QString::number(addr+(i-1)) +
+                              " Value: " + data_real
+                              , 1);
+                }
+                data_real.clear();
+            }
+        }
+    }
+    else
+    {
+        if( ret < 0 )
+        {
+            if(
+#ifdef WIN32
+                    errno == WSAETIMEDOUT ||
+#endif
+                    errno == EIO
+                                                                    )
+            {
+                log.write("TcpModbus","I/O error : did not receive any data from slave ..",
+                          monita_cfg.config.at(7).toInt());
+                releaseTcpModbus();
+            }
+            else
+            {
+                log.write("TcpModbus","Protocol Error : Slave threw exception " +
+                          QString::fromUtf8(modbus_strerror(errno)) +
+                          " or function not implemented.",
+                          monita_cfg.config.at(7).toInt());
+                releaseTcpModbus();
+            }
+        }
+        else
+        {
+            log.write("TcpModbus","Protocol Error : "
+                                           "Number of registers returned does not match number of registers requested!",
+                      monita_cfg.config.at(7).toInt());
+            releaseTcpModbus();
+        }
+    }
 }
 
 void tcp_modbus::request_modbus(int index, QDateTime dt_req_mod)

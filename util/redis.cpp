@@ -27,28 +27,36 @@ QStringList redis::reqRedis(QString command, QString address, int port, int len)
     void *pointer = NULL;
     pointer = redisCommand(r_context, bytes.constData());
     r_reply = (redisReply*)pointer;
-    if ( r_reply->type == REDIS_REPLY_ERROR ) {
-        printf( "Error: %s\n", r_reply->str );
-//        result.insert(result.length(), r_reply->str);
-    } else if ( r_reply->type != REDIS_REPLY_ARRAY ) {
-        if ( r_reply->type == REDIS_REPLY_INTEGER ) {
-            result.insert(result.length(), QString::number(r_reply->integer));
-//            qDebug() << "Monita::Redis::Result: " << QString::number(r_reply->integer);
+    if (r_reply->type) {
+        if ( r_reply->type == REDIS_REPLY_ERROR ) {
+            printf( "Error: %s\n", r_reply->str );
+//            result.insert(result.length(), r_reply->str);
+        } else if ( r_reply->type != REDIS_REPLY_ARRAY ) {
+            if ( r_reply->type == REDIS_REPLY_INTEGER ) {
+                result.insert(result.length(), QString::number(r_reply->integer));
+//                qDebug() << "Monita::Redis::Result: " << QString::number(r_reply->integer);
+            } else {
+                result.insert(result.length(), r_reply->str);
+//                qDebug() << "Monita::Redis::Result: " << QString(r_reply->str);
+            }
         } else {
-            result.insert(result.length(), r_reply->str);
-//            qDebug() << "Monita::Redis::Result: " << QString(r_reply->str);
+            if ((int)r_reply->elements >= len) {
+                for (int i = 0; i < len ; ++i ) {
+                    result.insert(result.length(), r_reply->element[i]->str);
+//                    QThread::msleep(10);
+//                    printf( "Monita::Redis::Result:%i: %s\n", i,
+//                        r_reply->element[i]->str );
+                }
+            }
         }
-    } else {
-        for (int i = 0; i < len ; ++i ) {
-            result.insert(result.length(), r_reply->element[i]->str);
-//            QThread::msleep(10);
-//            printf( "Monita::Redis::Result:%i: %s\n", i,
-//                r_reply->element[i]->str );
-        }
+        freeReplyObject(r_reply);
     }
-    freeReplyObject(r_reply);
     redisFree(r_context);
     return result;
+    /**  **/
+    /// ///
+    /* */
+    // //
 }
 
 QStringList redis::eval(QByteArray script, QString address, int port)
@@ -78,7 +86,7 @@ QStringList redis::eval(QByteArray script, QString address, int port)
         printf("Monita::Redis::Error : %s\n", r_reply->str);
         result.insert(result.length(), r_reply->str);
     } else if (r_reply->type == REDIS_REPLY_ARRAY) {
-        for (int i = 0; i < r_reply->elements; i++) {
+        for (int i = 0; i < (int)r_reply->elements; i++) {
             result.insert(result.length(), r_reply->element[i]->str);
         }
     } else {

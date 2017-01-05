@@ -4,7 +4,7 @@ init_mysql::init_mysql()
 {
 }
 
-QSqlDatabase init_mysql::connect_db(){
+QSqlDatabase init_mysql::connect_db(QString name){
 
     QFile db_path(PATH_DB_CONNECTION);
     if (db_path.exists()) {
@@ -14,7 +14,7 @@ QSqlDatabase init_mysql::connect_db(){
         user_name = db_sett.value("USERNAME").toString();
         password = db_sett.value("PASSWORD").toString();
 
-        QSqlDatabase db = QSqlDatabase::addDatabase("QMYSQL");
+        QSqlDatabase db = QSqlDatabase::addDatabase("QMYSQL", name);
         db.setHostName(host);
         db.setDatabaseName(db_name);
         db.setUserName(user_name);
@@ -33,7 +33,7 @@ QSqlDatabase init_mysql::connect_db(){
         db_sett.setValue("USERNAME", user_name.toUtf8());
         db_sett.setValue("PASSWORD", password.toUtf8());
 
-        QSqlDatabase db = QSqlDatabase::addDatabase("QMYSQL");
+        QSqlDatabase db = QSqlDatabase::addDatabase("QMYSQL", name);
         db.setHostName(host);
         db.setDatabaseName(db_name);
         db.setUserName(user_name);

@@ -38,6 +38,7 @@ private:
     void send_ResultToRedis(QStringList result_data, QDateTime dt_result);
     QByteArray readLua(QString pth);
 
+    void request_modbus_custom(const int vSlave, const int vFunc, const int vAddr, int vNum, const int vByte, QString vType, int value);
 public slots:
     void doWork();
 

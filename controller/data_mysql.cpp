@@ -12,7 +12,7 @@ void data_mysql::doSetup(QThread &cThread)
     connect(t, SIGNAL(timeout()), this, SLOT(set_dataHarian()));
     t->start(60000);
 
-    db = mysql.connect_db();
+    db = mysql.connect_db("TcpModBus");
 }
 
 void data_mysql::set_dataHarian()
@@ -52,7 +52,7 @@ void data_mysql::set_dataHarian()
             log.write("Database","Error : Connecting Fail ..!!",
                       monita_cfg.config.at(8).toInt());
             QThread::msleep(DELAY_DB_CONNECT);
-            db = mysql.connect_db();
+            db = mysql.connect_db("TcpModBus");
 //            t++;
 //            if (t >= 3) {emit finish();}
         }
@@ -83,7 +83,10 @@ void data_mysql::set_dataHarian()
               monita_cfg.config.at(8).toInt());
 //    rds.reqRedis("del data_jaman_" + QDate::currentDate().toString("dd_MM_yyyy"), address, port);
     rds.reqRedis("del monita_service:temp", address, port);
-    rds.reqRedis("del monita_service:" + monita_cfg.config.at(3) + QDate::currentDate().toString("dd_MM_yyyy"), address, port);
+    qint64 Y_epoch = QDateTime::currentDateTime().toTime_t()-86400;
+    QString yesterday = QDateTime::fromTime_t(Y_epoch).toString("dd_MM_yyyy");
+//    rds.reqRedis("del monita_service:" + monita_cfg.config.at(3) + QDateTime::currentDateTime().toString("dd_MM_yyyy"), address, port);
+    rds.reqRedis("del monita_service:" + monita_cfg.config.at(3) + yesterday, address, port);
     rds.reqRedis("del monita_service:vismon", address, port);
 //    mysql.close(db);
 //    db.close();

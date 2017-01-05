@@ -32,8 +32,7 @@ void sky_wave::doSetup(QThread &cThread)
     acc = (struct sky_wave_account *) malloc ( sizeof (struct sky_wave_account));
     memset((char *) acc, 0, sizeof(struct sky_wave_account));
 
-//    mysql.close(db_skywave);
-    db_skywave = mysql.connect_db();
+    db_skywave = mysql.connect_db("SkyWave");
     get.modem_info(db_skywave, marine);
     get.modem_getway(db_skywave, acc);
     get.skyWave_config(db_skywave, &monita_cfg, "SkyWave", monita_cfg.config.at(10).toInt());
@@ -90,7 +89,7 @@ void sky_wave::parsing(QByteArray data_json, int indexGateway)
                                         }
                                         index++;
                                     }
-                                    PayLoadData = parsingRawPayload(parse.format_5cut_32get(RawBiner));
+                                    PayLoadData = parsingRawPayload(this->format_5cut_32get(RawBiner));
                                     for (int j = 5; j < PayLoadData.length(); j++) {
                                         if (PayLoadData.at(j) != "0.000000000") {
                                             getData = true;
@@ -206,7 +205,7 @@ void sky_wave::parsing(QByteArray data_json, int indexGateway)
                 log.write("Database","Error : Connecting Fail ..!!",
                           monita_cfg.config.at(10).toInt());
                 QThread::msleep(DELAY_DB_CONNECT);
-                db_skywave = mysql.connect_db();
+                db_skywave = mysql.connect_db("SkyWave");
             }
         }
         if (!dataToTable.isEmpty()) {
@@ -416,4 +415,47 @@ void sky_wave::replyFinished(QNetworkReply* reply)
         monita_cfg.gateway_count = 0;
 //        timer.start((1000 * 60 * 10) / 2);
     }
+}
+
+QString sky_wave::format_5cut_32get(QString biner){
+
+    char dat[(biner.size()+1)];
+
+    int c_5bit  = 0;
+    int c_32bit = 0;
+
+    bool buang_5bit  = false;
+//    bool ambil_32bit = false;
+
+    QString dat_5bit  = ""; /* 5 bit yang di buang */
+    QString dat_32bit = ""; /* 32 bit yang di ambil */
+    QString all_32bit = ""; /* gabung semua 32 bit */
+
+    strcpy(dat, biner.toLatin1());
+
+    for (int i = 0; i < biner.size(); i++){
+        if (buang_5bit == false){
+            dat_5bit.sprintf("%s%c", dat_5bit.toLocal8Bit().data(), dat[i]);
+
+            if (c_5bit == 4){
+                buang_5bit = true;
+                c_32bit = 0;
+                dat_5bit = "";
+            }
+            c_5bit++;
+        }
+        else if(buang_5bit == true){
+            dat_32bit.sprintf("%s%c", dat_32bit.toLocal8Bit().data(), dat[i]);
+
+            if (c_32bit == 31){
+                all_32bit.sprintf("%s%s", all_32bit.toLocal8Bit().data(), dat_32bit.toLocal8Bit().data());
+
+                buang_5bit = false;
+                c_5bit = 0;
+                dat_32bit = "";
+            }
+            c_32bit++;
+        }
+    }
+    return (QString) all_32bit;
 }

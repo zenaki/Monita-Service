@@ -39,10 +39,10 @@ Worker::Worker(QObject *parent) : QObject(parent)
 
 Worker::~Worker()
 {
-//    if (ThreadTcpModbus.isRunning()) ThreadTcpModbus.terminate();
-//    if (ThreadDataMysql.isRunning()) ThreadDataMysql.terminate();
+    if (ThreadTcpModbus.isRunning()) ThreadTcpModbus.terminate();
+    if (ThreadDataMysql.isRunning()) ThreadDataMysql.terminate();
     if (ThreadDataVisual.isRunning()) ThreadDataVisual.terminate();
-//    if (ThreadSkyWave.isRunning()) ThreadSkyWave.terminate();
+    if (ThreadSkyWave.isRunning()) ThreadSkyWave.terminate();
 //    if (m_pWebSocketServer->isListening()) {
 //        m_pWebSocketServer->close();
 //        qDeleteAll(m_clients.begin(), m_clients.end());

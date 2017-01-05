@@ -1,7 +1,7 @@
 [DEBREATE-0.7.10]
 <<CTRL>>
 Package: monita-service
-Version: 1.6
+Version: 1.7
 Section: utils
 Maintainer: Dendy Gema <dendy@daunbiru.com>
 Homepage: http://www.daunbiru.com
@@ -75,6 +75,13 @@ esac
 <</SCRIPTS>>
 <<CHANGELOG>>
 <<DEST>>DEFAULT<</DEST>>
+monita-service (1.7) PT. Daun Biru Engineering; urgency=low
+
+  * - Fixed Database Bug
+  * - Data Jaman harian di redis tidak dihapus
+
+ -- Dendy Gema <dendy@daunbiru.com>  Wed, 28 Sep 2016 17:00:00 +0700
+
 monita-service (1.6) PT. Daun Biru Engineering; urgency=low
 
   * - Validasi Nama Table Data Harian
@@ -262,7 +269,7 @@ copyright PT. Daun Biru Engineering Indonesia
 <</COPYRIGHT>>
 <<MENU>>
 1
-Name=Monita Service ver 1.6
+Name=Monita Service ver 1.7
 Version=1.0
 Exec=/usr/local/bin/monita-service
 Comment=Monita Service (by PT. Daun Biru Engineering)
@@ -272,7 +279,7 @@ Terminal=false
 StartupNotify=false
 Encoding=UTF-8
 Categories=Network;Qt;
-Version=1.6
+Version=1.7
 <</MENU>>
 <<BUILD>>
 0

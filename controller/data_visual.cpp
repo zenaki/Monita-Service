@@ -36,8 +36,8 @@ void data_visual::doSetup(QThread &cThread)
 void data_visual::RedisToJson(QStringList data, QDateTime dt)
 {
     QJsonObject json;
-    QJsonArray slaveArray[JUMLAH_MAX_TITIK_UKUR];            // Jumlah Maksimal titik Ukut
-    QJsonObject idTitikUkurObject[JUMLAH_MAX_TITIK_UKUR];    // Jumlah Maksimal titik Ukut
+//    QJsonArray slaveArray[JUMLAH_MAX_TITIK_UKUR];            // Jumlah Maksimal titik Ukut
+//    QJsonObject idTitikUkurObject[JUMLAH_MAX_TITIK_UKUR];    // Jumlah Maksimal titik Ukut
 //    QJsonArray slaveArray;
 //    QJsonObject idTitikUkurObject;
     QJsonObject errorObject;
@@ -162,7 +162,7 @@ void data_visual::onNewConnection()
     pSocket->ignoreSslErrors();
     log.write("WebSocket","Socket Connect : " + pSocket->localAddress().toString() + ":" + pSocket->localPort(),
               monita_cfg.config.at(8).toInt());
-    pSocket->sendTextMessage("Berhasil Connect cuy ..");
+//    pSocket->sendTextMessage("Berhasil Connect cuy ..");
 
     m_clients << pSocket;
 }

@@ -5,8 +5,9 @@
 
 #include "util/utama.h"
 #include "util/config.h"
-#include "util/util_skyw.h"
-#include "util/parsing_fuction.h"
+//#include "util/util_skyw.h"
+//#include "util/parsing_fuction.h"
+#include "model/get_db.h"
 
 #include <QNetworkAccessManager>
 #include <QNetworkRequest>
@@ -25,14 +26,13 @@ public:
     struct monita_config monita_cfg;
 
     void doSetup(QThread &cThread);
-
 private:
     QSqlDatabase db_skywave;
     QNetworkAccessManager *manager;
-    util_skyw read;
+//    util_skyw read;
     get_db get;
     save_db set;
-    parsing_function parse;
+//    parsing_function parse;
 
     struct sky_wave_ship *marine;
     struct sky_wave_account *acc;
@@ -45,6 +45,7 @@ private:
     void parsing(QByteArray data_json, int indexGateWay);
     QStringList parsingRawPayload(QString RawData);
     void getQuery(QString MessageUTC, int indexGateway, int i);
+    QString format_5cut_32get(QString biner);
 
 signals:
 

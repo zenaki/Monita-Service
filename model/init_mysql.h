@@ -13,7 +13,7 @@ public:
     QString user_name;
     QString password;
 
-    QSqlDatabase connect_db();
+    QSqlDatabase connect_db(QString name);
     void close(QSqlDatabase db);
 };
 

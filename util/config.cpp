@@ -22,32 +22,57 @@ QStringList config::read(QString obj)
                 result.append(value.toObject().value("IP").toString());
                 result.append(QString::number(value.toObject().value("PORT").toInt()));
             }
-        } else if (obj == "SOURCE") {
+        }
+//        else if (obj == "SOURCE") {
+//            if (object.value(obj).isArray()) {
+//                QJsonArray array = value.toArray();
+//                foreach (const QJsonValue & v, array) {
+//                    result.append(v.toObject().value("IP").toString());
+//                    result.append(QString::number(v.toObject().value("PORT").toInt()));
+//                    result.append(QString::number(v.toObject().value("SLAVE_ID").toInt()));
+//                    result.append(QString::number(v.toObject().value("FUNCT_ID").toInt()));
+//                    result.append(QString::number(v.toObject().value("START").toInt()));
+//                    result.append(QString::number(v.toObject().value("COILS").toInt()));
+//                    result.append(v.toObject().value("MODE").toString());
+//                    result.append(QString::number(v.toObject().value("BYTE").toInt()));
+//                    result.append(v.toObject().value("TYPE").toString());
+//                    result.append(v.toObject().value("SN").toString());
+//                }
+//            } else {
+//                result.append(value.toObject().value("IP").toString());
+//                result.append(QString::number(value.toObject().value("PORT").toInt()));
+//                result.append(QString::number(value.toObject().value("SLAVE_ID").toInt()));
+//                result.append(QString::number(value.toObject().value("FUNCT_ID").toInt()));
+//                result.append(QString::number(value.toObject().value("START").toInt()));
+//                result.append(QString::number(value.toObject().value("COILS").toInt()));
+//                result.append(value.toObject().value("MODE").toString());
+//                result.append(QString::number(value.toObject().value("BYTE").toInt()));
+//                result.append(value.toObject().value("TYPE").toString());
+//                result.append(value.toObject().value("SN").toString());
+//            }
+//        }
+        else if (obj == "APP") {
             if (object.value(obj).isArray()) {
                 QJsonArray array = value.toArray();
                 foreach (const QJsonValue & v, array) {
-                    result.append(v.toObject().value("IP").toString());
-                    result.append(QString::number(v.toObject().value("PORT").toInt()));
-                    result.append(QString::number(v.toObject().value("SLAVE_ID").toInt()));
-                    result.append(QString::number(v.toObject().value("FUNCT_ID").toInt()));
-                    result.append(QString::number(v.toObject().value("START").toInt()));
-                    result.append(QString::number(v.toObject().value("COILS").toInt()));
-                    result.append(v.toObject().value("MODE").toString());
-                    result.append(QString::number(v.toObject().value("BYTE").toInt()));
-                    result.append(v.toObject().value("TYPE").toString());
+                    if (v.toObject().value("SOURCE").isArray()) {
+                        QJsonArray sourceArray = v.toObject().value("SOURCE").toArray();
+                        foreach (const QJsonValue & vSource, sourceArray) {
+                            if (vSource.toObject().value("ARGV").isArray()) {
+                                QJsonArray argv = vSource.toObject().value("ARGV").toArray();
+                                QString arg = "";
+                                foreach (const QJsonValue & vARGV, argv) {
+                                    arg = arg + vARGV.toObject().value("ARG").toString() + " ";
+                                }
+                                result.append(v.toObject().value("PATH").toString() + " " + arg);
+                                result.append(vSource.toObject().value("SN").toString());
+                            }
+                        }
+                    }
                 }
-            } else {
-                result.append(value.toObject().value("IP").toString());
-                result.append(QString::number(value.toObject().value("PORT").toInt()));
-                result.append(QString::number(value.toObject().value("SLAVE_ID").toInt()));
-                result.append(QString::number(value.toObject().value("FUNCT_ID").toInt()));
-                result.append(QString::number(value.toObject().value("START").toInt()));
-                result.append(QString::number(value.toObject().value("COILS").toInt()));
-                result.append(value.toObject().value("MODE").toString());
-                result.append(QString::number(value.toObject().value("BYTE").toInt()));
-                result.append(value.toObject().value("TYPE").toString());
             }
-        } else if (obj == "CONFIG") {
+        }
+        else if (obj == "CONFIG") {
             if (object.value(obj).isArray()) {
                 QJsonArray array = value.toArray();
                 foreach (const QJsonValue & v, array) {
@@ -92,19 +117,43 @@ QStringList config::read(QString obj)
 
 void config::write(QJsonObject &json) const //Default
 {
+//    QJsonArray sourceArray;
+//    QJsonObject sourceObject;
+//    sourceObject["IP"] = QString("192.168.1.1");
+//    sourceObject["PORT"] = 502;
+//    sourceObject["SLAVE_ID"] = 1;
+//    sourceObject["FUNCT_ID"] = 3;
+//    sourceObject["START"] = 1;
+//    sourceObject["COILS"] = 1;
+//    sourceObject["MODE"] = QString("TCP");
+//    sourceObject["BYTE"] = 2;
+//    sourceObject["TYPE"] = QString("FLOAT");
+//    sourceObject["SN"] = QString("XXXX-XXXXXX-XXX-XXXXX");
+//    sourceArray.append(sourceObject);
+//    json["SOURCE"] = sourceArray;
+
+    QJsonArray appArray;
+    QJsonObject appObject;
     QJsonArray sourceArray;
     QJsonObject sourceObject;
-    sourceObject["IP"] = QString("192.168.1.1");
-    sourceObject["PORT"] = 502;
-    sourceObject["SLAVE_ID"] = 1;
-    sourceObject["FUNCT_ID"] = 3;
-    sourceObject["START"] = 1;
-    sourceObject["COILS"] = 1;
-    sourceObject["MODE"] = QString("TCP");
-    sourceObject["BYTE"] = 2;
-    sourceObject["TYPE"] = QString("FLOAT");
+    QJsonArray argv;
+    QJsonObject arg;
+    arg["ARG"] = QString("-tcp"); argv.append(arg); arg.remove("ARG");
+    arg["ARG"] = QString("--ip-address 192.168.1.1"); argv.append(arg); arg.remove("ARG");
+    arg["ARG"] = QString("--port 502"); argv.append(arg); arg.remove("ARG");
+    arg["ARG"] = QString("--slave-id 1"); argv.append(arg); arg.remove("ARG");
+    arg["ARG"] = QString("--function-code 3"); argv.append(arg); arg.remove("ARG");
+    arg["ARG"] = QString("--start-address 1000"); argv.append(arg); arg.remove("ARG");
+    arg["ARG"] = QString("--num-of-coils 20"); argv.append(arg); arg.remove("ARG");
+    arg["ARG"] = QString("--num-of-bytes 2"); argv.append(arg); arg.remove("ARG");
+    arg["ARG"] = QString("--type-conversion FLOAT"); argv.append(arg); arg.remove("ARG");
+    sourceObject["ARGV"] = argv;
+    sourceObject["SN"] = QString("XXXX-XXXXXX-XXX-XXXXX");
     sourceArray.append(sourceObject);
-    json["SOURCE"] = sourceArray;
+    appObject["PATH"] = QString("plugins/ModBus");
+    appObject["SOURCE"] = sourceArray;
+    appArray.append(appObject);
+    json["APP"] = appArray;
 
     QJsonArray redisArray;
     QJsonObject redisObject;
@@ -118,8 +167,8 @@ void config::write(QJsonObject &json) const //Default
     configObject["INTERVAL"] = 1000;    //milis
     configObject["DB_PERIOD"] = 60;     //detik
     configObject["TIMESTAMP"] = 3;     //TimeStamp
-    configObject["REDIS_KEY"] = QString("data_jaman_");
-    configObject["TABLE_NAME"] = QString("data_harian_");
+    configObject["REDIS_KEY"] = QString("data_");
+    configObject["TABLE_NAME"] = QString("data_");
     configObject["WEBSOCKET_PORT"] = 1234;
     configObject["INTERVAL_SKYWAVE"] = 2;
     configObject["DEBUG_TCPMODBUS_DATA"] = false;

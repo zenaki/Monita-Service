@@ -1,7 +1,8 @@
 #ifndef UTAMA_H
 #define UTAMA_H
 
-//#include <QDebug>
+#include <QDebug>
+#include <QProcess>
 #include <QSqlError>
 #include <QSqlDatabase>
 #include <QSqlQuery>
@@ -93,7 +94,8 @@ struct monita_config {
     int modbus_period;
     int jml_sumber;
     QStringList config;
-    QStringList source_config;
+//    QStringList source_config;
+    QStringList app_config;
 //    QStringList sky_config;
     QStringList redis_config;
     QStringList funct_config;

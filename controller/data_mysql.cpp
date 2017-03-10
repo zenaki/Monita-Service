@@ -31,16 +31,16 @@ void data_mysql::set_dataHarian()
 //    request = rds.reqRedis("hgetall monita_service:data_jaman_" + QDate::currentDate().toString("dd_MM_yyyy"), address, port, redis_len*2);
     request = rds.reqRedis("hgetall monita_service:temp", address, port, redis_len*2);
 //    qSort(request.begin(), request.end());
-    QStringList temp1; QStringList temp2; QString data;
-    QStringList slave; QStringList id_titik_ukur;
-    QStringList tanggal; QStringList data_tunggal; QStringList waktu;
+    QStringList temp1; QString data;
+//    QStringList temp2; QStringList slave; QStringList tanggal;
+    QStringList id_titik_ukur; QStringList data_tunggal; QStringList waktu;
     for (int i = 0; i < request.length(); i+=2) {
         temp1 = request.at(i).split("_");
-        temp2 = temp1.at(0).split(";");
-        slave.append(temp2.at(0));
-        id_titik_ukur.append(temp2.at(1));
-        tanggal.append(temp1.at(1).split("-"));
-        waktu.append(temp1.at(2).split(":"));
+//        temp2 = temp1.at(0).split(";");
+//        slave.append(temp2.at(0));
+        id_titik_ukur.append(temp1.at(0));
+//        tanggal.append(temp1.at(1).split("-"));
+        waktu.append(temp1.at(1));
         data_tunggal.append(request.at(i+1));
     }
 //    int t = 0;
@@ -62,13 +62,9 @@ void data_mysql::set_dataHarian()
     }
     for (int i = 0; i < redis_len; i++) {
         data = data + "(" +
-            slave.at(i) + id_titik_ukur.at(i) + ", " +
-            tanggal.at(i*3+2) + tanggal.at(i*3+1) + tanggal.at(i*3) +
-            waktu.at(i*4) + waktu.at(i*4+1) + waktu.at(i*4+2) + waktu.at(i*4+3) + ", " +
+            id_titik_ukur.at(i) + ", " +
             data_tunggal.at(i) + ", " +
-            waktu.at(i*4) + ", " +
-            waktu.at(i*4+1) + ", " +
-            waktu.at(i*4+2) +
+            waktu.at(i) +
                 ")";
 //        log.write("Debug",id_titik_ukur.at(i));
         if (i != redis_len - 1) {
@@ -79,15 +75,15 @@ void data_mysql::set_dataHarian()
 //    if (db.isOpen()) db.close();
 //    mysql.close(db);
     db.close();
-    log.write("Database","Data Inserted on table data_" + QDate::currentDate().toString("dd_MM_yyyy") + " ..",
+    log.write("Database","Data Inserted on table data_" + QDate::currentDate().toString("yyyyMMdd") + " ..",
               monita_cfg.config.at(8).toInt());
 //    rds.reqRedis("del data_jaman_" + QDate::currentDate().toString("dd_MM_yyyy"), address, port);
     rds.reqRedis("del monita_service:temp", address, port);
-    qint64 Y_epoch = QDateTime::currentDateTime().toTime_t()-86400;
-    QString yesterday = QDateTime::fromTime_t(Y_epoch).toString("dd_MM_yyyy");
+//    qint64 Y_epoch = QDateTime::currentDateTime().toTime_t()-86400;
+//    QString yesterday = QDateTime::fromTime_t(Y_epoch).toString("dd_MM_yyyy");
 //    rds.reqRedis("del monita_service:" + monita_cfg.config.at(3) + QDateTime::currentDateTime().toString("dd_MM_yyyy"), address, port);
-    rds.reqRedis("del monita_service:" + monita_cfg.config.at(3) + yesterday, address, port);
-    rds.reqRedis("del monita_service:vismon", address, port);
+//    rds.reqRedis("del monita_service:" + monita_cfg.config.at(3) + yesterday, address, port);
+//    rds.reqRedis("del monita_service:vismon", address, port);
 //    mysql.close(db);
 //    db.close();
 }

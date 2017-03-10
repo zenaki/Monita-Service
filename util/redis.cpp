@@ -27,7 +27,7 @@ QStringList redis::reqRedis(QString command, QString address, int port, int len)
     void *pointer = NULL;
     pointer = redisCommand(r_context, bytes.constData());
     r_reply = (redisReply*)pointer;
-    if (r_reply->type) {
+    if (r_reply && r_reply->type) {
         if ( r_reply->type == REDIS_REPLY_ERROR ) {
             printf( "Error: %s\n", r_reply->str );
 //            result.insert(result.length(), r_reply->str);

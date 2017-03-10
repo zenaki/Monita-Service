@@ -9,12 +9,9 @@ void save_db::data_harian(QSqlDatabase db, QString tb_name, QString data, QStrin
     QSqlQuery q(QSqlDatabase::database(db.connectionName()));
 
     query = "REPLACE INTO " + tb_name + " ( \
-                id_titik_ukur, \
-                waktu, \
-                data_tunggal, \
-                hour, \
-                minute, \
-                second \
+                titik_ukur_id, \
+                value, \
+                epochtime \
             ) VALUES ";
     query = query + data + ";";
     log.write(type, query, debug);
@@ -28,13 +25,10 @@ void save_db::create_tabel_data_harian(QSqlDatabase db, QString tb_name, QString
 
     query.clear();
     query = "CREATE TABLE if not exists " + tb_name + " (\
-                id_titik_ukur INT(11) NOT NULL, \
-                waktu bigint(17) NOT NULL, \
-                data_tunggal float NOT NULL, \
-                hour tinyint(4) NOT NULL, \
-                minute tinyint(4) NOT NULL, \
-                second tinyint(4) NOT NULL, \
-                PRIMARY KEY (id_titik_ukur, waktu) \
+                titik_ukur_id INT(11) NOT NULL, \
+                value float NULL, \
+                epochtime varchar(45) NOT NULL, \
+                PRIMARY KEY (titik_ukur_id, epochtime) \
     );";
     log.write(type, query, debug);
     q.prepare(query);

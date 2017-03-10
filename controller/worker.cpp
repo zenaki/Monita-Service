@@ -40,9 +40,9 @@ Worker::Worker(QObject *parent) : QObject(parent)
 Worker::~Worker()
 {
     if (ThreadTcpModbus.isRunning()) ThreadTcpModbus.terminate();
-    if (ThreadDataMysql.isRunning()) ThreadDataMysql.terminate();
-    if (ThreadDataVisual.isRunning()) ThreadDataVisual.terminate();
-    if (ThreadSkyWave.isRunning()) ThreadSkyWave.terminate();
+//    if (ThreadDataMysql.isRunning()) ThreadDataMysql.terminate();
+//    if (ThreadDataVisual.isRunning()) ThreadDataVisual.terminate();
+//    if (ThreadSkyWave.isRunning()) ThreadSkyWave.terminate();
 //    if (m_pWebSocketServer->isListening()) {
 //        m_pWebSocketServer->close();
 //        qDeleteAll(m_clients.begin(), m_clients.end());
@@ -51,21 +51,28 @@ Worker::~Worker()
 
 void Worker::doWork()
 {
+//    QProcess tcp_modbus;
+//    tcp_modbus.start("./ModBus -tcp -ip 192.168.3.21 -p 502 -s 1 -f 3 -str 1000 -noc 20 -nob 2 -t FLOAT");
+//    tcp_modbus.waitForFinished(); // sets current thread to sleep and waits for pingProcess end
+//    QString output(tcp_modbus.readAllStandardOutput());
+//    QJsonObject obj = this->ObjectFromString(output);
+//    QStringList result = output.split("\n");
+
     obj_tcp_modbus.doSetup(ThreadTcpModbus);
     obj_tcp_modbus.moveToThread(&ThreadTcpModbus);
     ThreadTcpModbus.start();
 
-    obj_data_mysql.doSetup(ThreadDataMysql);
-    obj_data_mysql.moveToThread(&ThreadDataMysql);
-    ThreadDataMysql.start();
+//    obj_data_mysql.doSetup(ThreadDataMysql);
+//    obj_data_mysql.moveToThread(&ThreadDataMysql);
+//    ThreadDataMysql.start();
 
-    obj_data_visual.doSetup(ThreadDataVisual);
-    obj_data_visual.moveToThread(&ThreadDataVisual);
-    ThreadDataVisual.start();
+//    obj_data_visual.doSetup(ThreadDataVisual);
+//    obj_data_visual.moveToThread(&ThreadDataVisual);
+//    ThreadDataVisual.start();
 
-    obj_sky_wave.doSetup(ThreadSkyWave);
-    obj_sky_wave.moveToThread(&ThreadSkyWave);
-    ThreadSkyWave.start();
+//    obj_sky_wave.doSetup(ThreadSkyWave);
+//    obj_sky_wave.moveToThread(&ThreadSkyWave);
+//    ThreadSkyWave.start();
 
 //    this->request_sky_wave();
 }

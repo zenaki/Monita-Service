@@ -8,9 +8,11 @@ void data_mysql::doSetup(QThread &cThread)
 {
     connect(&cThread,SIGNAL(started()),this,SLOT(set_dataHarian()));
 
+    monita_cfg.config = cfg.read("CONFIG");
+
     QTimer *t = new QTimer(this);
     connect(t, SIGNAL(timeout()), this, SLOT(set_dataHarian()));
-    t->start(60000);
+    t->start(monita_cfg.config.at(0).toInt());
 
     db = mysql.connect_db("TcpModBus");
 }
@@ -24,8 +26,8 @@ void data_mysql::set_dataHarian()
     QDateTime dt_sdh = QDateTime::currentDateTime();
 //    QStringList request = rds.reqRedis("hlen monita_service:data_jaman_" + QDate::currentDate().toString("dd_MM_yyyy"), address, port);
     QStringList request = rds.reqRedis("hlen monita_service:temp", address, port);
-    log.write("Redis",request.at(0) + " Data ..",
-              monita_cfg.config.at(8).toInt());
+//    log.write("Redis",request.at(0) + " Data ..",
+//              monita_cfg.config.at(8).toInt());
     int redis_len = request.at(0).toInt();
 
 //    request = rds.reqRedis("hgetall monita_service:data_jaman_" + QDate::currentDate().toString("dd_MM_yyyy"), address, port, redis_len*2);
@@ -57,8 +59,8 @@ void data_mysql::set_dataHarian()
 //            if (t >= 3) {emit finish();}
         }
     }
-    if (!get.check_table_is_available(db, monita_cfg.config.at(4) + dt_sdh.date().toString("yyyyMMdd"), "TcpModbus", monita_cfg.config.at(8).toInt())) {
-        set.create_tabel_data_harian(db, monita_cfg.config.at(4) + dt_sdh.date().toString("yyyyMMdd"), "TcpModbus", monita_cfg.config.at(8).toInt());
+    if (!get.check_table_is_available(db, monita_cfg.config.at(4) + dt_sdh.date().toString("yyyyMMdd"), "Database", monita_cfg.config.at(8).toInt())) {
+        set.create_tabel_data_harian(db, monita_cfg.config.at(4) + dt_sdh.date().toString("yyyyMMdd"), "Database", monita_cfg.config.at(8).toInt());
     }
     for (int i = 0; i < redis_len; i++) {
         data = data + "(" +
@@ -71,7 +73,7 @@ void data_mysql::set_dataHarian()
             data = data + ",";
         }
     }
-    set.data_harian(db, monita_cfg.config.at(4) + dt_sdh.date().toString("yyyyMMdd"), data, "TcpModbus", monita_cfg.config.at(8).toInt());
+    set.data_harian(db, monita_cfg.config.at(4) + dt_sdh.date().toString("yyyyMMdd"), data, "Database", monita_cfg.config.at(8).toInt());
 //    if (db.isOpen()) db.close();
 //    mysql.close(db);
     db.close();

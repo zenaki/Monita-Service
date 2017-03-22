@@ -23,7 +23,7 @@ void tcp_modbus::doSetup(QThread &cThread)
 
     QTimer *t = new QTimer(this);
     connect(t, SIGNAL(timeout()), this, SLOT(doWork()));
-    t->start(2000);
+    t->start(monita_cfg.config.at(1).toInt());
 }
 
 void tcp_modbus::doWork()
@@ -38,9 +38,9 @@ void tcp_modbus::doWork()
     if (monita_cfg.app_config.length() % 2 == 0) monita_cfg.jml_sumber = monita_cfg.app_config.length();
 
     QStringList redis_config = cfg.read("REDIS");
-    QStringList request = rds.reqRedis("hlen monita_service:parsing_ref_test", redis_config.at(0), redis_config.at(1).toInt());
+    QStringList request = rds.reqRedis("hlen monita_service:parsing_ref", redis_config.at(0), redis_config.at(1).toInt());
     int redis_len = request.at(0).toInt();
-    request = rds.reqRedis("hgetall monita_service:parsing_ref_test", redis_config.at(0), redis_config.at(1).toInt(), redis_len*2);
+    request = rds.reqRedis("hgetall monita_service:parsing_ref", redis_config.at(0), redis_config.at(1).toInt(), redis_len*2);
 
     for (int i = 0; i < monita_cfg.jml_sumber; i+=2) {
 //        if (monita_cfg.source_config.at(6) == "TCP") {
@@ -87,6 +87,7 @@ void tcp_modbus::doWork()
 //                }
 //            }
             this->request_modbus(i, dateTime);
+            if (monita_cfg.modbus_period >= monita_cfg.jml_sumber) monita_cfg.modbus_period = 0;
             monita_cfg.modbus_period++;
 //        }
     }
@@ -536,69 +537,79 @@ void tcp_modbus::request_modbus(int index, QDateTime dt_req_mod)
 //        }
 //    }
 
-
-    QProcess tcp_modbus;
-//    qDebug() << monita_cfg.app_config.at(index);
-    tcp_modbus.start("./" + monita_cfg.app_config.at(index));
-    tcp_modbus.waitForFinished(); // sets current thread to sleep and waits for pingProcess end
-    QString output(tcp_modbus.readAllStandardOutput());
-    QJsonObject obj = this->ObjectFromString(output);
+    QStringList titik_ukur;
     QString SerialNumber = monita_cfg.app_config.at(index+1);
-    QStringList result;
-    if (!obj.value("ERR").isUndefined()) {
-        log.write("TcpModbus",
-                  "ERROR: SOURCE(" + QString::number(index/2) + "): " + obj.value("ERR").toString(),
-                  monita_cfg.config.at(7).toInt());
-    } else if (!obj.value("monita").isUndefined()) {
-        if (obj.value("monita").isArray()) {
-            QJsonArray array = obj.value("monita").toArray();
-            foreach (const QJsonValue & v, array) {
-                result.append(v.toObject().value("value").toString());
-                result.append(v.toObject().value("epochtime").toString());
-            }
-            if (result.length() % 2 == 0) {
-                for (int i = 0; i < result.length(); i+=2) {
-                    QStringList redis_config = cfg.read("REDIS");
-                    QStringList request = rds.reqRedis("hlen monita_service:parsing_ref_test", redis_config.at(0), redis_config.at(1).toInt());
-                    int redis_len = request.at(0).toInt();
-                    request = rds.reqRedis("hgetall monita_service:parsing_ref_test", redis_config.at(0), redis_config.at(1).toInt(), redis_len*2);
-                    for (int j = 0; j < request.length(); j+=2) {
-                        QStringList temp = request.at(j).split(";");
-                        if (SerialNumber == temp.at(0)) {
-                            if (temp.at(1).toInt() <= result.length()/2) {
-                                rds.reqRedis("hset monita_service:history:" + monita_cfg.config.at(3) +
-                                             request.at(j+1) + " " +
-                                             QString::number(dt_req_mod.toTime_t()) +
-                                             " " +
-                                             result.at(i), redis_config.at(0), redis_config.at(1).toInt());
 
-                                logsheet = false;
-                                for (int k = monita_cfg.config.at(2).toInt(); k > 0; k--) {
-                                    if (monita_cfg.modbus_period <= 1 * monita_cfg.jml_sumber ||
-                                            (monita_cfg.modbus_period > (monita_cfg.config.at(0).toInt()/k) * monita_cfg.jml_sumber &&
-                                            monita_cfg.modbus_period <= ((monita_cfg.config.at(0).toInt()/k)+1) * monita_cfg.jml_sumber)
-                                       ) {
-                                        rds.reqRedis("hset monita_service:temp " +
-                                                       request.at(j+1) +
-                                                       "_" +
-                                                       QString::number(dt_req_mod.toTime_t()) +
-                                                       " " +
-                                                       result.at(i), redis_config.at(0), redis_config.at(1).toInt());
-                                        logsheet = true;
-                                    }
+    QStringList redis_config = cfg.read("REDIS");
+    QStringList request = rds.reqRedis("hlen monita_service:parsing_ref", redis_config.at(0), redis_config.at(1).toInt());
+    int redis_len = request.at(0).toInt();
+    request = rds.reqRedis("hgetall monita_service:parsing_ref", redis_config.at(0), redis_config.at(1).toInt(), redis_len*2);
+    for (int j = 0; j < request.length(); j+=2) {
+        QStringList temp = request.at(j).split(";");
+        if (SerialNumber == temp.at(0)) {
+            titik_ukur.insert(temp.at(1).toInt()-1, request.at(j+1));
+        }
+    }
+
+    if (titik_ukur.length() > 0) {
+        log.write("TcpModbus", "Polling from " + SerialNumber, monita_cfg.config.at(7).toInt());
+        QProcess tcp_modbus;
+        tcp_modbus.start("./" + monita_cfg.app_config.at(index));
+        tcp_modbus.waitForFinished(); // sets current thread to sleep and waits for pingProcess end
+        QString output(tcp_modbus.readAllStandardOutput());
+        QJsonObject obj = this->ObjectFromString(output);
+        QStringList result;
+        if (!obj.value("ERR").isUndefined()) {
+            log.write("TcpModbus",
+                      "ERROR: SOURCE(" + QString::number(index/2) + "): " + obj.value("ERR").toString(),
+                      monita_cfg.config.at(7).toInt());
+        } else if (!obj.value("monita").isUndefined()) {
+            if (obj.value("monita").isArray()) {
+                QJsonArray array = obj.value("monita").toArray();
+                foreach (const QJsonValue & v, array) {
+                    result.append(v.toObject().value("value").toString());
+                    result.append(v.toObject().value("epochtime").toString());
+                }
+                if (result.length() % 2 == 0) {
+                    if (result.length()/2 >= titik_ukur.length()) {
+                        int j = 0;
+                        for (int i = 0; i < titik_ukur.length()+1; i+=2) {
+                            rds.reqRedis("hset monita_service:history:" + monita_cfg.config.at(3) +
+                                          titik_ukur.at(j) + " " +
+//                                          QString::number(dt_req_mod.toTime_t()) +
+                                          QString::number(QDateTime::currentMSecsSinceEpoch()) +
+                                          " " +
+                                          result.at(i), redis_config.at(0), redis_config.at(1).toInt());
+
+                            logsheet = false;
+                            for (int k = monita_cfg.config.at(2).toInt(); k > 0; k--) {
+                                if (monita_cfg.modbus_period <= 1 * monita_cfg.jml_sumber ||
+                                        (monita_cfg.modbus_period > (monita_cfg.config.at(0).toInt()/k) * monita_cfg.jml_sumber &&
+                                        monita_cfg.modbus_period <= ((monita_cfg.config.at(0).toInt()/k)+1) * monita_cfg.jml_sumber)
+                                   ) {
+                                    rds.reqRedis("hset monita_service:temp " +
+                                                  titik_ukur.at(j) +
+                                                  "_" +
+//                                                  QString::number(dt_req_mod.toTime_t()) +
+                                                  QString::number(QDateTime::currentMSecsSinceEpoch()) +
+                                                  " " +
+                                                  result.at(i), redis_config.at(0), redis_config.at(1).toInt());
+                                    logsheet = true;
                                 }
-
-                                rds.reqRedis("hset monita_service:vismon_test " +
-                                             SerialNumber + ";" +
-                                             request.at(j+1) +
-                                             " " +
-                                             result.at(i), redis_config.at(0), redis_config.at(1).toInt());
-                                log.write("TcpModbus",
-                                          request.at(j+1) + " - " +
-                                          result.at(i),
-                                          monita_cfg.config.at(7).toInt());
-                                break;
                             }
+
+                            rds.reqRedis("hset monita_service:vismon " +
+                                         SerialNumber + ";" +
+                                         titik_ukur.at(j) + ";" +
+                                         QString::number(QDateTime::currentMSecsSinceEpoch()) +
+                                         " " +
+                                         result.at(i), redis_config.at(0), redis_config.at(1).toInt());
+                            log.write("TcpModbus",
+                                      QString::number(j) + " - " +
+                                      titik_ukur.at(j) + " - " +
+                                      result.at(i),
+                                      monita_cfg.config.at(7).toInt());
+                            j++;
                         }
                     }
                 }
@@ -677,7 +688,7 @@ void tcp_modbus::LuaRedis_function(QDateTime dt_lua)
         }
     }
 
-    this->send_ResultToRedis(funct_temp, dt_lua);
+//    this->send_ResultToRedis(funct_temp, dt_lua);
     funct_temp.clear();
 }
 

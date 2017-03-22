@@ -26,10 +26,16 @@ public:
 private:
     QWebSocketServer *m_pWebSocketServer;
     QList<QWebSocket *> m_clients;
+    QStringList m_user_id;
+    QStringList m_titik_ukur;
 
-    void RedisToJson(QStringList data, QDateTime dt);
-    void WriteToJson(QJsonObject json, QDateTime dt);
+    void RedisToJson(QStringList data, QDateTime dt, int index);
+    void WriteToJson(QJsonObject json, QString user_id, QDateTime dt, int index);
 
+    init_mysql mysql;
+    QSqlDatabase db;
+
+    void get_titik_ukur(QString user_id, int index);
 public slots:
     void doWork();
 

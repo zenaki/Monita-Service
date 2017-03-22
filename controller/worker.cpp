@@ -40,8 +40,8 @@ Worker::Worker(QObject *parent) : QObject(parent)
 Worker::~Worker()
 {
     if (ThreadTcpModbus.isRunning()) ThreadTcpModbus.terminate();
-//    if (ThreadDataMysql.isRunning()) ThreadDataMysql.terminate();
-//    if (ThreadDataVisual.isRunning()) ThreadDataVisual.terminate();
+    if (ThreadDataMysql.isRunning()) ThreadDataMysql.terminate();
+    if (ThreadDataVisual.isRunning()) ThreadDataVisual.terminate();
 //    if (ThreadSkyWave.isRunning()) ThreadSkyWave.terminate();
 //    if (m_pWebSocketServer->isListening()) {
 //        m_pWebSocketServer->close();
@@ -62,13 +62,13 @@ void Worker::doWork()
     obj_tcp_modbus.moveToThread(&ThreadTcpModbus);
     ThreadTcpModbus.start();
 
-//    obj_data_mysql.doSetup(ThreadDataMysql);
-//    obj_data_mysql.moveToThread(&ThreadDataMysql);
-//    ThreadDataMysql.start();
+    obj_data_mysql.doSetup(ThreadDataMysql);
+    obj_data_mysql.moveToThread(&ThreadDataMysql);
+    ThreadDataMysql.start();
 
-//    obj_data_visual.doSetup(ThreadDataVisual);
-//    obj_data_visual.moveToThread(&ThreadDataVisual);
-//    ThreadDataVisual.start();
+    obj_data_visual.doSetup(ThreadDataVisual);
+    obj_data_visual.moveToThread(&ThreadDataVisual);
+    ThreadDataVisual.start();
 
 //    obj_sky_wave.doSetup(ThreadSkyWave);
 //    obj_sky_wave.moveToThread(&ThreadSkyWave);

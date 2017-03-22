@@ -318,9 +318,9 @@ void sky_wave::getQuery(QString MessageUTC, int indexGateway, int i)
             const uint s = unixTimeStr.toUInt( &ok );
             const QDateTime dt = QDateTime::fromTime_t( s );
             const QString date_gmt7 = dt.toString("yyyy-MM-dd HH:mm:ss");
-            if (dt.toString("HH").toInt() == 7) {
-                qDebug() << "Debug";
-            }
+//            if (dt.toString("HH").toInt() == 7) {
+//                qDebug() << "Debug";
+//            }
             if (monita_cfg.sky[indexGateway].next_utc.toString("yyyyMMdd") == dt.toUTC().toString("yyyyMMdd")) {
                 if (!monita_cfg.sky[indexGateway].mdm[i].query.isEmpty()) {
                     monita_cfg.sky[indexGateway].mdm[i].query.sprintf(
@@ -350,9 +350,9 @@ void sky_wave::getQuery(QString MessageUTC, int indexGateway, int i)
             const uint s = unixTimeStr.toUInt( &ok );
             const QDateTime dt = QDateTime::fromTime_t( s );
             const QString date_gmt7 = dt.toString("yyyy-MM-dd HH:mm:ss");
-            if (dt.toString("HH").toInt() == 7) {
-                qDebug() << "Debug";
-            }
+//            if (dt.toString("HH").toInt() == 7) {
+//                qDebug() << "Debug";
+//            }
             if (monita_cfg.sky[indexGateway].next_utc.toString("yyyyMMdd") == dt.toUTC().toString("yyyyMMdd")) {
                 if (!monita_cfg.sky[indexGateway].mdm[i].query.isEmpty()) {
                     monita_cfg.sky[indexGateway].mdm[i].query.sprintf(

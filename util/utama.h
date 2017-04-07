@@ -40,6 +40,9 @@
 
 #define JUMLAH_MAX_TITIK_UKUR 10000
 
+#define MAX_PLUGINS 50
+#define MAX_THREAD 50
+
 struct ship {
     int id_ship;
     char name[32];
@@ -105,6 +108,14 @@ struct monita_config {
     int jml_gateWay;
     struct sky_wave_config sky[10];
 
+};
+
+struct plugins {
+    QString path[MAX_PLUGINS];
+    bool database[MAX_PLUGINS];
+    QStringList arg[MAX_PLUGINS];
+    int time_periode[MAX_PLUGINS];
+    QStringList sn[MAX_PLUGINS];
 };
 
 #endif // UTAMA_H

@@ -7,6 +7,8 @@ CONFIG -= app_bundle
 
 TEMPLATE = app
 
+OBJECTS_DIR += compile
+
 HEADERS += \
         model/get_db.h \
         controller/worker.h \
@@ -22,10 +24,11 @@ HEADERS += \
         util/redis.h \
 #        util/util_skyw.h \
 #        util/parsing_fuction.h \
-    controller/tcp_modbus.h \
+#    controller/tcp_modbus.h \
     controller/data_mysql.h \
     controller/data_visual.h \
-    controller/sky_wave.h
+#    controller/sky_wave.h \
+    controller/process.h
 
 SOURCES += main.cpp \
         model/get_db.cpp \
@@ -41,10 +44,11 @@ SOURCES += main.cpp \
         util/redis.cpp \
 #        util/util_skyw.cpp \
 #        util/parsing_fuction.cpp \
-    controller/tcp_modbus.cpp \
+#    controller/tcp_modbus.cpp \
     controller/data_mysql.cpp \
     controller/data_visual.cpp \
-    controller/sky_wave.cpp
+#    controller/sky_wave.cpp \
+    controller/process.cpp
 
 #INCLUDEPATH += 3rdparty/libmodbus \
 #               3rdparty/libmodbus/src \

@@ -18,11 +18,13 @@ void monita_log::write(QString type, QString message, int debug)
         outFile.open(QIODevice::WriteOnly | QIODevice::Append);
         QTextStream ts(&outFile);
         message.prepend("::").prepend(type).prepend("::").prepend(QDateTime::currentDateTime().toString("dd-MM-yyyy HH:mm:ss"));
-        qDebug() << message;
+//        qDebug() << message;
+        printf("%s\n", message.toLatin1().data());
         ts << message << endl;
         outFile.close();
     } else {
         message.prepend("::").prepend(type).prepend("::").prepend(QDateTime::currentDateTime().toString("dd-MM-yyyy HH:mm:ss"));
-        qDebug() << message;
+//        qDebug() << message;
+        printf("%s\n", message.toLatin1().data());
     }
 }

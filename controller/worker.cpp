@@ -39,9 +39,10 @@ Worker::Worker(QObject *parent) : QObject(parent)
 
 Worker::~Worker()
 {
-    if (ThreadTcpModbus.isRunning()) ThreadTcpModbus.terminate();
-    if (ThreadDataMysql.isRunning()) ThreadDataMysql.terminate();
-    if (ThreadDataVisual.isRunning()) ThreadDataVisual.terminate();
+//    if (ThreadTcpModbus.isRunning()) ThreadTcpModbus.terminate();
+//    if (ThreadDataMysql.isRunning()) ThreadDataMysql.terminate();
+//    if (ThreadDataVisual.isRunning()) ThreadDataVisual.terminate();
+
 //    if (ThreadSkyWave.isRunning()) ThreadSkyWave.terminate();
 //    if (m_pWebSocketServer->isListening()) {
 //        m_pWebSocketServer->close();
@@ -58,17 +59,33 @@ void Worker::doWork()
 //    QJsonObject obj = this->ObjectFromString(output);
 //    QStringList result = output.split("\n");
 
-    obj_tcp_modbus.doSetup(ThreadTcpModbus);
-    obj_tcp_modbus.moveToThread(&ThreadTcpModbus);
-    ThreadTcpModbus.start();
+    plg = cfg.get_plugins();
+    int jml_thread = 0;
+    for (int i = 0; i < MAX_PLUGINS; i++) {
+        if (plg.arg[i].length() > 0) {
+            obj_app[jml_thread].doSetup(ThreadApp[jml_thread], plg.path[i], plg.arg[i], plg.sn[i], plg.time_periode[i]);
+            obj_app[jml_thread].moveToThread(&ThreadApp[jml_thread]);
+            ThreadApp[jml_thread].start();
+            jml_thread++;
+        }
+    }
 
-    obj_data_mysql.doSetup(ThreadDataMysql);
-    obj_data_mysql.moveToThread(&ThreadDataMysql);
-    ThreadDataMysql.start();
+    printf("%s::Total Thread = %d\n",
+           QDateTime::currentDateTime().toString("dd-MM-yyyy HH:mm:ss").toLatin1().data(),
+           jml_thread);
+//    qDebug() << "test debug\n\n";
 
-    obj_data_visual.doSetup(ThreadDataVisual);
-    obj_data_visual.moveToThread(&ThreadDataVisual);
-    ThreadDataVisual.start();
+//    obj_tcp_modbus.doSetup(ThreadTcpModbus);
+//    obj_tcp_modbus.moveToThread(&ThreadTcpModbus);
+//    ThreadTcpModbus.start();
+
+//    obj_data_mysql.doSetup(ThreadDataMysql);
+//    obj_data_mysql.moveToThread(&ThreadDataMysql);
+//    ThreadDataMysql.start();
+
+//    obj_data_visual.doSetup(ThreadDataVisual);
+//    obj_data_visual.moveToThread(&ThreadDataVisual);
+//    ThreadDataVisual.start();
 
 //    obj_sky_wave.doSetup(ThreadSkyWave);
 //    obj_sky_wave.moveToThread(&ThreadSkyWave);

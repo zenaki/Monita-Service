@@ -51,27 +51,31 @@ QStringList config::read(QString obj)
 //                result.append(value.toObject().value("SN").toString());
 //            }
 //        }
-        else if (obj == "APP") {
-            if (object.value(obj).isArray()) {
-                QJsonArray array = value.toArray();
-                foreach (const QJsonValue & v, array) {
-                    if (v.toObject().value("SOURCE").isArray()) {
-                        QJsonArray sourceArray = v.toObject().value("SOURCE").toArray();
-                        foreach (const QJsonValue & vSource, sourceArray) {
-                            if (vSource.toObject().value("ARGV").isArray()) {
-                                QJsonArray argv = vSource.toObject().value("ARGV").toArray();
-                                QString arg = "";
-                                foreach (const QJsonValue & vARGV, argv) {
-                                    arg = arg + vARGV.toObject().value("ARG").toString() + " ";
-                                }
-                                result.append(v.toObject().value("PATH").toString() + " " + arg);
-                                result.append(vSource.toObject().value("SN").toString());
-                            }
-                        }
-                    }
-                }
-            }
-        }
+//        else if (obj == "APP") {
+//            if (object.value(obj).isArray()) {
+//                QJsonArray array = value.toArray();
+//                foreach (const QJsonValue & v, array) {
+//                    if (v.toObject().value("DATABASE_SOURCE").toBool()) {
+
+//                    } else {
+//                        if (v.toObject().value("SOURCE").isArray()) {
+//                            QJsonArray sourceArray = v.toObject().value("SOURCE").toArray();
+//                            foreach (const QJsonValue & vSource, sourceArray) {
+//                                if (vSource.toObject().value("ARGV").isArray()) {
+//                                    QJsonArray argv = vSource.toObject().value("ARGV").toArray();
+//                                    QString arg = "";
+//                                    foreach (const QJsonValue & vARGV, argv) {
+//                                        arg = arg + vARGV.toObject().value("ARG").toString() + " ";
+//                                    }
+//                                    result.append(v.toObject().value("PATH").toString() + " " + arg);
+//                                    result.append(vSource.toObject().value("SN").toString());
+//                                }
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//        }
         else if (obj == "CONFIG") {
             if (object.value(obj).isArray()) {
                 QJsonArray array = value.toArray();
@@ -83,10 +87,8 @@ QStringList config::read(QString obj)
                     result.append(v.toObject().value("TABLE_NAME").toString());
                     result.append(QString::number(v.toObject().value("WEBSOCKET_PORT").toInt()));
                     result.append(QString::number(v.toObject().value("INTERVAL_SKYWAVE").toInt()));
-                    result.append(QString::number(v.toObject().value("DEBUG_TCPMODBUS_DATA").toBool()));
-                    result.append(QString::number(v.toObject().value("DEBUG_TCPMODBUS_DATABASE").toBool()));
-                    result.append(QString::number(v.toObject().value("DEBUG_SKYWAVE_DATA").toBool()));
-                    result.append(QString::number(v.toObject().value("DEBUG_SKYWAVE_DATABASE").toBool()));
+                    result.append(QString::number(v.toObject().value("DEBUG_DATA").toBool()));
+                    result.append(QString::number(v.toObject().value("DEBUG_DATABASE").toBool()));
                 }
             } else {
                 result.append(QString::number(value.toObject().value("DB_PERIOD").toInt()));
@@ -96,10 +98,8 @@ QStringList config::read(QString obj)
                 result.append(value.toObject().value("TABLE_NAME").toString());
                 result.append(QString::number(value.toObject().value("WEBSOCKET_PORT").toInt()));
                 result.append(QString::number(value.toObject().value("INTERVAL_SKYWAVE").toInt()));
-                result.append(QString::number(value.toObject().value("DEBUG_TCPMODBUS_DATA").toInt()));
-                result.append(QString::number(value.toObject().value("DEBUG_TCPMODBUS_DATABASE").toInt()));
-                result.append(QString::number(value.toObject().value("DEBUG_SKYWAVE_DATA").toInt()));
-                result.append(QString::number(value.toObject().value("DEBUG_SKYWAVE_DATABASE").toInt()));
+                result.append(QString::number(value.toObject().value("DEBUG_DATA").toInt()));
+                result.append(QString::number(value.toObject().value("DEBUG_DATABASE").toInt()));
             }
         } else if (obj == "FUNCT") {
             if (object.value(obj).isArray()) {
@@ -235,4 +235,104 @@ bool config::saveConfig(config::SaveFormat saveFormat) const
         : saveDoc.toBinaryData());
 
     return true;
+}
+
+plugins config::get_plugins() {
+    struct plugins plg;
+
+    for (int i = 0; i < MAX_PLUGINS; i++) {
+        plg.path[i].clear();
+        plg.database[i] = false;
+        plg.time_periode[i] = 0;
+        plg.arg[i].clear();
+    }
+
+    if (loadConfig(config::Json)) {
+        JsonDoc = QJsonDocument::fromJson(data_json);
+        QJsonObject object = JsonDoc.object();
+        QJsonValue value = object.value("APP");
+        if (object.value("APP").isArray()) {
+            QJsonArray array = value.toArray(); int index = 0;
+            foreach (const QJsonValue & v, array) {
+                if (v.toObject().value("DATABASE_SOURCE").toBool()) {
+                    plg.path[index] = v.toObject().value("PATH").toString();
+                    plg.database[index] = v.toObject().value("DATABASE_SOURCE").toBool();
+                    plg.time_periode[index] = v.toObject().value("TIME_PERIODE").toInt();
+//                    plg.arg[index] = this->get_plugins_from_database();
+                    plg = this->get_plugins_from_database(plg, index);
+                    for (int i = 0; i < plg.arg[index].length(); i++) {
+                        plg.arg[index].replace(i, plg.arg[index].at(i) + "-t " + QString::number(plg.time_periode[index]));
+                    }
+                } else {
+                    plg.path[index] = v.toObject().value("PATH").toString();
+                    plg.database[index] = v.toObject().value("DATABASE_SOURCE").toBool();
+                    plg.time_periode[index] = v.toObject().value("TIME_PERIODE").toInt();
+                    if (v.toObject().value("SOURCE").isArray()) {
+                        QJsonArray sourceArray = v.toObject().value("SOURCE").toArray();
+                        foreach (const QJsonValue & vSource, sourceArray) {
+                            if (vSource.toObject().value("ARGV").isArray()) {
+                                QJsonArray argv = vSource.toObject().value("ARGV").toArray();
+                                QString arg = "";
+                                foreach (const QJsonValue & vARGV, argv) {
+                                    arg = arg + vARGV.toObject().value("ARG").toString() + " ";
+                                }
+                                plg.arg[index].append(arg);
+//                                result.append(v.toObject().value("PATH").toString() + " " + arg);
+//                                result.append(vSource.toObject().value("SN").toString());
+                            }
+                            plg.sn[index].append(vSource.toObject().value("SN").toString());
+                        }
+                    }
+                }
+                index++;
+            }
+        }
+    }
+    return plg;
+}
+
+plugins config::get_plugins_from_database(struct plugins plg, int index) {
+    QSqlDatabase db;
+    db = mysql.connect_db("Config");
+    db.open();
+    QSqlQuery q(QSqlDatabase::database(db.connectionName()));
+    int last_id = 0;
+
+    if (!q.exec("call get_skywave_parameter();")) {
+        return plg;
+    } else {
+        while (q.next()) {
+//            -g http://m2prime.aissat.com/RestMessages.svc/get_return_messages.json/ -aid 150103286 -pwd ZRM3B9SSDI -sm 128;1 -s 2017-03-27#03:43:02 -t 10000
+            plg.sn[index].append(q.value(1).toString());
+            if (last_id != q.value(0).toInt()) {
+                last_id = q.value(0).toInt();
+                plg.arg[index].append(
+                            "-g " + q.value(2).toString().toLatin1() + "get_return_messages.json/ " +
+                            "-aid " + q.value(3).toString().toLatin1() + " " +
+                            "-pwd " + q.value(4).toString().toLatin1() + " " +
+                            "-sm " + q.value(5).toString().toLatin1() + " " +
+                            "-s " + QDateTime::fromTime_t(q.value(6).toInt()).toString("yyyy-MM-dd#HH:mm:dd") + " "
+                            );
+            }
+//            result.append(
+//                        "-g " + q.value(0).toString().toLatin1() + "get_return_messages.json/ " +
+//                        "-aid " + q.value(1).toString().toLatin1() + " " +
+//                        "-pwd " + q.value(2).toString().toLatin1() + " " +
+//                        "-sm " + q.value(3).toString().toLatin1() + " " +
+//                        "-s " + QDateTime::fromTime_t(q.value(4).toInt()).toString("yyyy-MM-dd#HH:mm:dd") + " "
+////                        q.value(5).toString().toLatin1() + ";" +
+////                        q.value(6).toString().toLatin1() + ";" +
+////                        q.value(7).toString().toLatin1() + ";" +
+////                        q.value(8).toString().toLatin1() + ";" +
+////                        q.value(9).toString().toLatin1() + ";" +
+////                        q.value(10).toString().toLatin1() + ";" +
+////                        q.value(11).toString().toLatin1() + ";" +
+////                        q.value(12).toString().toLatin1()
+//                          );
+        }
+    }
+
+    db.close();
+
+    return plg;
 }

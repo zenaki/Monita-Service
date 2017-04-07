@@ -7,10 +7,12 @@
 #include "util/config.h"
 //#include <util/util_skyw.h>
 
-#include "controller/tcp_modbus.h"
+//#include "controller/tcp_modbus.h"
 #include "controller/data_mysql.h"
 #include "controller/data_visual.h"
-#include "controller/sky_wave.h"
+//#include "controller/sky_wave.h"
+
+#include "controller/process.h"
 
 class Worker : public QObject
 {
@@ -30,14 +32,19 @@ private:
 //    QNetworkAccessManager *manager;                     /** veranda **/
 //    util_skyw read;                                     /** veranda **/
 
-    tcp_modbus obj_tcp_modbus;
-    QThread ThreadTcpModbus;
+    struct plugins plg;
+
+    process obj_app[MAX_PLUGINS];
+    QThread ThreadApp[MAX_PLUGINS];
+
+//    tcp_modbus obj_tcp_modbus;
+//    QThread ThreadTcpModbus;
     data_mysql obj_data_mysql;
     QThread ThreadDataMysql;
     data_visual obj_data_visual;
     QThread ThreadDataVisual;
-    sky_wave obj_sky_wave;
-    QThread ThreadSkyWave;
+//    sky_wave obj_sky_wave;
+//    QThread ThreadSkyWave;
 
 //    struct sky_wave_ship *marine;                       /** veranda **/
 //    struct sky_wave_account *acc;                       /** veranda **/

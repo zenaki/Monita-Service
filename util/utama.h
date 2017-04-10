@@ -111,6 +111,7 @@ struct monita_config {
 };
 
 struct plugins {
+    QStringList id[MAX_PLUGINS];
     QString path[MAX_PLUGINS];
     bool database[MAX_PLUGINS];
     QStringList arg[MAX_PLUGINS];

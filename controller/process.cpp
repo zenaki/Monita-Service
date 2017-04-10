@@ -5,24 +5,34 @@ process::process(QObject *parent) : QObject(parent)
 
 }
 
-void process::doSetup(QThread &cThread, QString plugins_path, QStringList arg, QStringList sn, int time_periode)
+void process::doSetup(QThread &cThread, QStringList plugins_id, QString plugins_path, QStringList arg, QStringList sn, int time_periode)
 {
     connect(&cThread,SIGNAL(started()),this,SLOT(doWork()));
+    id = plugins_id;
     Plugin = plugins_path;
     Argv = arg;
     SN = sn;
+
+    logsheet.clear();
+    for (int i = 0; i < Argv.length(); i++) logsheet.append("0");
 
     monita_cfg.config = cfg.read("CONFIG");
 
     QTimer *t = new QTimer(this);
     connect(t, SIGNAL(timeout()), this, SLOT(doWork()));
     t->start(time_periode);
+
+
 }
 
 void process::doWork()
 {
+//    if (QDateTime::currentDateTime().toString("ss").toInt() <= 20 && QDateTime::currentDateTime().toString("ss").toInt() >= 50) {
+//        logsheet.clear();
+//        for (int i = 0; i < Argv.length(); i++) logsheet.append("0");
+//    }
     for (int i = 0; i < Argv.length(); i++) {
-        log.write("Process", Plugin + " " + Argv.at(i), monita_cfg.config.at(7).toInt());
+        log.write("Process", Plugin + " " + Argv.at(i), monita_cfg.config.at(6).toInt());
         QProcess proc;
         proc.start("./" + Plugin + " " + Argv.at(i));
         proc.waitForFinished(); // sets current thread to sleep and waits for pingProcess end
@@ -32,16 +42,15 @@ void process::doWork()
         printf("%s", output.toLatin1().data());
 
         if (!obj.value("monita").isUndefined()) {
-//            log.write("Monita", Plugin + " " + Argv.at(i), monita_cfg.config.at(7).toInt());
-            logsheet = false;
+//            log.write("Monita", Plugin + " " + Argv.at(i), monita_cfg.config.at(6).toInt());
             this->monita_parse(obj, i);
 
         } else if (!obj.value("skywave").isUndefined()) {
-//            log.write("SkyWave", Plugin + " " + Argv.at(i), monita_cfg.config.at(7).toInt());
-            this->skywave_parse(obj);
+//            log.write("SkyWave", Plugin + " " + Argv.at(i), monita_cfg.config.at(6).toInt());
+            this->skywave_parse(obj, i);
 
         } else if (!obj.value("ERR").isUndefined()) {
-//            log.write("Process", obj.value("ERR").toString(), monita_cfg.config.at(7).toInt());
+//            log.write("Process", obj.value("ERR").toString(), monita_cfg.config.at(6).toInt());
         }
     }
 }
@@ -93,7 +102,7 @@ void process::monita_parse(QJsonObject obj, int index) {
                                       QString::number(QDateTime::currentMSecsSinceEpoch()) +
                                       " " +
                                       result[0].at(j), redis_config.at(0), redis_config.at(1).toInt());
-                        if (QTime::currentTime().toString("ss").toInt() < monita_cfg.config.at(2).toInt()) {
+//                        if (logsheet.at(index).toInt() <= monita_cfg.config.at(2).toInt()) {
                             rds.reqRedis("hset monita_service:temp " +
                                           titik_ukur.at(j) +
                                           "_" +
@@ -104,8 +113,9 @@ void process::monita_parse(QJsonObject obj, int index) {
                                       QString::number(j) + " - " +
                                       titik_ukur.at(j) + " - " +
                                       result[0].at(j),
-                                      monita_cfg.config.at(7).toInt());
-                        }
+                                      monita_cfg.config.at(6).toInt());
+                            logsheet.replace(index, QString::number(logsheet.at(index).toInt()+1));
+//                        }
                         rds.reqRedis("hset monita_service:vismon " +
                                      SerialNumber + ";" +
                                      titik_ukur.at(j) + ";" +
@@ -116,7 +126,7 @@ void process::monita_parse(QJsonObject obj, int index) {
                                   QString::number(j) + " - " +
                                   titik_ukur.at(j) + " - " +
                                   result[0].at(j),
-                                  monita_cfg.config.at(7).toInt());
+                                  monita_cfg.config.at(6).toInt());
                     }
                 } else {
                     for (int j = 0; j < titik_ukur.length(); j++) {
@@ -125,7 +135,7 @@ void process::monita_parse(QJsonObject obj, int index) {
                                       QString::number(QDateTime::currentMSecsSinceEpoch()) +
                                       " " +
                                       result[0].at(j), redis_config.at(0), redis_config.at(1).toInt());
-                        if (QTime::currentTime().toString("ss").toInt() < monita_cfg.config.at(2).toInt()) {
+//                        if (logsheet.at(index).toInt() <= monita_cfg.config.at(2).toInt()) {
                             rds.reqRedis("hset monita_service:temp " +
                                           titik_ukur.at(j) +
                                           "_" +
@@ -136,8 +146,9 @@ void process::monita_parse(QJsonObject obj, int index) {
                                       QString::number(j) + " - " +
                                       titik_ukur.at(j) + " - " +
                                       result[0].at(j),
-                                      monita_cfg.config.at(7).toInt());
-                        }
+                                      monita_cfg.config.at(6).toInt());
+                            logsheet.replace(index, QString::number(logsheet.at(index).toInt()+1));
+//                        }
                         rds.reqRedis("hset monita_service:vismon " +
                                      SerialNumber + ";" +
                                      titik_ukur.at(j) + ";" +
@@ -148,14 +159,14 @@ void process::monita_parse(QJsonObject obj, int index) {
                                   QString::number(j) + " - " +
                                   titik_ukur.at(j) + " - " +
                                   result[0].at(j),
-                                  monita_cfg.config.at(7).toInt());
+                                  monita_cfg.config.at(6).toInt());
                     }
                 }
             }
         }
     }
 }
-void process::skywave_parse(QJsonObject obj/*, QString arg*/) {
+void process::skywave_parse(QJsonObject obj, int index) {
 //    QStringList list_arg = arg.split(" ");
 //    QStringList list_SinMin = list_arg.at(7).split(",");
 
@@ -223,7 +234,7 @@ void process::skywave_parse(QJsonObject obj/*, QString arg*/) {
                                               result[1].at(j) + " - " +
                                               titik_ukur.at(k) + " - " +
                                               list_val.at(k),
-                                              monita_cfg.config.at(7).toInt());
+                                              monita_cfg.config.at(6).toInt());
                                 }
                             } else {
                                 for (int k = 0; k < list_val.length()-1; k++) {
@@ -250,7 +261,7 @@ void process::skywave_parse(QJsonObject obj/*, QString arg*/) {
                                               QString::number(k) + " - " +
                                               titik_ukur.at(k) + " - " +
                                               list_val.at(k),
-                                              monita_cfg.config.at(7).toInt());
+                                              monita_cfg.config.at(6).toInt());
                                 }
                             }
                         }
@@ -258,5 +269,30 @@ void process::skywave_parse(QJsonObject obj/*, QString arg*/) {
                 }
             }
         }
+    }
+    if (!obj.value("NextStartUTC").isUndefined()) {
+        cfg.set_nextutc_skywave(id.at(index),
+            QString::number(
+                QDateTime::fromString(
+                    obj.value("NextStartUTC").toString(), "yyyy-MM-dd HH:mm:ss"
+                ).toTime_t()
+            )
+        );
+        QStringList temp = Argv.at(index).split(" ");
+        temp.replace(9, obj.value("NextStartUTC").toString().replace(" ","#"));
+        Argv.replace(index,
+                     temp.at(0) + " " +
+                     temp.at(1) + " " +
+                     temp.at(2) + " " +
+                     temp.at(3) + " " +
+                     temp.at(4) + " " +
+                     temp.at(5) + " " +
+                     temp.at(6) + " " +
+                     temp.at(7) + " " +
+                     temp.at(8) + " " +
+                     temp.at(9) + " " +
+                     temp.at(10) + " " +
+                     temp.at(11)
+                     );
     }
 }

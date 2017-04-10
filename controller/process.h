@@ -12,7 +12,7 @@ class process : public QObject
 public:
     explicit process(QObject *parent = 0);
 
-    void doSetup(QThread &cThread, QString plugins_path, QStringList arg, QStringList sn, int time_periode);
+    void doSetup(QThread &cThread, QStringList plugins_id, QString plugins_path, QStringList arg, QStringList sn, int time_periode);
 
 signals:
 
@@ -25,15 +25,17 @@ private:
     monita_log log;
     struct monita_config monita_cfg;
 
+    QStringList id;
     QString Plugin;
     QStringList Argv;
     QStringList SN;
+    QStringList logsheet;
 
     QJsonObject ObjectFromString(QString in);
 
-    bool logsheet;
+//    bool logsheet;
     void monita_parse(QJsonObject obj, int index);
-    void skywave_parse(QJsonObject obj);
+    void skywave_parse(QJsonObject obj, int index);
 };
 
 #endif // PROCESS_H

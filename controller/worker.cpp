@@ -63,7 +63,7 @@ void Worker::doWork()
     int jml_thread = 0;
     for (int i = 0; i < MAX_PLUGINS; i++) {
         if (plg.arg[i].length() > 0) {
-            obj_app[jml_thread].doSetup(ThreadApp[jml_thread], plg.path[i], plg.arg[i], plg.sn[i], plg.time_periode[i]);
+            obj_app[jml_thread].doSetup(ThreadApp[jml_thread], plg.id[i], plg.path[i], plg.arg[i], plg.sn[i], plg.time_periode[i]);
             obj_app[jml_thread].moveToThread(&ThreadApp[jml_thread]);
             ThreadApp[jml_thread].start();
             jml_thread++;
@@ -79,13 +79,13 @@ void Worker::doWork()
 //    obj_tcp_modbus.moveToThread(&ThreadTcpModbus);
 //    ThreadTcpModbus.start();
 
-//    obj_data_mysql.doSetup(ThreadDataMysql);
-//    obj_data_mysql.moveToThread(&ThreadDataMysql);
-//    ThreadDataMysql.start();
+    obj_data_mysql.doSetup(ThreadDataMysql);
+    obj_data_mysql.moveToThread(&ThreadDataMysql);
+    ThreadDataMysql.start();
 
-//    obj_data_visual.doSetup(ThreadDataVisual);
-//    obj_data_visual.moveToThread(&ThreadDataVisual);
-//    ThreadDataVisual.start();
+    obj_data_visual.doSetup(ThreadDataVisual);
+    obj_data_visual.moveToThread(&ThreadDataVisual);
+    ThreadDataVisual.start();
 
 //    obj_sky_wave.doSetup(ThreadSkyWave);
 //    obj_sky_wave.moveToThread(&ThreadSkyWave);

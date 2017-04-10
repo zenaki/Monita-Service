@@ -86,7 +86,7 @@ QStringList config::read(QString obj)
                     result.append(v.toObject().value("REDIS_KEY").toString());
                     result.append(v.toObject().value("TABLE_NAME").toString());
                     result.append(QString::number(v.toObject().value("WEBSOCKET_PORT").toInt()));
-                    result.append(QString::number(v.toObject().value("INTERVAL_SKYWAVE").toInt()));
+//                    result.append(QString::number(v.toObject().value("INTERVAL_SKYWAVE").toInt()));
                     result.append(QString::number(v.toObject().value("DEBUG_DATA").toBool()));
                     result.append(QString::number(v.toObject().value("DEBUG_DATABASE").toBool()));
                 }
@@ -97,7 +97,7 @@ QStringList config::read(QString obj)
                 result.append(value.toObject().value("REDIS_KEY").toString());
                 result.append(value.toObject().value("TABLE_NAME").toString());
                 result.append(QString::number(value.toObject().value("WEBSOCKET_PORT").toInt()));
-                result.append(QString::number(value.toObject().value("INTERVAL_SKYWAVE").toInt()));
+//                result.append(QString::number(value.toObject().value("INTERVAL_SKYWAVE").toInt()));
                 result.append(QString::number(value.toObject().value("DEBUG_DATA").toInt()));
                 result.append(QString::number(value.toObject().value("DEBUG_DATABASE").toInt()));
             }
@@ -303,11 +303,13 @@ plugins config::get_plugins_from_database(struct plugins plg, int index) {
     } else {
         while (q.next()) {
 //            -g http://m2prime.aissat.com/RestMessages.svc/get_return_messages.json/ -aid 150103286 -pwd ZRM3B9SSDI -sm 128;1 -s 2017-03-27#03:43:02 -t 10000
-            plg.sn[index].append(q.value(1).toString());
             if (last_id != q.value(0).toInt()) {
                 last_id = q.value(0).toInt();
+                plg.id[index].append(QString::number(last_id));
+                plg.sn[index].append(q.value(1).toString());
                 plg.arg[index].append(
-                            "-g " + q.value(2).toString().toLatin1() + "get_return_messages.json/ " +
+//                            "-g " + q.value(2).toString().toLatin1() + "get_return_messages.json/ " +
+                            "-g " + q.value(2).toString().toLatin1() + " " +
                             "-aid " + q.value(3).toString().toLatin1() + " " +
                             "-pwd " + q.value(4).toString().toLatin1() + " " +
                             "-sm " + q.value(5).toString().toLatin1() + " " +
@@ -335,4 +337,19 @@ plugins config::get_plugins_from_database(struct plugins plg, int index) {
     db.close();
 
     return plg;
+}
+
+void config::set_nextutc_skywave(QString id, QString nextUTC) {
+    QSqlDatabase db;
+    db = mysql.connect_db("SkyWave");
+    db.open();
+    QSqlQuery q(QSqlDatabase::database(db.connectionName()));
+
+    if (!q.exec("call set_skywave_nextutc("+id+","+nextUTC+");")) {
+        return;
+    } else {
+        return;
+    }
+
+    db.close();
 }

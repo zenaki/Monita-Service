@@ -22,12 +22,20 @@ void data_visual::doSetup(QThread &cThread)
 
     monita_cfg.config = cfg.read("CONFIG");
     int port = monita_cfg.config.at(5).toInt();
+
     m_pWebSocketServer = new QWebSocketServer(QStringLiteral("WebSocket Server"), QWebSocketServer::NonSecureMode, this);
-    if (m_pWebSocketServer->listen(QHostAddress::Any, port)) {
-        log.write("WebSocket","Server listening on port : " + QString::number(port),
-                  monita_cfg.config.at(8).toInt());
-        connect(m_pWebSocketServer, &QWebSocketServer::newConnection,this, &data_visual::onNewConnection);
-        connect(m_pWebSocketServer, &QWebSocketServer::closed, this, &data_visual::closed);
+
+    bool webSocketServer = false;
+    while (!webSocketServer) {
+        if (m_pWebSocketServer->listen(QHostAddress::Any, port)) {
+            log.write("WebSocket","Server listening on port : " + QString::number(port),
+                      monita_cfg.config.at(7).toInt());
+            connect(m_pWebSocketServer, &QWebSocketServer::newConnection,this, &data_visual::onNewConnection);
+            connect(m_pWebSocketServer, &QWebSocketServer::closed, this, &data_visual::closed);
+            webSocketServer = true;
+        } else {
+            m_pWebSocketServer->close();
+        }
     }
 
     QTimer *t = new QTimer(this);
@@ -162,7 +170,7 @@ void data_visual::doWork()
 
     QStringList request = rds.reqRedis("hlen monita_service:vismon", address, port);
 //    log.write("Redis",request.at(0) + " Data ..",
-//              monita_cfg.config.at(8).toInt());
+//              monita_cfg.config.at(7).toInt());
     int redis_len = request.at(0).toInt();
     if (redis_len > 0) {
         request = rds.reqRedis("hgetall monita_service:vismon", address, port, redis_len*2);
@@ -184,7 +192,7 @@ void data_visual::onNewConnection()
 
     pSocket->ignoreSslErrors();
     log.write("WebSocket","New Client : " + pSocket->localAddress().toString() + ":" + pSocket->localPort(),
-              monita_cfg.config.at(8).toInt());
+              monita_cfg.config.at(7).toInt());
 //    pSocket->sendTextMessage("Berhasil Connect cuy ..");
 
     m_clients << pSocket;
@@ -197,7 +205,7 @@ void data_visual::processTextMessage(QString message)
 {
     QWebSocket *pClient = qobject_cast<QWebSocket *>(sender());
     log.write("WebSocket","Message received : " + message,
-              monita_cfg.config.at(8).toInt());
+              monita_cfg.config.at(7).toInt());
 
 //    if (pClient) {pClient->sendTextMessage(message);}
     for (int i = 0; i < m_clients.length(); i++) {
@@ -213,7 +221,7 @@ void data_visual::processBinaryMessage(QByteArray message)
 {
     QWebSocket *pClient = qobject_cast<QWebSocket *>(sender());
     log.write("WebSocket","Binary Message received : " + message,
-              monita_cfg.config.at(8).toInt());
+              monita_cfg.config.at(7).toInt());
     if (pClient) {pClient->sendBinaryMessage(message);}
 
 }
@@ -222,7 +230,7 @@ void data_visual::socketDisconnected()
 {
     QWebSocket *pClient = qobject_cast<QWebSocket *>(sender());
     log.write("WebSocket","Socket Disconnect : " + pClient->localAddress().toString() + ":" + pClient->localPort(),
-              monita_cfg.config.at(8).toInt());
+              monita_cfg.config.at(7).toInt());
     if (pClient) {
         for (int i = 0; i < m_clients.length(); i++) {
             if (m_clients.at(i) == pClient) {

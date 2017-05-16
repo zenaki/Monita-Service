@@ -57,6 +57,7 @@ void data_visual::RedisToJson(QStringList data, QDateTime dt, int index)
     QJsonArray VisMonArray;
 
     QStringList list_temp;
+    QStringList list_temp2;
 //    QString temp; int index = 0; int indexObject = 0;
 //    for (int i = 0; i < data.length(); i+=2) {
 //        if (data.at(i).indexOf("UNKNOWN") > 0) {
@@ -117,24 +118,28 @@ void data_visual::RedisToJson(QStringList data, QDateTime dt, int index)
     for (int i = 0; i < data.length(); i+=2) {
         QStringList list_titik_ukur = m_titik_ukur.at(index).split(";");
         list_temp = data.at(i).split(";");
+        list_temp2 = data.at(i+1).split(";");
         for (int j = 0; j < list_titik_ukur.length(); j++) {
             if (list_temp.at(1) == list_titik_ukur.at(j)) {
                 json["serial_number"] = list_temp.at(0);
                 json["titik_ukur"] = list_temp.at(1);
-                json["value"] = data.at(i+1);
-                json["epochtime"] = QString::number(QDateTime::currentMSecsSinceEpoch());
+//                json["value"] = data.at(i+1);
+//                json["epochtime"] = QString::number(QDateTime::currentMSecsSinceEpoch());
+                json["epochtime"] = list_temp2.at(0);
+                json["value"] = list_temp2.at(1);
+                json["nama_tu"] = m_nama_titik_ukur.at(index).split(";").at(j);
 //                json["epochtime"] = list_temp.at(2);
                 VisMonArray.append(json);
             }
         }
     }
     VisMonObject["monita"] = VisMonArray;
-    this->WriteToJson(VisMonObject, m_user_id.at(index), dt, index);
+    this->WriteToJson(VisMonObject, m_type.at(index), m_id.at(index), dt, index);
 }
 
-void data_visual::WriteToJson(QJsonObject json, QString user_id, QDateTime dt, int index)
+void data_visual::WriteToJson(QJsonObject json, QString type, QString id, QDateTime dt, int index)
 {
-    QString path = ".MonSerConfig/VisMon_" + user_id + "_" + dt.date().toString("yyyyMMdd") + ".json";
+    QString path = ".MonSerConfig/VisMon_" + type + "_" + id + "_" + dt.date().toString("yyyyMMdd") + ".json";
     QFile visual_json_file(path);
     if (!visual_json_file.exists()) {
         QDir dir;
@@ -178,7 +183,7 @@ void data_visual::doWork()
         for (int i = 0; i < m_clients.length(); i++) {
             this->RedisToJson(request, dt, i);
         }
-        request = rds.reqRedis("del monita_service:vismon", address, port, redis_len*2);
+//        request = rds.reqRedis("del monita_service:vismon", address, port, redis_len*2);
     }
 }
 
@@ -196,22 +201,37 @@ void data_visual::onNewConnection()
 //    pSocket->sendTextMessage("Berhasil Connect cuy ..");
 
     m_clients << pSocket;
-    m_user_id << "";
+    m_type << "";
+    m_id << "";
+    m_nama_titik_ukur << "";
     m_titik_ukur << "";
 //    qDebug() << "debug new webSockcet Server Connection";
+
+    monita_cfg.config = cfg.read("CONFIG");
+    QStringList redis_config = cfg.read("REDIS");
+    QString address = redis_config.at(0);
+    int port = redis_config.at(1).toInt();
+    QStringList request = rds.reqRedis("hlen monita_service:vismon", address, port);
+    int redis_len = request.at(0).toInt();
+    request = rds.reqRedis("del monita_service:vismon", address, port, redis_len*2);
 }
 
 void data_visual::processTextMessage(QString message)
 {
     QWebSocket *pClient = qobject_cast<QWebSocket *>(sender());
-    log.write("WebSocket","Message received : " + message,
+    log.write("WebSocket","Client : " + pClient->localAddress().toString() + " Message received : " + message,
               monita_cfg.config.at(7).toInt());
 
 //    if (pClient) {pClient->sendTextMessage(message);}
     for (int i = 0; i < m_clients.length(); i++) {
         if (m_clients.at(i) == pClient) {
-            m_user_id.replace(i, message);
-            this->get_titik_ukur(message, i);
+            if (message.split(':').length() == 2) {
+                m_type.replace(i, message.split(':').at(0));
+                m_id.replace(i, message.split(':').at(1));
+                if (m_type.at(i) != "arg") {
+                    this->get_titik_ukur(m_type.at(i), m_id.at(i), i);
+                }
+            }
             break;
         }
     }
@@ -220,7 +240,7 @@ void data_visual::processTextMessage(QString message)
 void data_visual::processBinaryMessage(QByteArray message)
 {
     QWebSocket *pClient = qobject_cast<QWebSocket *>(sender());
-    log.write("WebSocket","Binary Message received : " + message,
+    log.write("WebSocket","Client : " + pClient->localAddress().toString() + " Binary Message received : " + message,
               monita_cfg.config.at(7).toInt());
     if (pClient) {pClient->sendBinaryMessage(message);}
 
@@ -234,6 +254,7 @@ void data_visual::socketDisconnected()
     if (pClient) {
         for (int i = 0; i < m_clients.length(); i++) {
             if (m_clients.at(i) == pClient) {
+                m_nama_titik_ukur.removeAt(i);
                 m_titik_ukur.removeAt(i);
                 break;
             }
@@ -243,23 +264,25 @@ void data_visual::socketDisconnected()
     }
 }
 
-void data_visual::get_titik_ukur(QString user_id, int index) {
-    QString result;
+void data_visual::get_titik_ukur(QString type, QString id, int index) {
+    QString resultNama;
+    QString resultTitikUkur;
     db.open();
     QSqlQuery q(QSqlDatabase::database(db.connectionName()));
-//    QSqlQuery q(db);
 
-//    q.prepare("call get_titik_ukur(" + user_id + ");");
-    if(!q.exec("call get_titik_ukur(" + user_id + ");")){
+//    if(!q.exec("call get_titik_ukur('" + type + "', " + id + ");")){
+    if(!q.exec("call get_titik_ukur(" + id + ");")){
         return;
     }
     else{
         while(q.next()){
-            result = result + q.value(0).toString().toLatin1() + ";";
+            resultNama = resultNama + q.value(0).toString().toLatin1() + ";";
+            resultTitikUkur = resultTitikUkur + q.value(1).toString().toLatin1() + ";";
         }
     }
 
-    m_titik_ukur.replace(index, result);
+    m_nama_titik_ukur.replace(index, resultNama);
+    m_titik_ukur.replace(index, resultTitikUkur);
 
     db.close();
 }

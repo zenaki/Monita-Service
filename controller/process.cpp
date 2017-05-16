@@ -118,9 +118,9 @@ void process::monita_parse(QJsonObject obj, int index) {
 //                        }
                         rds.reqRedis("hset monita_service:vismon " +
                                      SerialNumber + ";" +
-                                     titik_ukur.at(j) + ";" +
-                                     QString::number(QDateTime::currentMSecsSinceEpoch()) +
+                                     titik_ukur.at(j) +
                                      " " +
+                                     QString::number(QDateTime::currentMSecsSinceEpoch()) + ";" +
                                      result[0].at(j), redis_config.at(0), redis_config.at(1).toInt());
                         log.write("TcpModbus",
                                   QString::number(j) + " - " +
@@ -151,9 +151,9 @@ void process::monita_parse(QJsonObject obj, int index) {
 //                        }
                         rds.reqRedis("hset monita_service:vismon " +
                                      SerialNumber + ";" +
-                                     titik_ukur.at(j) + ";" +
-                                     QString::number(QDateTime::currentMSecsSinceEpoch()) +
+                                     titik_ukur.at(j) +
                                      " " +
+                                     QString::number(QDateTime::currentMSecsSinceEpoch()) + ";" +
                                      result[0].at(j), redis_config.at(0), redis_config.at(1).toInt());
                         log.write("TcpModbus",
                                   QString::number(j) + " - " +

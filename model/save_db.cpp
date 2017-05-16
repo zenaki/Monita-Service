@@ -26,8 +26,8 @@ void save_db::create_tabel_data_harian(QSqlDatabase db, QString tb_name, QString
     query.clear();
     query = "CREATE TABLE if not exists " + tb_name + " (\
                 titik_ukur_id INT(11) NOT NULL, \
-                value float NULL, \
-                epochtime varchar(45) NOT NULL, \
+                value FLOAT NULL, \
+                epochtime INT(11) NOT NULL, \
                 PRIMARY KEY (titik_ukur_id, epochtime) \
     );";
     log.write(type, query, debug);

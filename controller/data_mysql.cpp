@@ -91,6 +91,7 @@ void data_mysql::set_dataHarian()
             }
         }
         set.data_harian(db, monita_cfg.config.at(4) + dt_sdh.date().toString("yyyyMMdd"), data, "Database", monita_cfg.config.at(7).toInt());
+        set.data_harian(db, "data", data, "Database", monita_cfg.config.at(7).toInt());
     }
 //    if (db.isOpen()) db.close();
 //    mysql.close(db);

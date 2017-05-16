@@ -127,7 +127,11 @@ void data_visual::RedisToJson(QStringList data, QDateTime dt, int index)
 //                json["epochtime"] = QString::number(QDateTime::currentMSecsSinceEpoch());
                 json["epochtime"] = list_temp2.at(0);
                 json["value"] = list_temp2.at(1);
-                json["nama_tu"] = m_nama_titik_ukur.at(index).split(";").at(j);
+                if (m_nama_titik_ukur.at(index).split(";").length() > j) {
+                    json["nama_tu"] = m_nama_titik_ukur.at(index).split(";").at(j);
+                } else {
+                    json["nama_tu"] = "";
+                }
 //                json["epochtime"] = list_temp.at(2);
                 VisMonArray.append(json);
             }
@@ -228,8 +232,13 @@ void data_visual::processTextMessage(QString message)
             if (message.split(':').length() == 2) {
                 m_type.replace(i, message.split(':').at(0));
                 m_id.replace(i, message.split(':').at(1));
-                if (m_type.at(i) != "arg") {
+                if (m_type.at(i) == "id") {
                     this->get_titik_ukur(m_type.at(i), m_id.at(i), i);
+                } else if (m_type.at(i) == "op") {
+                    QString resultTitikUkur = m_id.at(i);
+                    m_nama_titik_ukur.replace(i, "");
+                    m_titik_ukur.replace(i, resultTitikUkur);
+                    m_id.replace(i, "");
                 }
             }
             break;

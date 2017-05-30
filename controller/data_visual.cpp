@@ -46,74 +46,11 @@ void data_visual::doSetup(QThread &cThread)
 void data_visual::RedisToJson(QStringList data, QDateTime dt, int index)
 {
     QJsonObject json;
-//    QJsonArray slaveArray[JUMLAH_MAX_TITIK_UKUR];            // Jumlah Maksimal titik Ukut
-//    QJsonObject idTitikUkurObject[JUMLAH_MAX_TITIK_UKUR];    // Jumlah Maksimal titik Ukut
-//    QJsonArray slaveArray;
-//    QJsonObject idTitikUkurObject;
-//    QJsonObject errorObject;
-//    QJsonObject dataObject;
-//    QJsonArray dataArray;
     QJsonObject VisMonObject;
     QJsonArray VisMonArray;
 
     QStringList list_temp;
     QStringList list_temp2;
-//    QString temp; int index = 0; int indexObject = 0;
-//    for (int i = 0; i < data.length(); i+=2) {
-//        if (data.at(i).indexOf("UNKNOWN") > 0) {
-//            errorObject[data.at(i)] = data.at(i+1);
-//            json[data.at(i)] = errorObject;
-//        } else {
-//            list_temp = data.at(i).split(";");
-//            if ((i > 0 && temp != list_temp.at(0))) {
-//                slaveArray[index].append(idTitikUkurObject[index]);
-//                json["SLAVE_ID:"+temp] = slaveArray[index];
-//                index++;
-//            }
-//            idTitikUkurObject[index]["ID_TITIK_UKUR:"+list_temp.at(1)] = data.at(i+1);
-//            temp = list_temp.at(0);
-//            if (i >= data.length()-2) {
-//                slaveArray[index].append(idTitikUkurObject[index]);
-//                json["SLAVE_ID:"+temp] = slaveArray[index];
-//            }
-//        }
-//    }
-
-//    for (int i = 0; i < data.length(); i+=2) {
-//        if (data.at(i).indexOf("UNKNOWN") > 0) {
-//            errorObject[data.at(i)] = data.at(i+1);
-//            json[data.at(i)] = errorObject;
-//        } else {
-//            list_temp = data.at(i).split(";");
-//            if ((i > 0 && temp != list_temp.at(0))) {
-////                slaveArray[index].append(idTitikUkurObject[index]);
-////                slaveArray[index].append(dataArray);
-//                json["slave_id"] = temp.toInt();
-//                json["data"] = dataArray;
-//                index++;
-//                for (int j = 0; j < indexObject; j++) {
-//                    dataArray.removeAt(0);
-//                }
-//                indexObject = 0;
-//                VisMonArray.append(json);
-//            }
-//            if (data.at(i+1) != "N/A") {
-//                dataObject["titik_ukur"] = list_temp.at(1);
-//                dataObject["value"] = data.at(i+1);
-////                idTitikUkurObject[index]["ID_TITIK_UKUR:"+list_temp.at(1)] = data.at(i+1);
-////                idTitikUkurObject[indexObject] = dataObject;
-//                dataArray.append(dataObject); indexObject++;
-//            }
-//            temp = list_temp.at(0);
-//            if (i >= data.length()-2) {
-////                slaveArray[index].append(idTitikUkurObject[index]);
-////                slaveArray[index].append(dataArray);
-//                json["slave_id"] = temp.toInt();
-//                json["data"] = dataArray;
-//                VisMonArray.append(json);
-//            }
-//        }
-//    }
 
     for (int i = 0; i < data.length(); i+=2) {
         QStringList list_titik_ukur = m_titik_ukur.at(index).split(";");
@@ -130,7 +67,7 @@ void data_visual::RedisToJson(QStringList data, QDateTime dt, int index)
                 if (m_nama_titik_ukur.at(index).split(";").length() > j) {
                     json["nama_tu"] = m_nama_titik_ukur.at(index).split(";").at(j);
                 } else {
-                    json["nama_tu"] = "";
+//                    json["nama_tu"] = "";
                 }
 //                json["epochtime"] = list_temp.at(2);
                 VisMonArray.append(json);
@@ -239,6 +176,9 @@ void data_visual::processTextMessage(QString message)
                     m_nama_titik_ukur.replace(i, "");
                     m_titik_ukur.replace(i, resultTitikUkur);
                     m_id.replace(i, "");
+                } else if (m_type.at(i) == "arg") {
+                    get_arguments(m_id.at(i));
+                    exec_arguments();
                 }
             }
             break;
@@ -296,3 +236,75 @@ void data_visual::get_titik_ukur(QString type, QString id, int index) {
     db.close();
 }
 
+void data_visual::get_arguments(QString id) {
+    QStringList result;
+    db.open();
+    QSqlQuery q(QSqlDatabase::database(db.connectionName()));
+    if (!q.exec("call get_arguments("+id+")")) {
+        return;
+    } else {
+        while(q.next()){
+            result.append(q.value(1).toString().toLatin1());
+        }
+    }
+
+    m_arguments = result;
+}
+
+void data_visual::exec_arguments() {
+    QStringList result;
+    for (int i = 0; i < m_arguments.length(); i++) {
+        if (m_arguments.at(i).indexOf("ARG") > 0) {
+            QString temp = m_arguments.at(i).mid(m_arguments.at(i).indexOf("ARG"));
+            QString temp2;
+            if (temp.indexOf("#") > 0) {
+                temp2 = temp.mid(0, temp.indexOf("#"));
+            } else {
+                temp2 = temp.mid(0, temp.indexOf(" "));
+            }
+            QStringList tempList =  temp2.split("_");
+            if (i > tempList.at(1).toInt()-1) {
+//                QString().toUtf8().data();
+                temp = m_arguments.at(i);
+                temp.replace(temp2, result.at(tempList.at(1).toInt()-1));
+                m_arguments.replace(i, temp);
+            }
+            qDebug() << temp;
+        }
+        QProcess proc;
+        proc.start(m_arguments.at(i));
+        proc.waitForFinished();
+        QString output(proc.readAllStandardOutput());
+        QJsonObject obj = this->ObjectFromString(output);
+
+        if (!obj.value("monita").isUndefined()) {
+            QJsonArray array = obj.value("monita").toArray();
+            foreach (const QJsonValue & v, array) {
+                result.append(v.toObject().value("value").toString());
+            }
+        } else if (!obj.value("ERR").isUndefined()) {
+            qDebug() << "----------------------------------------------------------------------------------------------------";
+            qDebug() << "----------------------------------------------------------------------------------------------------";
+            qDebug() << "----------------------------------------------------------------------------------------------------";
+            qDebug() << "EXEC_ARG:" + output;
+            qDebug() << "----------------------------------------------------------------------------------------------------";
+            qDebug() << "----------------------------------------------------------------------------------------------------";
+            qDebug() << "----------------------------------------------------------------------------------------------------";
+        }
+    }
+}
+
+QJsonObject data_visual::ObjectFromString(QString in)
+{
+    QJsonObject obj;
+    QJsonDocument doc = QJsonDocument::fromJson(in.toUtf8());
+
+    // check validity of the document
+    if (!doc.isNull()) {
+        if (doc.isObject()) {
+            obj = doc.object();
+        }
+    }
+
+    return obj;
+}

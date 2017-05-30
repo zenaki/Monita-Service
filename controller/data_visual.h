@@ -30,6 +30,7 @@ private:
     QStringList m_id;
     QStringList m_nama_titik_ukur;
     QStringList m_titik_ukur;
+    QStringList m_arguments;
 
     void RedisToJson(QStringList data, QDateTime dt, int index);
     void WriteToJson(QJsonObject json, QString type, QString id, QDateTime dt, int index);
@@ -38,6 +39,10 @@ private:
     QSqlDatabase db;
 
     void get_titik_ukur(QString type, QString id, int index);
+    void get_arguments(QString id);
+    void exec_arguments();
+    QJsonObject ObjectFromString(QString in);
+
 public slots:
     void doWork();
 

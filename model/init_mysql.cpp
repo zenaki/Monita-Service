@@ -4,8 +4,8 @@ init_mysql::init_mysql()
 {
 }
 
-QSqlDatabase init_mysql::connect_db(QString name){
-
+QSqlDatabase init_mysql::connect_db(QString name)
+{
     QFile db_path(PATH_DB_CONNECTION);
     if (db_path.exists()) {
         QSettings db_sett(PATH_DB_CONNECTION, QSettings::IniFormat);

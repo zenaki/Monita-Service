@@ -101,6 +101,8 @@ QStringList config::read(QString obj)
                 result.append(QString::number(value.toObject().value("DEBUG_DATA").toInt()));
                 result.append(QString::number(value.toObject().value("DEBUG_DATABASE").toInt()));
             }
+        } else if (obj == "RPT_GEN") {
+          result.append(object.value(obj).toString());
         } else if (obj == "FUNCT") {
             if (object.value(obj).isArray()) {
                 QJsonArray array = value.toArray();
@@ -307,14 +309,23 @@ plugins config::get_plugins_from_database(struct plugins plg, int index) {
                 last_id = q.value(0).toInt();
                 plg.id[index].append(QString::number(last_id));
                 plg.sn[index].append(q.value(1).toString());
+
+                QDateTime dt1 = QDateTime::currentDateTime();
+                QDateTime dt2 = dt1.toUTC();
+                dt1.setTimeSpec(Qt::UTC);
+                int offset = dt2.secsTo(dt1) / 3600;
+
                 plg.arg[index].append(
 //                            "-g " + q.value(2).toString().toLatin1() + "get_return_messages.json/ " +
                             "-g " + q.value(2).toString().toLatin1() + " " +
                             "-aid " + q.value(3).toString().toLatin1() + " " +
                             "-pwd " + q.value(4).toString().toLatin1() + " " +
                             "-sm " + q.value(5).toString().toLatin1() + " " +
-                            "-s " + QDateTime::fromTime_t(q.value(6).toInt()).toString("yyyy-MM-dd#HH:mm:dd") + " "
+                            "-s " + QDateTime::fromTime_t(q.value(6).toInt()-(offset*3600)).toString("yyyy-MM-dd#HH:mm:dd") + " "
                             );
+//                qDebug() << plg.arg[index];
+//                qDebug() << q.value(6).toInt();
+//                qDebug() << "test";
             }
 //            result.append(
 //                        "-g " + q.value(0).toString().toLatin1() + "get_return_messages.json/ " +

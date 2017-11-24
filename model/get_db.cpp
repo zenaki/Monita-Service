@@ -23,7 +23,7 @@ bool get_db::check_table_is_available(QSqlDatabase db, QString table_name, QStri
 
 void get_db::skyWave_config(QSqlDatabase db, monita_config *mon, QString mode, int debug) {
     if (db.isValid()) {
-        if (db.isOpen()) {
+        if (!db.isOpen()) {
             db.open();
         }
         QString query;

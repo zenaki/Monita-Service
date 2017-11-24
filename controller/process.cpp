@@ -32,25 +32,44 @@ void process::doWork()
 //        for (int i = 0; i < Argv.length(); i++) logsheet.append("0");
 //    }
     for (int i = 0; i < Argv.length(); i++) {
-        log.write("Process", Plugin + " " + Argv.at(i), monita_cfg.config.at(6).toInt());
         QProcess proc;
+//        log.write("Report", "usr/local/bin/plugins/Report -tmp /home/ovm/sample_report.xml -cnf /home/ovm/sample_config.json -f /home/ovm/sample123.pdf -host localhost -db marine_2_new_concept -usr root -pwd ovm2015 -par  ", monita_cfg.config.at(6).toInt());
+//        proc.start("/usr/local/bin/plugins/Report -tmp /home/ovm/sample_report.xml -cnf /home/ovm/sample_config.json -f /home/ovm/sample123.pdf -host localhost -db marine_2_new_concept -usr root -pwd ovm2015 -par  ");
+//        proc.waitForFinished(); // sets current thread to sleep and waits for pingProcess end
+//        QString output2(proc.readAllStandardOutput());
+//        printf("%s::%s", QDateTime::currentDateTime().toString("dd-MM-yyyy HH:mm:ss").toLatin1().data(), output2.toLatin1().data());
+
+        log.write("Process", Plugin + " " + Argv.at(i), monita_cfg.config.at(6).toInt());
+//        if (Plugin.indexOf("Sky") > 0) {cc
+//            qDebug() << "Test";
+//        }
         proc.start("./" + Plugin + " " + Argv.at(i));
         proc.waitForFinished(); // sets current thread to sleep and waits for pingProcess end
         QString output(proc.readAllStandardOutput());
         QJsonObject obj = this->ObjectFromString(output);
 //        proc.deleteLater();
-        printf("%s", output.toLatin1().data());
+        printf("%s::%s", QDateTime::currentDateTime().toString("dd-MM-yyyy HH:mm:ss").toLatin1().data(), output.toLatin1().data());
 
-        if (!obj.value("monita").isUndefined()) {
-//            log.write("Monita", Plugin + " " + Argv.at(i), monita_cfg.config.at(6).toInt());
-            this->monita_parse(obj, i);
-
-        } else if (!obj.value("skywave").isUndefined()) {
-//            log.write("SkyWave", Plugin + " " + Argv.at(i), monita_cfg.config.at(6).toInt());
+        if (!obj.value("skywave").isUndefined()) {
             this->skywave_parse(obj, i);
+        }
 
-        } else if (!obj.value("ERR").isUndefined()) {
-//            log.write("Process", obj.value("ERR").toString(), monita_cfg.config.at(6).toInt());
+        if (!obj.value("success").isUndefined()) {
+            if (!obj.value("monita").isUndefined()) {
+//                log.write("Monita", Plugin + " " + Argv.at(i), monita_cfg.config.at(6).toInt());
+                if (obj.value("success").toString() == "true") {
+                    this->monita_parse(obj, i);
+                } else {
+
+                }
+
+            } else if (!obj.value("skywave").isUndefined()) {
+//                log.write("SkyWave", Plugin + " " + Argv.at(i), monita_cfg.config.at(6).toInt());
+                this->skywave_parse(obj, i);
+
+            } else if (!obj.value("ERR").isUndefined()) {
+//                log.write("Process", obj.value("ERR").toString(), monita_cfg.config.at(6).toInt());
+            }
         }
     }
 }
@@ -77,6 +96,7 @@ void process::monita_parse(QJsonObject obj, int index) {
 
     QStringList redis_config = cfg.read("REDIS");
     QStringList request = rds.reqRedis("hlen monita_service:parsing_ref", redis_config.at(0), redis_config.at(1).toInt());
+    if (request.isEmpty()) return;
     int redis_len = request.at(0).toInt();
     request = rds.reqRedis("hgetall monita_service:parsing_ref", redis_config.at(0), redis_config.at(1).toInt(), redis_len*2);
     for (int j = 0; j < request.length(); j+=2) {
@@ -94,13 +114,13 @@ void process::monita_parse(QJsonObject obj, int index) {
                 result[0].append(v.toObject().value("value").toString());
                 result[1].append(v.toObject().value("epochtime").toString());
             }
+
             if (result[0].length() > 0) {
                 if (titik_ukur.length() > result[1].length()) {
                     for (int j = 0; j < result[1].length(); j++) {
                         rds.reqRedis("hset monita_service:history:" + monita_cfg.config.at(3) +
                                       titik_ukur.at(j) + " " +
-                                      QString::number(QDateTime::currentMSecsSinceEpoch())
-                                        .left(QString::number(QDateTime::currentMSecsSinceEpoch()).length() - 3) +
+                                      result[1].at(j) +
 //                                      QString::number(QDateTime::currentMSecsSinceEpoch()) +
                                       " " +
                                       result[0].at(j), redis_config.at(0), redis_config.at(1).toInt());
@@ -108,8 +128,7 @@ void process::monita_parse(QJsonObject obj, int index) {
                             rds.reqRedis("hset monita_service:temp " +
                                           titik_ukur.at(j) +
                                           "_" +
-                                          QString::number(QDateTime::currentMSecsSinceEpoch())
-                                            .left(QString::number(QDateTime::currentMSecsSinceEpoch()).length() - 3) +
+                                          result[1].at(j) +
 //                                          QString::number(QDateTime::currentMSecsSinceEpoch()) +
                                           " " +
                                           result[0].at(j), redis_config.at(0), redis_config.at(1).toInt());
@@ -120,12 +139,11 @@ void process::monita_parse(QJsonObject obj, int index) {
                                       monita_cfg.config.at(6).toInt());
                             logsheet.replace(index, QString::number(logsheet.at(index).toInt()+1));
 //                        }
-                        rds.reqRedis("hset monita_service:vismon " +
+                        rds.reqRedis("hset monita_service:realtime " +
                                      SerialNumber + ";" +
                                      titik_ukur.at(j) +
                                      " " +
-                                     QString::number(QDateTime::currentMSecsSinceEpoch())
-                                       .left(QString::number(QDateTime::currentMSecsSinceEpoch()).length() - 3) + ";" +
+                                     result[1].at(j) + ";" +
 //                                     QString::number(QDateTime::currentMSecsSinceEpoch()) + ";" +
                                      result[0].at(j), redis_config.at(0), redis_config.at(1).toInt());
                         log.write("TcpModbus",
@@ -138,8 +156,7 @@ void process::monita_parse(QJsonObject obj, int index) {
                     for (int j = 0; j < titik_ukur.length(); j++) {
                         rds.reqRedis("hset monita_service:history:" + monita_cfg.config.at(3) +
                                       titik_ukur.at(j) + " " +
-                                      QString::number(QDateTime::currentMSecsSinceEpoch())
-                                        .left(QString::number(QDateTime::currentMSecsSinceEpoch()).length() - 3) +
+                                      result[1].at(j) +
 //                                      QString::number(QDateTime::currentMSecsSinceEpoch()) +
                                       " " +
                                       result[0].at(j), redis_config.at(0), redis_config.at(1).toInt());
@@ -147,8 +164,7 @@ void process::monita_parse(QJsonObject obj, int index) {
                             rds.reqRedis("hset monita_service:temp " +
                                           titik_ukur.at(j) +
                                           "_" +
-                                          QString::number(QDateTime::currentMSecsSinceEpoch())
-                                            .left(QString::number(QDateTime::currentMSecsSinceEpoch()).length() - 3) +
+                                          result[1].at(j) +
 //                                          QString::number(QDateTime::currentMSecsSinceEpoch()) +
                                           " " +
                                           result[0].at(j), redis_config.at(0), redis_config.at(1).toInt());
@@ -159,12 +175,11 @@ void process::monita_parse(QJsonObject obj, int index) {
                                       monita_cfg.config.at(6).toInt());
                             logsheet.replace(index, QString::number(logsheet.at(index).toInt()+1));
 //                        }
-                        rds.reqRedis("hset monita_service:vismon " +
+                        rds.reqRedis("hset monita_service:realtime " +
                                      SerialNumber + ";" +
                                      titik_ukur.at(j) +
                                      " " +
-                                     QString::number(QDateTime::currentMSecsSinceEpoch())
-                                       .left(QString::number(QDateTime::currentMSecsSinceEpoch()).length() - 3) + ";" +
+                                     result[1].at(j) + ";" +
 //                                     QString::number(QDateTime::currentMSecsSinceEpoch()) + ";" +
                                      result[0].at(j), redis_config.at(0), redis_config.at(1).toInt());
                         log.write("TcpModbus",
@@ -215,6 +230,12 @@ void process::skywave_parse(QJsonObject obj, int index) {
                         result[2].append(load);
                     }
                 }
+
+                QDateTime dt1 = QDateTime::currentDateTime();
+                QDateTime dt2 = dt1.toUTC();
+                dt1.setTimeSpec(Qt::UTC);
+                int offset = dt2.secsTo(dt1) / 3600;
+
                 if (result[0].length() > 0) {
                     for (int j = 0; j < result[0].length(); j++) {
                         if (!result[2].at(j).isEmpty()) {
@@ -223,27 +244,23 @@ void process::skywave_parse(QJsonObject obj, int index) {
                                 for (int k = 0; k < titik_ukur.length(); k++) {
                                     rds.reqRedis("hset monita_service:history:" + monita_cfg.config.at(3) +
                                                   titik_ukur.at(k) + " " +
-                                                  QString::number(QDateTime::fromString(result[1].at(j), "yyyy-MM-dd HH:mm:ss").toMSecsSinceEpoch())
-                                                    .left(QString::number(QDateTime::fromString(result[1].at(j), "yyyy-MM-dd HH:mm:ss").toMSecsSinceEpoch()).length() - 3) +
+                                                  QString::number(QDateTime::fromString(result[1].at(j), "yyyy-MM-dd HH:mm:ss").toTime_t() + (offset*3600)) +
 //                                                  QString::number(QDateTime::fromString(result[1].at(j), "yyyy-MM-dd HH:mm:ss").toMSecsSinceEpoch()) +
                                                   " " +
                                                   list_val.at(k), redis_config.at(0), redis_config.at(1).toInt());
-
                                     rds.reqRedis("hset monita_service:temp " +
                                                   titik_ukur.at(k) +
                                                   "_" +
-                                                  QString::number(QDateTime::fromString(result[1].at(j), "yyyy-MM-dd HH:mm:ss").toMSecsSinceEpoch())
-                                                    .left(QString::number(QDateTime::fromString(result[1].at(j), "yyyy-MM-dd HH:mm:ss").toMSecsSinceEpoch()).length() - 3) +
+                                                  QString::number(QDateTime::fromString(result[1].at(j), "yyyy-MM-dd HH:mm:ss").toTime_t() + (offset*3600)) +
 //                                                  QString::number(QDateTime::fromString(result[1].at(j), "yyyy-MM-dd HH:mm:ss").toMSecsSinceEpoch()) +
                                                   " " +
                                                   list_val.at(k), redis_config.at(0), redis_config.at(1).toInt());
 
-                                    rds.reqRedis("hset monita_service:vismon " +
+                                    rds.reqRedis("hset monita_service:realtime " +
                                                   SerialNumber + ";" +
                                                   titik_ukur.at(k) +
                                                   " " +
-                                                  QString::number(QDateTime::fromString(result[1].at(j), "yyyy-MM-dd HH:mm:ss").toMSecsSinceEpoch())
-                                                    .left(QString::number(QDateTime::fromString(result[1].at(j), "yyyy-MM-dd HH:mm:ss").toMSecsSinceEpoch()).length() - 3) + ";" +
+                                                  QString::number(QDateTime::fromString(result[1].at(j), "yyyy-MM-dd HH:mm:ss").toTime_t() + (offset*3600)) + ";" +
 //                                                  QString::number(QDateTime::fromString(result[1].at(j), "yyyy-MM-dd HH:mm:ss").toMSecsSinceEpoch()) + ";" +
                                                   list_val.at(k), redis_config.at(0), redis_config.at(1).toInt());
                                     log.write("SkyWave",
@@ -258,26 +275,23 @@ void process::skywave_parse(QJsonObject obj, int index) {
                                 for (int k = 0; k < list_val.length()-1; k++) {
                                     rds.reqRedis("hset monita_service:history:" + monita_cfg.config.at(3) +
                                                   titik_ukur.at(k) + " " +
-                                                  QString::number(QDateTime::fromString(result[1].at(j), "yyyy-MM-dd HH:mm:ss").toMSecsSinceEpoch())
-                                                    .left(QString::number(QDateTime::fromString(result[1].at(j), "yyyy-MM-dd HH:mm:ss").toMSecsSinceEpoch()).length() - 3) +
+                                                  QString::number(QDateTime::fromString(result[1].at(j), "yyyy-MM-dd HH:mm:ss").toTime_t() + (offset*3600)) +
                                                   " " +
                                                   list_val.at(k), redis_config.at(0), redis_config.at(1).toInt());
 
                                     rds.reqRedis("hset monita_service:temp " +
                                                   titik_ukur.at(k) +
                                                   "_" +
-                                                  QString::number(QDateTime::fromString(result[1].at(j), "yyyy-MM-dd HH:mm:ss").toMSecsSinceEpoch())
-                                                    .left(QString::number(QDateTime::fromString(result[1].at(j), "yyyy-MM-dd HH:mm:ss").toMSecsSinceEpoch()).length() - 3) +
+                                                  QString::number(QDateTime::fromString(result[1].at(j), "yyyy-MM-dd HH:mm:ss").toTime_t() + (offset*3600)) +
 //                                                  QString::number(QDateTime::fromString(result[1].at(j), "yyyy-MM-dd HH:mm:ss").toMSecsSinceEpoch()) +
                                                   " " +
                                                   list_val.at(k), redis_config.at(0), redis_config.at(1).toInt());
 
-                                    rds.reqRedis("hset monita_service:vismon " +
+                                    rds.reqRedis("hset monita_service:realtime " +
                                                   SerialNumber + ";" +
                                                   titik_ukur.at(k) +
                                                   " " +
-                                                  QString::number(QDateTime::fromString(result[1].at(j), "yyyy-MM-dd HH:mm:ss").toMSecsSinceEpoch())
-                                                    .left(QString::number(QDateTime::fromString(result[1].at(j), "yyyy-MM-dd HH:mm:ss").toMSecsSinceEpoch()).length() - 3) + ";" +
+                                                  QString::number(QDateTime::fromString(result[1].at(j), "yyyy-MM-dd HH:mm:ss").toTime_t() + (offset*3600)) + ";" +
 //                                                  QString::number(QDateTime::fromString(result[1].at(j), "yyyy-MM-dd HH:mm:ss").toMSecsSinceEpoch()) + ";" +
                                                   list_val.at(k), redis_config.at(0), redis_config.at(1).toInt());
                                     log.write("SkyWave",

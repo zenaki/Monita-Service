@@ -56,7 +56,9 @@ void data_visual::RedisToJson(QStringList data, QDateTime dt, int index)
         QStringList list_titik_ukur = m_titik_ukur.at(index).split(";");
         list_temp = data.at(i).split(";");
         list_temp2 = data.at(i+1).split(";");
+
         for (int j = 0; j < list_titik_ukur.length(); j++) {
+
             if (list_temp.at(1) == list_titik_ukur.at(j)) {
                 json["serial_number"] = list_temp.at(0);
                 json["titik_ukur"] = list_temp.at(1);
@@ -98,6 +100,8 @@ void data_visual::WriteToJson(QJsonObject json, QString type, QString id, QDateT
     if (visual_json_file.open(QIODevice::ReadWrite)) {
         QByteArray readFile = visual_json_file.readAll();
         m_clients.at(index)->sendTextMessage(readFile);
+        visual_json_file.close();
+        visual_json_file.remove();
 //        for (int i = 0; i < m_clients.length(); i++) {
 //            if (m_clients.at(i)->isValid()) {
 //                m_clients.at(i)->sendTextMessage(readFile);
@@ -114,12 +118,13 @@ void data_visual::doWork()
     int port = redis_config.at(1).toInt();
     QDateTime dt = QDateTime::currentDateTime();
 
-    QStringList request = rds.reqRedis("hlen monita_service:vismon", address, port);
+    QStringList request = rds.reqRedis("hlen monita_service:realtime", address, port);
 //    log.write("Redis",request.at(0) + " Data ..",
 //              monita_cfg.config.at(7).toInt());
+    if (request.isEmpty()) return;
     int redis_len = request.at(0).toInt();
     if (redis_len > 0) {
-        request = rds.reqRedis("hgetall monita_service:vismon", address, port, redis_len*2);
+        request = rds.reqRedis("hgetall monita_service:realtime", address, port, redis_len*2);
 
         for (int i = 0; i < m_clients.length(); i++) {
             this->RedisToJson(request, dt, i);
@@ -148,13 +153,13 @@ void data_visual::onNewConnection()
     m_titik_ukur << "";
 //    qDebug() << "debug new webSockcet Server Connection";
 
-    monita_cfg.config = cfg.read("CONFIG");
-    QStringList redis_config = cfg.read("REDIS");
-    QString address = redis_config.at(0);
-    int port = redis_config.at(1).toInt();
-    QStringList request = rds.reqRedis("hlen monita_service:vismon", address, port);
-    int redis_len = request.at(0).toInt();
-    request = rds.reqRedis("del monita_service:vismon", address, port, redis_len*2);
+//    monita_cfg.config = cfg.read("CONFIG");
+//    QStringList redis_config = cfg.read("REDIS");
+//    QString address = redis_config.at(0);
+//    int port = redis_config.at(1).toInt();
+//    QStringList request = rds.reqRedis("hlen monita_service:vismon", address, port);
+//    int redis_len = request.at(0).toInt();
+//    request = rds.reqRedis("del monita_service:vismon", address, port, redis_len*2);
 }
 
 void data_visual::processTextMessage(QString message)
@@ -166,19 +171,29 @@ void data_visual::processTextMessage(QString message)
 //    if (pClient) {pClient->sendTextMessage(message);}
     for (int i = 0; i < m_clients.length(); i++) {
         if (m_clients.at(i) == pClient) {
-            if (message.split(':').length() == 2) {
-                m_type.replace(i, message.split(':').at(0));
-                m_id.replace(i, message.split(':').at(1));
-                if (m_type.at(i) == "id") {
+            if (message.split(':').length() >= 2) {
+                if (message.split(':').at(0) == "id") {
+                    m_type.replace(i, message.split(':').at(0));
+                    m_id.replace(i, message.split(':').at(1));
                     this->get_titik_ukur(m_type.at(i), m_id.at(i), i);
-                } else if (m_type.at(i) == "op") {
+                } else if (message.split(':').at(0) == "op") {
+                    m_type.replace(i, message.split(':').at(0));
+                    m_id.replace(i, message.split(':').at(1));
                     QString resultTitikUkur = m_id.at(i);
                     m_nama_titik_ukur.replace(i, "");
                     m_titik_ukur.replace(i, resultTitikUkur);
                     m_id.replace(i, "");
-                } else if (m_type.at(i) == "arg") {
+                } else if (message.split(':').at(0) == "arg") {
                     get_arguments(m_id.at(i));
                     exec_arguments();
+                } else if (message.split(':').at(0) == "rpt") {
+                    QStringList list_temp = message.split(':');
+                    if (list_temp.length() >= 4) {
+//                        rpt:template.xml:config.json:path_name:parameter1#parameter2#parameter3#...
+//                        rpt:/home/ovm/sample_report.xml:/home/ovm/sample_config.json:/home/ovm/sample.pdf:
+//                        rpt:/home/zenaki/Desktop/sample_report.xml:/home/zenaki/Desktop/sample_config.json:/home/zenaki/Desktop/sample.pdf:
+                        this->generate_report(i, list_temp.at(1), list_temp.at(2), list_temp.at(3), list_temp.at(4));
+                    }
                 }
             }
             break;
@@ -214,6 +229,7 @@ void data_visual::socketDisconnected()
 }
 
 void data_visual::get_titik_ukur(QString type, QString id, int index) {
+    Q_UNUSED(type);
     QString resultNama;
     QString resultTitikUkur;
     db.open();
@@ -244,7 +260,7 @@ void data_visual::get_arguments(QString id) {
         return;
     } else {
         while(q.next()){
-            result.append(q.value(1).toString().toLatin1());
+            result.append(q.value(2).toString().toLatin1());
         }
     }
 
@@ -277,19 +293,35 @@ void data_visual::exec_arguments() {
         QString output(proc.readAllStandardOutput());
         QJsonObject obj = this->ObjectFromString(output);
 
-        if (!obj.value("monita").isUndefined()) {
-            QJsonArray array = obj.value("monita").toArray();
-            foreach (const QJsonValue & v, array) {
-                result.append(v.toObject().value("value").toString());
+        if (!obj.value("success").isUndefined()) {
+            if (obj.value("success").toString() == "false") {
+                if (!obj.value("ERR").isUndefined()) {
+                   qDebug() << "----------------------------------------------------------------------------------------------------";
+                   qDebug() << "----------------------------------------------------------------------------------------------------";
+                   qDebug() << "----------------------------------------------------------------------------------------------------";
+                   qDebug() << "EXEC_ARG:" + output;
+                   qDebug() << "----------------------------------------------------------------------------------------------------";
+                   qDebug() << "----------------------------------------------------------------------------------------------------";
+                   qDebug() << "----------------------------------------------------------------------------------------------------";
+               }
+                break;
+            } else {
+                if (!obj.value("monita").isUndefined()) {
+                    QJsonArray array = obj.value("monita").toArray();
+                    foreach (const QJsonValue & v, array) {
+                        result.append(v.toObject().value("value").toString());
+                    }
+                } else {
+                    qDebug() << "----------------------------------------------------------------------------------------------------";
+                    qDebug() << "----------------------------------------------------------------------------------------------------";
+                    qDebug() << "----------------------------------------------------------------------------------------------------";
+                    qDebug() << "EXEC_ARG:" + output;
+                    qDebug() << "----------------------------------------------------------------------------------------------------";
+                    qDebug() << "----------------------------------------------------------------------------------------------------";
+                    qDebug() << "----------------------------------------------------------------------------------------------------";
+                    break;
+                }
             }
-        } else if (!obj.value("ERR").isUndefined()) {
-            qDebug() << "----------------------------------------------------------------------------------------------------";
-            qDebug() << "----------------------------------------------------------------------------------------------------";
-            qDebug() << "----------------------------------------------------------------------------------------------------";
-            qDebug() << "EXEC_ARG:" + output;
-            qDebug() << "----------------------------------------------------------------------------------------------------";
-            qDebug() << "----------------------------------------------------------------------------------------------------";
-            qDebug() << "----------------------------------------------------------------------------------------------------";
         }
     }
 }
@@ -307,4 +339,47 @@ QJsonObject data_visual::ObjectFromString(QString in)
     }
 
     return obj;
+}
+
+void data_visual::generate_report(int index, QString temp, QString conf, QString name, QString parameter)
+{
+    QSettings db_sett(PATH_DB_CONNECTION, QSettings::IniFormat);
+    QString host = db_sett.value("HOST").toString();
+    QString db_name = db_sett.value("DATABASE").toString();
+    QString user_name = db_sett.value("USERNAME").toString();
+    QString password = db_sett.value("PASSWORD").toString();
+
+    QStringList rpt_gen = cfg.read("RPT_GEN");
+
+    log.write("Process", rpt_gen.at(0) +
+              " -tmp " + temp +
+              " -cnf " + conf +
+              " -f " + name +
+              " -host " + host +
+              " -db " + db_name +
+              " -usr " + user_name +
+              " -pwd " + password +
+              " -par " + parameter, monita_cfg.config.at(6).toInt());
+    QProcess proc;
+    proc.start("/" + rpt_gen.at(0) +
+               " -tmp " + temp +
+               " -cnf " + conf +
+               " -f " + name +
+               " -host " + host +
+               " -db " + db_name +
+               " -usr " + user_name +
+               " -pwd " + password +
+               " -par " + parameter);
+    proc.waitForFinished(); // sets current thread to sleep and waits for pingProcess end
+    QString output(proc.readAllStandardOutput());
+//    for (int i = 0; i < 1000; i++) {
+//        qDebug() << output;
+//    }
+    output.mid(output.indexOf("{"));
+    QJsonObject obj = this->ObjectFromString(output);
+    if (obj.value("ERR").isUndefined()) {
+        m_clients.at(index)->sendTextMessage("{\"REPORT\": \""+ obj.value("SUCCESS").toString() +"\"}");
+    } else {
+        m_clients.at(index)->sendTextMessage("{\"REPORT\": \""+ obj.value("ERR").toString() +"\"}");
+    }
 }

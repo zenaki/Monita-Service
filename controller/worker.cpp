@@ -39,9 +39,15 @@ Worker::Worker(QObject *parent) : QObject(parent)
 
 Worker::~Worker()
 {
+    for (int i = 0; i < jml_thread; i++) {
+        if (ThreadApp[i].isRunning()) {
+            ThreadApp[i].terminate();
+        }
+    }
+    
 //    if (ThreadTcpModbus.isRunning()) ThreadTcpModbus.terminate();
-//    if (ThreadDataMysql.isRunning()) ThreadDataMysql.terminate();
-//    if (ThreadDataVisual.isRunning()) ThreadDataVisual.terminate();
+    if (ThreadDataMysql.isRunning()) ThreadDataMysql.terminate();
+    if (ThreadDataVisual.isRunning()) ThreadDataVisual.terminate();
 
 //    if (ThreadSkyWave.isRunning()) ThreadSkyWave.terminate();
 //    if (m_pWebSocketServer->isListening()) {
@@ -60,7 +66,7 @@ void Worker::doWork()
 //    QStringList result = output.split("\n");
 
     plg = cfg.get_plugins();
-    int jml_thread = 0;
+    jml_thread = 0;
     for (int i = 0; i < MAX_PLUGINS; i++) {
         if (plg.arg[i].length() > 0) {
             obj_app[jml_thread].doSetup(ThreadApp[jml_thread], plg.id[i], plg.path[i], plg.arg[i], plg.sn[i], plg.time_periode[i]);
@@ -69,7 +75,6 @@ void Worker::doWork()
             jml_thread++;
         }
     }
-
     printf("%s::Total Thread = %d\n",
            QDateTime::currentDateTime().toString("dd-MM-yyyy HH:mm:ss").toLatin1().data(),
            jml_thread);

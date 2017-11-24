@@ -28,6 +28,7 @@ void data_mysql::set_dataHarian()
     QStringList request = rds.reqRedis("hlen monita_service:temp", address, port);
 //    log.write("Redis",request.at(0) + " Data ..",
 //              monita_cfg.config.at(7).toInt());
+    if (request.isEmpty()) return;
     int redis_len = request.at(0).toInt();
 
 //    request = rds.reqRedis("hgetall monita_service:data_jaman_" + QDate::currentDate().toString("dd_MM_yyyy"), address, port, redis_len*2);
@@ -81,6 +82,7 @@ void data_mysql::set_dataHarian()
                     dt_sdh.date().toString("yyyyMMdd")) {
                 data = data + "(" +
                     id_titik_ukur.at(i) + ", " +
+//                    id_titik_ukur.at(i) + ", " +
                     data_tunggal.at(i) + ", " +
                     waktu.at(i) +
                         ")";

@@ -33,7 +33,8 @@ private:
 //    util_skyw read;                                     /** veranda **/
 
     struct plugins plg;
-
+    
+    int jml_thread;
     process obj_app[MAX_PLUGINS];
     QThread ThreadApp[MAX_PLUGINS];
 

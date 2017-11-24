@@ -11,6 +11,7 @@
 SCRIPT=/usr/local/bin/monita-service
 RUNAS=$SUDO_USER
 NAME=monita-service
+VERSION="Monita Service Ver 1.9"
 
 PIDFILE=/var/run/$NAME.pid
 LOGFILE=/var/log/$NAME.log
@@ -46,16 +47,18 @@ uninstall() {
     echo "Notice: log file was not removed: '$LOGFILE'" >&2
     update-rc.d -f <NAME> remove
     rm -fv "$0"
+    apt-get remove --purge $NAME
   fi
 }
 
 status() {
         printf "%-50s" "Checking $NAME..."
+	echo $VERSION
     if [ -f $PIDFILE ]; then
         PID=$(cat $PIDFILE)
             if [ -z "$(ps axf | grep ${PID} | grep -v grep)" ]; then
                 printf "%s\n" "The process appears to be dead but pidfile still exists"
-            else    
+            else
                 echo "Running, the PID is $PID"
             fi
     else

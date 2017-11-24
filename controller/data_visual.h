@@ -42,6 +42,7 @@ private:
     void get_arguments(QString id);
     void exec_arguments();
     QJsonObject ObjectFromString(QString in);
+    void generate_report(int index, QString temp, QString conf, QString name, QString parameter);
 
 public slots:
     void doWork();

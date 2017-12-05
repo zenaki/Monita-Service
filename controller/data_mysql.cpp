@@ -36,6 +36,12 @@ void data_mysql::set_dataHarian()
 //    qSort(request.begin(), request.end());
     QStringList temp1; QString data;
 //    QStringList temp2; QStringList slave; QStringList tanggal;
+
+    QDateTime dt1 = QDateTime::currentDateTime();
+    QDateTime dt2 = dt1.toUTC();
+    dt1.setTimeSpec(Qt::UTC);
+    int offset = dt2.secsTo(dt1) / 3600;
+
     QStringList id_titik_ukur; QStringList data_tunggal; QStringList waktu; QStringList list_waktu;
     for (int i = 0; i < request.length(); i+=2) {
         temp1 = request.at(i).split("_");
@@ -57,7 +63,8 @@ void data_mysql::set_dataHarian()
         }
         if (!bWaktu) list_waktu.append(temp1.at(1));
     }
-//    int t = 0;
+    int t = 0;
+    bool database = false;
     while (!db.isOpen()) {
 //        db.close();
         db.open();
@@ -67,18 +74,23 @@ void data_mysql::set_dataHarian()
                       monita_cfg.config.at(7).toInt());
             QThread::msleep(DELAY_DB_CONNECT);
             db = mysql.connect_db("TcpModBus");
-//            t++;
-//            if (t >= 3) {emit finish();}
+            t++;
+            if (t >= 4) break;
+        } else {
+            database = true;
+            break;
         }
     }
+    if (!database) return;
+
     for (int j = 0; j < list_waktu.length(); j++) {
-        dt_sdh = QDateTime::fromTime_t(list_waktu.at(j).toInt());
+        dt_sdh = QDateTime::fromTime_t(list_waktu.at(j).toInt() - (offset*3600));
         data = "";
         if (!get.check_table_is_available(db, monita_cfg.config.at(4) + dt_sdh.date().toString("yyyyMMdd"), "Database", monita_cfg.config.at(7).toInt())) {
             set.create_tabel_data_harian(db, monita_cfg.config.at(4) + dt_sdh.date().toString("yyyyMMdd"), "Database", monita_cfg.config.at(7).toInt());
         }
         for (int i = 0; i < redis_len; i++) {
-            if (QDateTime::fromTime_t(waktu.at(i).mid(0, 10).toInt()).toString("yyyyMMdd") ==
+            if (QDateTime::fromTime_t(waktu.at(i).mid(0, 10).toInt() - (offset*3600)).toString("yyyyMMdd") ==
                     dt_sdh.date().toString("yyyyMMdd")) {
                 data = data + "(" +
                     id_titik_ukur.at(i) + ", " +
@@ -92,8 +104,13 @@ void data_mysql::set_dataHarian()
                 }
             }
         }
+//        qDebug() << data.mid(data.length()-1);
+        if (data.mid(data.length()-1) == ",") {
+            data = data.mid(0, data.length()-1);
+        }
+//        qDebug() << data.mid(data.length()-1);
         set.data_harian(db, monita_cfg.config.at(4) + dt_sdh.date().toString("yyyyMMdd"), data, "Database", monita_cfg.config.at(7).toInt());
-        set.data_harian(db, "data", data, "Database", monita_cfg.config.at(7).toInt());
+//        set.data_harian(db, "data", data, "Database", monita_cfg.config.at(7).toInt());
     }
 //    if (db.isOpen()) db.close();
 //    mysql.close(db);

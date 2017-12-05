@@ -112,7 +112,9 @@ void process::monita_parse(QJsonObject obj, int index) {
             QJsonArray array = obj.value("monita").toArray();
             foreach (const QJsonValue & v, array) {
                 result[0].append(v.toObject().value("value").toString());
-                result[1].append(v.toObject().value("epochtime").toString());
+                QString epochtime = v.toObject().value("epochtime").toString();
+                epochtime = epochtime.mid(0, epochtime.length()-3);
+                result[1].append(epochtime);
             }
 
             if (result[0].length() > 0) {
@@ -197,6 +199,11 @@ void process::skywave_parse(QJsonObject obj, int index) {
 //    QStringList list_arg = arg.split(" ");
 //    QStringList list_SinMin = list_arg.at(7).split(",");
 
+    QDateTime dt1 = QDateTime::currentDateTime();
+    QDateTime dt2 = dt1.toUTC();
+    dt1.setTimeSpec(Qt::UTC);
+    int offset = dt2.secsTo(dt1) / 3600;
+
     for (int i = 0; i < SN.length(); i++) {
         QStringList titik_ukur;
         QString SerialNumber = SN.at(i);
@@ -230,11 +237,6 @@ void process::skywave_parse(QJsonObject obj, int index) {
                         result[2].append(load);
                     }
                 }
-
-                QDateTime dt1 = QDateTime::currentDateTime();
-                QDateTime dt2 = dt1.toUTC();
-                dt1.setTimeSpec(Qt::UTC);
-                int offset = dt2.secsTo(dt1) / 3600;
 
                 if (result[0].length() > 0) {
                     for (int j = 0; j < result[0].length(); j++) {
@@ -312,7 +314,7 @@ void process::skywave_parse(QJsonObject obj, int index) {
             QString::number(
                 QDateTime::fromString(
                     obj.value("NextStartUTC").toString(), "yyyy-MM-dd HH:mm:ss"
-                ).toTime_t()
+                ).toTime_t() + (offset*3600)
             )
         );
         QStringList temp = Argv.at(index).split(" ");

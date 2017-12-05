@@ -16,7 +16,11 @@ void save_db::data_harian(QSqlDatabase db, QString tb_name, QString data, QStrin
     query = query + data + ";";
     log.write(type, query, debug);
     q.prepare(query);
-    q.exec();
+    if (q.exec()) {
+        log.write(type, "Berhasil Tulis Ke Database", debug);
+    } else {
+        log.write(type, "Gagal Tulis Ke Database", debug);
+    }
 }
 
 void save_db::create_tabel_data_harian(QSqlDatabase db, QString tb_name, QString type, int debug){

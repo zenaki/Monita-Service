@@ -1,6 +1,0 @@
-[submodule "hiredis"]
-	path = hiredis
-	url = https://github.com/redis/hiredis.git
-[submodule "QttpServer"]
-	path = QttpServer
-	url = https://github.com/supamii/QttpServer.git

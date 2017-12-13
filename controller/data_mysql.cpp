@@ -83,12 +83,13 @@ void data_mysql::set_dataHarian()
     }
     if (!database) return;
 
+    if (!get.check_table_is_available(db, monita_cfg.config.at(4) + dt_sdh.date().toString("yyyyMMdd"), "Database", monita_cfg.config.at(7).toInt())) {
+        set.create_tabel_data_harian(db, monita_cfg.config.at(4) + dt_sdh.date().toString("yyyyMMdd"), "Database", monita_cfg.config.at(7).toInt());
+    }
+
     for (int j = 0; j < list_waktu.length(); j++) {
         dt_sdh = QDateTime::fromTime_t(list_waktu.at(j).toInt() - (offset*3600));
         data = "";
-        if (!get.check_table_is_available(db, monita_cfg.config.at(4) + dt_sdh.date().toString("yyyyMMdd"), "Database", monita_cfg.config.at(7).toInt())) {
-            set.create_tabel_data_harian(db, monita_cfg.config.at(4) + dt_sdh.date().toString("yyyyMMdd"), "Database", monita_cfg.config.at(7).toInt());
-        }
         for (int i = 0; i < redis_len; i++) {
             if (QDateTime::fromTime_t(waktu.at(i).mid(0, 10).toInt() - (offset*3600)).toString("yyyyMMdd") ==
                     dt_sdh.date().toString("yyyyMMdd")) {

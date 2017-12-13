@@ -184,7 +184,7 @@ void data_visual::processTextMessage(QString message)
                     m_titik_ukur.replace(i, resultTitikUkur);
                     m_id.replace(i, "");
                 } else if (message.split(':').at(0) == "arg") {
-                    get_arguments(m_id.at(i));
+                    get_arguments(message.split(':').at(1));
                     exec_arguments();
                 } else if (message.split(':').at(0) == "rpt") {
                     QStringList list_temp = message.split(':');

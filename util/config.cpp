@@ -233,23 +233,23 @@ plugins config::get_plugins_from_database(struct plugins plg, int index) {
     db = mysql.connect_db("Config");
     db.open();
     QSqlQuery q(QSqlDatabase::database(db.connectionName()));
-    int last_id = 0;
+//    int last_id = 0;
+
+    QDateTime dt1 = QDateTime::currentDateTime();
+    QDateTime dt2 = dt1.toUTC();
+    dt1.setTimeSpec(Qt::UTC);
+    int offset = dt2.secsTo(dt1) / 3600;
 
     if (!q.exec("call get_skywave_parameter();")) {
         return plg;
     } else {
         while (q.next()) {
 //            -g http://m2prime.aissat.com/RestMessages.svc/get_return_messages.json/ -aid 150103286 -pwd ZRM3B9SSDI -sm 128;1 -s 2017-03-27#03:43:02 -t 10000
-            if (last_id != q.value(0).toInt()) {
-                last_id = q.value(0).toInt();
-                plg.id[index].append(QString::number(last_id));
+//            if (last_id != q.value(0).toInt()) {
+//                last_id = q.value(0).toInt();
+//                plg.id[index].append(QString::number(last_id));
+                plg.id[index].append(q.value(0).toString());
                 plg.sn[index].append(q.value(1).toString());
-
-                QDateTime dt1 = QDateTime::currentDateTime();
-                QDateTime dt2 = dt1.toUTC();
-                dt1.setTimeSpec(Qt::UTC);
-                int offset = dt2.secsTo(dt1) / 3600;
-
                 plg.arg[index].append(
 //                            "-g " + q.value(2).toString().toLatin1() + "get_return_messages.json/ " +
                             "-g " + q.value(2).toString().toLatin1() + " " +
@@ -261,7 +261,17 @@ plugins config::get_plugins_from_database(struct plugins plg, int index) {
 //                qDebug() << plg.arg[index];
 //                qDebug() << q.value(6).toInt();
 //                qDebug() << "test";
-            }
+//            } else {
+//                plg.sn[index].append(q.value(1).toString());
+//                plg.arg[index].append(
+////                            "-g " + q.value(2).toString().toLatin1() + "get_return_messages.json/ " +
+//                            "-g " + q.value(2).toString().toLatin1() + " " +
+//                            "-aid " + q.value(3).toString().toLatin1() + " " +
+//                            "-pwd " + q.value(4).toString().toLatin1() + " " +
+//                            "-sm " + q.value(5).toString().toLatin1() + " " +
+//                            "-s " + QDateTime::fromTime_t(q.value(6).toInt()-(offset*3600)).toString("yyyy-MM-dd#HH:mm:dd") + " "
+//                            );
+//            }
 //            result.append(
 //                        "-g " + q.value(0).toString().toLatin1() + "get_return_messages.json/ " +
 //                        "-aid " + q.value(1).toString().toLatin1() + " " +

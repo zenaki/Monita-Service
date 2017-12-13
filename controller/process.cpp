@@ -21,8 +21,6 @@ void process::doSetup(QThread &cThread, QStringList plugins_id, QString plugins_
     QTimer *t = new QTimer(this);
     connect(t, SIGNAL(timeout()), this, SLOT(doWork()));
     t->start(time_periode);
-
-
 }
 
 void process::doWork()
@@ -31,47 +29,52 @@ void process::doWork()
 //        logsheet.clear();
 //        for (int i = 0; i < Argv.length(); i++) logsheet.append("0");
 //    }
+    last_argv.clear();
     for (int i = 0; i < Argv.length(); i++) {
-        QProcess proc;
-//        log.write("Report", "usr/local/bin/plugins/Report -tmp /home/ovm/sample_report.xml -cnf /home/ovm/sample_config.json -f /home/ovm/sample123.pdf -host localhost -db marine_2_new_concept -usr root -pwd ovm2015 -par  ", monita_cfg.config.at(6).toInt());
-//        proc.start("/usr/local/bin/plugins/Report -tmp /home/ovm/sample_report.xml -cnf /home/ovm/sample_config.json -f /home/ovm/sample123.pdf -host localhost -db marine_2_new_concept -usr root -pwd ovm2015 -par  ");
-//        proc.waitForFinished(); // sets current thread to sleep and waits for pingProcess end
-//        QString output2(proc.readAllStandardOutput());
-//        printf("%s::%s", QDateTime::currentDateTime().toString("dd-MM-yyyy HH:mm:ss").toLatin1().data(), output2.toLatin1().data());
+        if (last_argv != Argv.at(i)) {
+            last_argv = Argv.at(i);
+            QProcess proc;
+//            log.write("Report", "usr/local/bin/plugins/Report -tmp /home/ovm/sample_report.xml -cnf /home/ovm/sample_config.json -f /home/ovm/sample123.pdf -host localhost -db marine_2_new_concept -usr root -pwd ovm2015 -par  ", monita_cfg.config.at(6).toInt());
+//            proc.start("/usr/local/bin/plugins/Report -tmp /home/ovm/sample_report.xml -cnf /home/ovm/sample_config.json -f /home/ovm/sample123.pdf -host localhost -db marine_2_new_concept -usr root -pwd ovm2015 -par  ");
+//            proc.waitForFinished(); // sets current thread to sleep and waits for pingProcess end
+//            QString output2(proc.readAllStandardOutput());
+//            printf("%s::%s", QDateTime::currentDateTime().toString("dd-MM-yyyy HH:mm:ss").toLatin1().data(), output2.toLatin1().data());
 
-        log.write("Process", Plugin + " " + Argv.at(i), monita_cfg.config.at(6).toInt());
-//        if (Plugin.indexOf("Sky") > 0) {cc
-//            qDebug() << "Test";
-//        }
-        proc.start("./" + Plugin + " " + Argv.at(i));
-        proc.waitForFinished(); // sets current thread to sleep and waits for pingProcess end
-        QString output(proc.readAllStandardOutput());
-        QJsonObject obj = this->ObjectFromString(output);
-//        proc.deleteLater();
-        printf("%s::%s", QDateTime::currentDateTime().toString("dd-MM-yyyy HH:mm:ss").toLatin1().data(), output.toLatin1().data());
+            log.write("Process", Plugin + " " + Argv.at(i), monita_cfg.config.at(6).toInt());
+//            if (Plugin.indexOf("Sky") > 0) {cc
+//                qDebug() << "Test";
+//            }
+            proc.start("./" + Plugin + " " + Argv.at(i));
+            proc.waitForFinished(); // sets current thread to sleep and waits for pingProcess end
+            QString output(proc.readAllStandardOutput());
+            QJsonObject obj = this->ObjectFromString(output);
+//            proc.deleteLater();
+            printf("%s::%s", QDateTime::currentDateTime().toString("dd-MM-yyyy HH:mm:ss").toLatin1().data(), output.toLatin1().data());
 
-        if (!obj.value("skywave").isUndefined()) {
-            this->skywave_parse(obj, i);
-        }
-
-        if (!obj.value("success").isUndefined()) {
-            if (!obj.value("monita").isUndefined()) {
-//                log.write("Monita", Plugin + " " + Argv.at(i), monita_cfg.config.at(6).toInt());
-                if (obj.value("success").toString() == "true") {
-                    this->monita_parse(obj, i);
-                } else {
-
-                }
-
-            } else if (!obj.value("skywave").isUndefined()) {
-//                log.write("SkyWave", Plugin + " " + Argv.at(i), monita_cfg.config.at(6).toInt());
+            if (!obj.value("skywave").isUndefined()) {
                 this->skywave_parse(obj, i);
+            }
 
-            } else if (!obj.value("ERR").isUndefined()) {
-//                log.write("Process", obj.value("ERR").toString(), monita_cfg.config.at(6).toInt());
+            if (!obj.value("success").isUndefined()) {
+                if (!obj.value("monita").isUndefined()) {
+//                    log.write("Monita", Plugin + " " + Argv.at(i), monita_cfg.config.at(6).toInt());
+                    if (obj.value("success").toString() == "true") {
+                        this->monita_parse(obj, i);
+                    } else {
+
+                    }
+
+                } else if (!obj.value("skywave").isUndefined()) {
+//                    log.write("SkyWave", Plugin + " " + Argv.at(i), monita_cfg.config.at(6).toInt());
+                    this->skywave_parse(obj, i);
+
+                } else if (!obj.value("ERR").isUndefined()) {
+//                    log.write("Process", obj.value("ERR").toString(), monita_cfg.config.at(6).toInt());
+                }
             }
         }
     }
+    last_argv.clear();
 }
 
 QJsonObject process::ObjectFromString(QString in)

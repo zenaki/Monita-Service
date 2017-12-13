@@ -99,7 +99,7 @@
          * need to copy the result into our private buffer. */                 \
         if (err_str != (buf)) {                                                \
             strncpy((buf), err_str, ((len) - 1));                              \
-            buf[(len)-1] = '\0';                                               \
+            (buf)[(len)-1] = '\0';                                               \
         }                                                                      \
     } while (0)
 #endif
@@ -133,7 +133,7 @@ void redisFreeSdsCommand(sds cmd);
 
 enum redisConnectionType {
     REDIS_CONN_TCP,
-    REDIS_CONN_UNIX,
+    REDIS_CONN_UNIX
 };
 
 /* Context for a connection to Redis */

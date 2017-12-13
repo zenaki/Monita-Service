@@ -31,6 +31,8 @@ private:
     QStringList SN;
     QStringList logsheet;
 
+    QString last_argv;
+
     QJsonObject ObjectFromString(QString in);
 
 //    bool logsheet;

@@ -49,7 +49,7 @@ void Worker::doWork()
     obj_data_visual.moveToThread(&ThreadDataVisual);
     ThreadDataVisual.start();
 
-//    obj_http_server.doSetup(ThreadHttpServer);
-//    obj_http_server.moveToThread(&ThreadHttpServer);
-//    ThreadHttpServer.start();
+    obj_http_server.doSetup(ThreadHttpServer);
+    obj_http_server.moveToThread(&ThreadHttpServer);
+    ThreadHttpServer.start();
 }

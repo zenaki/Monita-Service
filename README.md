@@ -6,6 +6,7 @@ Monita Service for Monita4 Realtime Monitoring.
 
 ### **Prerequisites**
 ```bash
+## QT 5.6++
 $ sudo apt install        \
     libqt5sql5            \
     libqt5sql5-mysql      \
@@ -33,16 +34,18 @@ Git submodules/dependencies automatically pulls in hiredis and QttpServer
 ```bash
 $ git submodule update --init
 ```
+
 build hiredis
 ```bash
-$ cd 3rdparty/hiredis/
+$ cd Monita-Service/3rdparty/hiredis/
 $ make
 $ sudo make install
+$ sudo ln -s /usr/local/lib/libhiredis.so.0.13 /usr/lib/x86_64-linux-gnu/libhiredis.so.0.13
 ```
 
 build QttpServer
 ```bash
-$ cd 3rdparty/QttpServer/
+$ cd Monita-Service/3rdparty/QttpServer/
 $ git submodule update --init
 $ qmake qttpserver.pro
 $ make

@@ -66,6 +66,9 @@ status() {
     fi
 }
 
+log() {
+	tail -f $LOGFILE
+}
 
 case "$1" in
   start)
@@ -84,6 +87,9 @@ case "$1" in
     stop
     start
     ;;
+  log)
+    log
+    ;;
   *)
-    echo "Usage: $0 {start|stop|status|restart|uninstall}"
+    echo "Usage: $0 {start|stop|status|restart|uninstall|log}"
 esac

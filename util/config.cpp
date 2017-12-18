@@ -74,6 +74,9 @@ void config::write(QJsonObject &json) const //Default
     QJsonObject sourceObject;
     QJsonArray argv;
     QJsonObject arg;
+    appObject["PATH"] = QString("path/to/plugins/ModBus");
+    appObject["DATABASE_SOURCE"] = bool(0);
+    appObject["TIME_PERIODE"] = 1000;
     arg["ARG"] = QString("-tcp"); argv.append(arg); arg.remove("ARG");
     arg["ARG"] = QString("--ip-address 192.168.1.1"); argv.append(arg); arg.remove("ARG");
     arg["ARG"] = QString("--port 502"); argv.append(arg); arg.remove("ARG");
@@ -86,8 +89,13 @@ void config::write(QJsonObject &json) const //Default
     sourceObject["ARGV"] = argv;
     sourceObject["SN"] = QString("XXXX-XXXXXX-XXX-XXXXX");
     sourceArray.append(sourceObject);
-    appObject["PATH"] = QString("plugins/ModBus");
     appObject["SOURCE"] = sourceArray;
+    appArray.append(appObject);
+
+    appObject["PATH"] = QString("path/to/plugins/SkyWave");
+    appObject["DATABASE_SOURCE"] = bool(1);
+    appObject["TIME_PERIODE"] = 120000;
+    appObject.remove("SOURCE");
     appArray.append(appObject);
     json["APP"] = appArray;
 
@@ -101,7 +109,7 @@ void config::write(QJsonObject &json) const //Default
     QJsonArray configArray;
     QJsonObject configObject;
     configObject["INTERVAL"] = 1000;    //milis
-    configObject["DB_PERIOD"] = 60;     //detik
+    configObject["DB_PERIOD"] = 60000;     //detik
     configObject["TIMESTAMP"] = 3;     //TimeStamp
     configObject["REDIS_KEY"] = QString("data_");
     configObject["TABLE_NAME"] = QString("data_");
@@ -114,6 +122,8 @@ void config::write(QJsonObject &json) const //Default
     configObject["DEBUG_SKYWAVE_DATABASE"] = false;
     configArray.append(configObject);
     json["CONFIG"] = configArray;
+
+    json["RPT_GEN"] = QString("path/to/report/generator/Report");
 }
 
 bool config::loadConfig(config::SaveFormat saveFormat)

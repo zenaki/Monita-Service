@@ -218,8 +218,13 @@ void process::skywave_parse(QJsonObject obj, int index) {
         for (int j = 0; j < request.length(); j+=2) {
             QStringList temp = request.at(j).split(";");
             if (SerialNumber == temp.at(0)) {
-                titik_ukur.insert(temp.at(1).toInt()-1, request.at(j+1));
+//                titik_ukur.insert(temp.at(1).toInt()-1, request.at(j+1));
+                titik_ukur.append(QString::number(temp.at(1).toInt()-1)+";"+request.at(j+1));
             }
+        }
+
+        if (SerialNumber == "01050294SKYE7CB") {
+            qDebug() << "Test";
         }
 
         if (titik_ukur.length() > 0) {
@@ -241,69 +246,81 @@ void process::skywave_parse(QJsonObject obj, int index) {
                     }
                 }
 
+                if (SerialNumber == "01050294SKYE7CB" && result[2].length()>0) {
+                    qDebug() << "Test";
+                }
+
                 if (result[0].length() > 0) {
                     for (int j = 0; j < result[0].length(); j++) {
                         if (!result[2].at(j).isEmpty()) {
                             QStringList list_val = result[2].at(j).split(";");
                             if (list_val.length()-1 > titik_ukur.length()) {
                                 for (int k = 0; k < titik_ukur.length(); k++) {
-                                    rds.reqRedis("hset monita_service:history:" + monita_cfg.config.at(3) +
-                                                  titik_ukur.at(k) + " " +
-                                                  QString::number(QDateTime::fromString(result[1].at(j), "yyyy-MM-dd HH:mm:ss").toTime_t() + (offset*3600)) +
-//                                                  QString::number(QDateTime::fromString(result[1].at(j), "yyyy-MM-dd HH:mm:ss").toMSecsSinceEpoch()) +
-                                                  " " +
-                                                  list_val.at(k), redis_config.at(0), redis_config.at(1).toInt());
-                                    rds.reqRedis("hset monita_service:temp " +
-                                                  titik_ukur.at(k) +
-                                                  "_" +
-                                                  QString::number(QDateTime::fromString(result[1].at(j), "yyyy-MM-dd HH:mm:ss").toTime_t() + (offset*3600)) +
-//                                                  QString::number(QDateTime::fromString(result[1].at(j), "yyyy-MM-dd HH:mm:ss").toMSecsSinceEpoch()) +
-                                                  " " +
-                                                  list_val.at(k), redis_config.at(0), redis_config.at(1).toInt());
+                                    QStringList temp = titik_ukur.at(k).split(";");
+                                    if (list_val.length() > temp.at(0).toInt()) {
+                                        rds.reqRedis("hset monita_service:history:" + monita_cfg.config.at(3) +
+                                                      temp.at(1) + " " +
+                                                      QString::number(QDateTime::fromString(result[1].at(j), "yyyy-MM-dd HH:mm:ss").toTime_t() + (offset*3600)) +
+//                                                      QString::number(QDateTime::fromString(result[1].at(j), "yyyy-MM-dd HH:mm:ss").toMSecsSinceEpoch()) +
+                                                      " " +
+                                                      list_val.at(temp.at(0).toInt()), redis_config.at(0), redis_config.at(1).toInt());
+                                        rds.reqRedis("hset monita_service:temp " +
+                                                      temp.at(1) +
+                                                      "_" +
+                                                      QString::number(QDateTime::fromString(result[1].at(j), "yyyy-MM-dd HH:mm:ss").toTime_t() + (offset*3600)) +
+//                                                      QString::number(QDateTime::fromString(result[1].at(j), "yyyy-MM-dd HH:mm:ss").toMSecsSinceEpoch()) +
+                                                      " " +
+                                                      list_val.at(temp.at(0).toInt()), redis_config.at(0), redis_config.at(1).toInt());
 
-                                    rds.reqRedis("hset monita_service:realtime " +
-                                                  SerialNumber + ";" +
-                                                  titik_ukur.at(k) +
-                                                  " " +
-                                                  QString::number(QDateTime::fromString(result[1].at(j), "yyyy-MM-dd HH:mm:ss").toTime_t() + (offset*3600)) + ";" +
-//                                                  QString::number(QDateTime::fromString(result[1].at(j), "yyyy-MM-dd HH:mm:ss").toMSecsSinceEpoch()) + ";" +
-                                                  list_val.at(k), redis_config.at(0), redis_config.at(1).toInt());
-                                    log.write("SkyWave",
-                                              QString::number(k) + " - " +
-                                              result[0].at(j) + " - " +
-                                              result[1].at(j) + " - " +
-                                              titik_ukur.at(k) + " - " +
-                                              list_val.at(k),
-                                              monita_cfg.config.at(6).toInt());
+                                        rds.reqRedis("hset monita_service:realtime " +
+                                                      SerialNumber + ";" +
+                                                      temp.at(1) +
+                                                      " " +
+                                                      QString::number(QDateTime::fromString(result[1].at(j), "yyyy-MM-dd HH:mm:ss").toTime_t() + (offset*3600)) + ";" +
+//                                                      QString::number(QDateTime::fromString(result[1].at(j), "yyyy-MM-dd HH:mm:ss").toMSecsSinceEpoch()) + ";" +
+                                                      list_val.at(temp.at(0).toInt()), redis_config.at(0), redis_config.at(1).toInt());
+                                        log.write("SkyWave",
+                                                  QString::number(k) + " - " +
+                                                  result[0].at(j) + " - " +
+                                                  result[1].at(j) + " - " +
+                                                  temp.at(1) + " - " +
+                                                  list_val.at(temp.at(0).toInt()),
+                                                  monita_cfg.config.at(6).toInt());
+                                    }
                                 }
                             } else {
                                 for (int k = 0; k < list_val.length()-1; k++) {
-                                    rds.reqRedis("hset monita_service:history:" + monita_cfg.config.at(3) +
-                                                  titik_ukur.at(k) + " " +
-                                                  QString::number(QDateTime::fromString(result[1].at(j), "yyyy-MM-dd HH:mm:ss").toTime_t() + (offset*3600)) +
-                                                  " " +
-                                                  list_val.at(k), redis_config.at(0), redis_config.at(1).toInt());
+                                    QStringList temp = titik_ukur.at(k).split(";");
+                                    if (list_val.length() > temp.at(0).toInt()) {
+                                        rds.reqRedis("hset monita_service:history:" + monita_cfg.config.at(3) +
+                                                      temp.at(1) + " " +
+                                                      QString::number(QDateTime::fromString(result[1].at(j), "yyyy-MM-dd HH:mm:ss").toTime_t() + (offset*3600)) +
+//                                                      QString::number(QDateTime::fromString(result[1].at(j), "yyyy-MM-dd HH:mm:ss").toMSecsSinceEpoch()) +
+                                                      " " +
+                                                      list_val.at(temp.at(0).toInt()), redis_config.at(0), redis_config.at(1).toInt());
+                                        rds.reqRedis("hset monita_service:temp " +
+                                                      temp.at(1) +
+                                                      "_" +
+                                                      QString::number(QDateTime::fromString(result[1].at(j), "yyyy-MM-dd HH:mm:ss").toTime_t() + (offset*3600)) +
+//                                                      QString::number(QDateTime::fromString(result[1].at(j), "yyyy-MM-dd HH:mm:ss").toMSecsSinceEpoch()) +
+                                                      " " +
+                                                      list_val.at(temp.at(0).toInt()), redis_config.at(0), redis_config.at(1).toInt());
 
-                                    rds.reqRedis("hset monita_service:temp " +
-                                                  titik_ukur.at(k) +
-                                                  "_" +
-                                                  QString::number(QDateTime::fromString(result[1].at(j), "yyyy-MM-dd HH:mm:ss").toTime_t() + (offset*3600)) +
-//                                                  QString::number(QDateTime::fromString(result[1].at(j), "yyyy-MM-dd HH:mm:ss").toMSecsSinceEpoch()) +
-                                                  " " +
-                                                  list_val.at(k), redis_config.at(0), redis_config.at(1).toInt());
-
-                                    rds.reqRedis("hset monita_service:realtime " +
-                                                  SerialNumber + ";" +
-                                                  titik_ukur.at(k) +
-                                                  " " +
-                                                  QString::number(QDateTime::fromString(result[1].at(j), "yyyy-MM-dd HH:mm:ss").toTime_t() + (offset*3600)) + ";" +
-//                                                  QString::number(QDateTime::fromString(result[1].at(j), "yyyy-MM-dd HH:mm:ss").toMSecsSinceEpoch()) + ";" +
-                                                  list_val.at(k), redis_config.at(0), redis_config.at(1).toInt());
-                                    log.write("SkyWave",
-                                              QString::number(k) + " - " +
-                                              titik_ukur.at(k) + " - " +
-                                              list_val.at(k),
-                                              monita_cfg.config.at(6).toInt());
+                                        rds.reqRedis("hset monita_service:realtime " +
+                                                      SerialNumber + ";" +
+                                                      temp.at(1) +
+                                                      " " +
+                                                      QString::number(QDateTime::fromString(result[1].at(j), "yyyy-MM-dd HH:mm:ss").toTime_t() + (offset*3600)) + ";" +
+//                                                      QString::number(QDateTime::fromString(result[1].at(j), "yyyy-MM-dd HH:mm:ss").toMSecsSinceEpoch()) + ";" +
+                                                      list_val.at(temp.at(0).toInt()), redis_config.at(0), redis_config.at(1).toInt());
+                                        log.write("SkyWave",
+                                                  QString::number(k) + " - " +
+                                                  result[0].at(j) + " - " +
+                                                  result[1].at(j) + " - " +
+                                                  temp.at(1) + " - " +
+                                                  list_val.at(temp.at(0).toInt()),
+                                                  monita_cfg.config.at(6).toInt());
+                                    }
                                 }
                             }
                         }

@@ -125,7 +125,9 @@ void data_visual::doWork()
     int redis_len = request.at(0).toInt();
     if (redis_len > 0) {
         request = rds.reqRedis("hgetall monita_service:realtime", address, port, redis_len*2);
-
+//        for (int i = 0; i < request.length(); i++) {
+//            log.write("RealTIme", request.at(i), 0);
+//        }
         for (int i = 0; i < m_clients.length(); i++) {
             this->RedisToJson(request, dt, i);
         }
@@ -229,6 +231,7 @@ void data_visual::socketDisconnected()
 }
 
 void data_visual::get_titik_ukur(QString type, QString id, int index) {
+//    log.write("Test", "type : " + type + " id : " + id, 0);
     Q_UNUSED(type);
     QString resultNama;
     QString resultTitikUkur;
@@ -361,7 +364,7 @@ void data_visual::generate_report(int index, QString temp, QString conf, QString
               " -pwd " + password +
               " -par " + parameter, monita_cfg.config.at(6).toInt());
     QProcess proc;
-    proc.start("/" + rpt_gen.at(0) +
+    proc.start("xvfb-run -- /" + rpt_gen.at(0) +
                " -tmp " + temp +
                " -cnf " + conf +
                " -f " + name +

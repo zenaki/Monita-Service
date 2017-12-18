@@ -8,7 +8,7 @@
 
 #include "controller/data_mysql.h"
 #include "controller/data_visual.h"
-#include "controller/http_server.h"
+//#include "controller/http_server.h"
 
 #include "controller/process.h"
 
@@ -37,8 +37,8 @@ private:
     QThread ThreadDataMysql;
     data_visual obj_data_visual;
     QThread ThreadDataVisual;
-    http_server obj_http_server;
-    QThread ThreadHttpServer;
+//    http_server obj_http_server;
+//    QThread ThreadHttpServer;
 };
 
 #endif

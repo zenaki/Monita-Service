@@ -15,7 +15,7 @@ Worker::~Worker()
     
     if (ThreadDataMysql.isRunning()) ThreadDataMysql.terminate();
     if (ThreadDataVisual.isRunning()) ThreadDataVisual.terminate();
-    if (ThreadHttpServer.isRunning()) ThreadHttpServer.terminate();
+//    if (ThreadHttpServer.isRunning()) ThreadHttpServer.terminate();
 }
 
 void Worker::doWork()
@@ -41,15 +41,17 @@ void Worker::doWork()
            QDateTime::currentDateTime().toString("dd-MM-yyyy HH:mm:ss").toLatin1().data(),
            jml_thread);
 
+//    log.write("Test", "Start Thread Data MySQL", 0);
     obj_data_mysql.doSetup(ThreadDataMysql);
     obj_data_mysql.moveToThread(&ThreadDataMysql);
     ThreadDataMysql.start();
 
+//    log.write("Test", "Start Thread Data Visual", 0);
     obj_data_visual.doSetup(ThreadDataVisual);
     obj_data_visual.moveToThread(&ThreadDataVisual);
     ThreadDataVisual.start();
 
-    obj_http_server.doSetup(ThreadHttpServer);
-    obj_http_server.moveToThread(&ThreadHttpServer);
-    ThreadHttpServer.start();
+//    obj_http_server.doSetup(ThreadHttpServer);
+//    obj_http_server.moveToThread(&ThreadHttpServer);
+//    ThreadHttpServer.start();
 }

@@ -18,11 +18,11 @@ HEADERS +=                          \
         model/monita_log.h          \
         util/config.h               \
         util/redis.h                \
-        util/api.h                  \
+#        util/api.h                  \
         controller/data_mysql.h     \
         controller/data_visual.h    \
-        controller/process.h \
-    controller/http_server.h
+        controller/process.h
+#    controller/http_server.h
 
 SOURCES += main.cpp                 \
         model/get_db.cpp            \
@@ -32,17 +32,17 @@ SOURCES += main.cpp                 \
         model/monita_log.cpp        \
         util/config.cpp             \
         util/redis.cpp              \
-        util/api.cpp                \
+#        util/api.cpp                \
         controller/data_mysql.cpp   \
         controller/data_visual.cpp  \
-        controller/process.cpp \
-    controller/http_server.cpp
+        controller/process.cpp
+#    controller/http_server.cpp
 
-INCLUDEPATH += 3rdparty/hiredis-64bit
-LIBS += -L3rdparty/hiredis-64bit -lhiredis
+#INCLUDEPATH += 3rdparty/hiredis-64bit
+#LIBS += -L3rdparty/hiredis-64bit -lhiredis
 
 INCLUDEPATH += /usr/local/include/hiredis
 LIBS += -L/usr/local/lib -lhiredis
 
-message('Including core files')
-include($$PWD/../../QttpServer/core.pri)
+#message('Including core files')
+#include($$PWD/../../QttpServer/core.pri)

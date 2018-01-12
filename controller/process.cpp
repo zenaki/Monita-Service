@@ -223,8 +223,8 @@ void process::skywave_parse(QJsonObject obj, int index) {
             }
         }
 
-        if (SerialNumber == "01050294SKYE7CB") {
-            qDebug() << "Test";
+        if (SerialNumber == "01093205SKY29E6") {
+            qDebug() << "";
         }
 
         if (titik_ukur.length() > 0) {
@@ -244,10 +244,6 @@ void process::skywave_parse(QJsonObject obj, int index) {
                         }
                         result[2].append(load);
                     }
-                }
-
-                if (SerialNumber == "01050294SKYE7CB" && result[2].length()>0) {
-                    qDebug() << "Test";
                 }
 
                 if (result[0].length() > 0) {

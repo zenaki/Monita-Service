@@ -32,6 +32,7 @@ void save_db::create_tabel_data_harian(QSqlDatabase db, QString tb_name, QString
                 titik_ukur_id INT(11) NOT NULL, \
                 value FLOAT NULL, \
                 epochtime INT(11) NOT NULL, \
+                protocol_type_id INT(11) NULL, \
                 PRIMARY KEY (titik_ukur_id, epochtime) \
     );";
     log.write(type, query, debug);

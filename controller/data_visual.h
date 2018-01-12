@@ -30,6 +30,8 @@ private:
     QStringList m_id;
     QStringList m_nama_titik_ukur;
     QStringList m_titik_ukur;
+    QStringList m_type_titik_ukur;
+    QStringList m_satuan;
     QStringList m_arguments;
 
     void RedisToJson(QStringList data, QDateTime dt, int index);
@@ -41,6 +43,7 @@ private:
     void get_titik_ukur(QString type, QString id, int index);
     void get_arguments(QString id);
     void exec_arguments();
+    void set_customInput(QStringList data);
     QJsonObject ObjectFromString(QString in);
     void generate_report(int index, QString temp, QString conf, QString name, QString parameter);
 
